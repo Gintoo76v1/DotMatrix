@@ -1,10 +1,3 @@
-Das ist natürlich super ärgerlich! Ich habe den Fehler gefunden: Es lag an einer winzigen Kommastelle bei der Berechnung der Bildmitte. Wenn das Bild zentriert wurde, kamen halbe Pixelkoordinaten (wie 150.5) heraus. Das Array, das die Tinte speichert, kann mit halben Indizes aber nichts anfangen und hat die Tinte einfach ins Nichts geschrieben – daher war das Bild am Ende leer und zeigte nur die Hintergrundfarbe. Ich habe Math.round() hinzugefügt, um das zu verhindern.
-Zum Thema **Live Preview**:
- 1. Die **ASCII-Vorschau** ist jetzt 100 % live und reagiert sofort auf alle Regler (Helligkeit, Kontrast, Dithering etc.).
- 2. Ich habe noch einen weiteren Bug behoben, der verhinderte, dass man ein zweites Bild hochladen konnte (das hat den Klick auf die Preview blockiert).
- 3. **Wichtig:** Das große Hauptbild im Canvas rendert *nicht* live mit. Bei Millionen von gesetzten Punkten würde das Berechnen in Echtzeit den Browser (gerade auf dem Handy) sofort zum Absturz bringen. Dafür musst du weiterhin auf "Render" klicken.
-Hier ist der komplette, fehlerfreie Code. Kopiere ihn einfach komplett und ersetze deine alte index.html:
-```html
 <!doctype html>
 <html lang="en">
 <head>
