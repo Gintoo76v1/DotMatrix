@@ -326,7 +326,7 @@
       </div>
     </div>
     <div>
-      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Paper</div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Paper (Auto-detect)</div>
       <div class="swatches" id="paperSwatches">
         <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232" title="cream"></div>
         <div class="swatch active" style="background:#ffffff" data-paper="255,255,255" title="white"></div>
@@ -336,14 +336,33 @@
       </div>
     </div>
   </div>
+  
+  <div class="grid-2" style="margin-top: 14px;">
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Ribbon Wear Pattern</div>
+      <div class="segmented" id="wearBtns" style="flex-direction: column;">
+        <button data-wear="none" class="active" style="border-right: 0; border-bottom: 2px solid var(--ink);">Fresh / None</button>
+        <button data-wear="fade_x" style="border-right: 0; border-bottom: 2px solid var(--ink);">Fade Left-Right</button>
+        <button data-wear="fade_y" style="border-right: 0; border-bottom: 2px solid var(--ink);">Fade Top-Down</button>
+        <button data-wear="uneven" style="border-right: 0;">Uneven Clouds</button>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Wear Strength</div>
+      <label class="field" style="margin-top: 0;">
+        <span class="name"><span>Intensity</span><b id="wearVal">50%</b></span>
+        <input type="range" id="wearSlider" min="0" max="100" value="50">
+      </label>
+    </div>
+  </div>
 </section>
 
 <section>
   <details>
     <summary>Advanced Rendering</summary>
     <label class="field">
-      <span class="name"><span>Output DPI</span><b id="dpiVal">200</b></span>
-      <input type="range" id="dpiSlider" min="100" max="900" step="50" value="200">
+      <span class="name"><span>Output DPI</span><b id="dpiVal">900</b></span>
+      <input type="range" id="dpiSlider" min="100" max="1200" step="50" value="900">
     </label>
     <label class="field">
       <span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span>
@@ -354,8 +373,8 @@
       <input type="range" id="bandingSlider" min="0" max="20" value="10">
     </label>
     <label class="field">
-      <span class="name"><span>Max output size (px)</span><b id="maxSizeVal">1600</b></span>
-      <input type="range" id="maxSizeSlider" min="600" max="3500" step="100" value="1600">
+      <span class="name"><span>Max output size (px)</span><b id="maxSizeVal">4000</b></span>
+      <input type="range" id="maxSizeSlider" min="1000" max="6000" step="100" value="4000">
     </label>
     <label class="field">
       <span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span>
@@ -366,7 +385,7 @@
 
 <footer>
   <div class="dots">· · · · ·</div>
-  dotmatrix v0.2.2 · client-side only
+  dotmatrix v0.3.0 · client-side only
 </footer>
 
 <div class="actions">
@@ -404,10 +423,12 @@ const state = {
   contrast: 20,
   gamma: 1.0,
   invert: false,
-  dpi: 200,
+  dpi: 900,
   jitterScale: 1.0,
   bandingScale: 1.0,
-  maxSize: 1600,
+  maxSize: 4000,
+  wearPattern: "none",
+  wearStrength: 50,
   seed: 0,
   sourceImage: null,
 };
@@ -430,6 +451,50 @@ function gaussian(rng) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
+// ==================== AUTO BACKGROUND ====================
+function detectAndSetPaperColor(img) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 64;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, 64, 64);
+    const data = ctx.getImageData(0,0,64,64).data;
+    
+    let r = 0, g = 0, b = 0, count = 0;
+    // Sample border pixels
+    for(let y = 0; y < 64; y++) {
+      for(let x = 0; x < 64; x++) {
+        if(x < 4 || x > 59 || y < 4 || y > 59) {
+          const idx = (y * 64 + x) * 4;
+          r += data[idx]; g += data[idx+1]; b += data[idx+2]; count++;
+        }
+      }
+    }
+    r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
+
+    let bestSwatch = null;
+    let minDist = Infinity;
+    
+    const swatches = document.querySelectorAll('#paperSwatches .swatch');
+    swatches.forEach(swatch => {
+      const rgb = swatch.dataset.paper.split(",").map(Number);
+      const dist = Math.pow(r - rgb[0], 2) + Math.pow(g - rgb[1], 2) + Math.pow(b - rgb[2], 2);
+      if(dist < minDist) {
+        minDist = dist;
+        bestSwatch = swatch;
+      }
+    });
+
+    if(bestSwatch) {
+      swatches.forEach(s => s.classList.remove("active"));
+      bestSwatch.classList.add("active");
+      state.paper = bestSwatch.dataset.paper.split(",").map(Number);
+    }
+  } catch (e) {
+    console.warn("Auto-detect background failed", e);
+  }
+}
+
 // ==================== PREPROCESSING & DITHERING ====================
 function toGrayscale(imgData, stateObj) {
   const {width, height, data} = imgData;
@@ -442,18 +507,12 @@ function toGrayscale(imgData, stateObj) {
 
   for (let i = 0, j = 0; i < data.length; i += 4, j++) {
     let r = data[i], green = data[i+1], blue = data[i+2];
-
-    // Contrast & Brightness
     r = r * c + intercept + b;
     green = green * c + intercept + b;
     blue = blue * c + intercept + b;
-
-    // Gamma
     r = 255 * Math.pow(Math.max(0, Math.min(255, r)) / 255, g);
     green = 255 * Math.pow(Math.max(0, Math.min(255, green)) / 255, g);
     blue = 255 * Math.pow(Math.max(0, Math.min(255, blue)) / 255, g);
-
-    // Luma
     let luma = 0.299 * r + 0.587 * green + 0.114 * blue;
     if (inv) luma = 255 - luma;
     out[j] = Math.max(0, Math.min(255, luma));
@@ -616,6 +675,8 @@ async function render(srcImage) {
 
   const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
   const bandAmp = profile.banding * state.bandingScale;
+  const wearStrength = state.wearStrength / 100;
+
   const rowBands = new Float32Array(gridH);
   for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
 
@@ -639,7 +700,19 @@ async function render(srcImage) {
         cx += Math.round(gaussian(rng) * passJitter);
         cy += Math.round(gaussian(rng) * passJitter);
       }
-      const band = rowBands[gy];
+      
+      // Ribbon Wear Calculation
+      let wearFactor = 1.0;
+      if (state.wearPattern === "fade_x") {
+        wearFactor = 1.0 - (gx / gridW) * wearStrength;
+      } else if (state.wearPattern === "fade_y") {
+        wearFactor = 1.0 - (gy / gridH) * wearStrength;
+      } else if (state.wearPattern === "uneven") {
+        wearFactor = 1.0 - ((Math.sin(gx * 0.02) * Math.sin(gy * 0.03) * 0.5 + 0.5) * wearStrength);
+      }
+      wearFactor = Math.max(0.1, wearFactor); // Verhindert komplettes Verschwinden
+
+      const band = rowBands[gy] * wearFactor;
       stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
 
       processed++;
@@ -790,6 +863,7 @@ wireSegmented("ditherBtns", "dither", "dither", () => {
 });
 wireSegmented("paperFormatBtns", "paperFormat", "format");
 wireSegmented("orientationBtns", "orientation", "orient");
+wireSegmented("wearBtns", "wearPattern", "wear"); // Ribbon Wear Pattern
 
 // Checkboxes
 document.querySelectorAll(".check").forEach(el => {
@@ -837,6 +911,7 @@ wireSlider("jitterSlider", "jitterVal", "jitterScale", v => +v / 10, v => v.toFi
 wireSlider("bandingSlider", "bandingVal", "bandingScale", v => +v / 10, v => v.toFixed(1));
 wireSlider("maxSizeSlider", "maxSizeVal", "maxSize", v => +v, v => v);
 wireSlider("seedSlider", "seedVal", "seed", v => +v, v => v);
+wireSlider("wearSlider", "wearVal", "wearStrength", v => +v, v => v + "%"); // Ribbon Wear Strength
 
 // File handling
 dropzone.addEventListener("click", () => fileInput.click());
@@ -858,6 +933,10 @@ async function handleFile(file) {
   const img = new Image();
   img.onload = () => {
     state.sourceImage = img;
+    
+    // Auto-Hintergrundfarbe ausführen
+    detectAndSetPaperColor(img);
+
     document.getElementById("dzBig").textContent = file.name;
     document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · tap to change`;
     
