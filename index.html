@@ -234,10 +234,10 @@
 <section>
   <div class="section-label">Printer profile</div>
   <div class="segmented scrollable" id="profileBtns">
-    <button data-profile="epson_fx" class="active">FX<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+    <button data-profile="epson_fx">FX<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
     <button data-profile="epson_lq">LQ<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
     <button data-profile="ibm_proprinter">IBM<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
-    <button data-profile="oki_microline">OKI<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+    <button data-profile="oki_microline" class="active">OKI<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
     <button data-profile="star_nx1000">STAR<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
     <button data-profile="panasonic_kx">PANA<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
     <button data-profile="dec_la75">DEC<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
@@ -248,7 +248,7 @@
   <div class="profile-meta" id="profileMeta"></div>
 
   <div class="checks">
-    <label class="check on" data-flag="doubleStrike">
+    <label class="check" data-flag="doubleStrike">
       <span class="box"></span><span>Double-strike</span>
     </label>
     <label class="check" data-flag="condensed">
@@ -264,8 +264,8 @@
     <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
   </label>
   <label class="field">
-    <span class="name"><span>Contrast</span><b id="contrastVal">0</b></span>
-    <input type="range" id="contrastSlider" min="-100" max="100" value="0">
+    <span class="name"><span>Contrast</span><b id="contrastVal">20</b></span>
+    <input type="range" id="contrastSlider" min="-100" max="100" value="20">
   </label>
   <label class="field">
     <span class="name"><span>Gamma</span><b id="gammaVal">1.0</b></span>
@@ -281,11 +281,11 @@
 <section>
   <div class="section-label">Halftone</div>
   <div class="segmented" id="ditherBtns">
-    <button data-dither="floyd_steinberg" class="active">Floyd-S</button>
+    <button data-dither="floyd_steinberg">Floyd-S</button>
     <button data-dither="ordered">Ordered</button>
-    <button data-dither="threshold">Thresh</button>
+    <button data-dither="threshold" class="active">Thresh</button>
   </div>
-  <label class="field" id="thresholdField" style="display:none">
+  <label class="field" id="thresholdField" style="display:block">
     <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
     <input type="range" id="thresholdSlider" min="0" max="255" value="128">
   </label>
@@ -328,8 +328,8 @@
     <div>
       <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Paper</div>
       <div class="swatches" id="paperSwatches">
-        <div class="swatch active" style="background:#f8f5e8" data-paper="248,245,232" title="cream"></div>
-        <div class="swatch" style="background:#ffffff" data-paper="255,255,255" title="white"></div>
+        <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232" title="cream"></div>
+        <div class="swatch active" style="background:#ffffff" data-paper="255,255,255" title="white"></div>
         <div class="swatch" style="background:#eadfb8" data-paper="234,223,184" title="aged"></div>
         <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160" title="kraft"></div>
         <div class="swatch" style="background:#f0d9cf" data-paper="240,217,207" title="pink form"></div>
@@ -366,7 +366,7 @@
 
 <footer>
   <div class="dots">· · · · ·</div>
-  dotmatrix v0.2.1 · client-side only
+  dotmatrix v0.2.2 · client-side only
 </footer>
 
 <div class="actions">
@@ -391,17 +391,17 @@ const PROFILES = {
 
 // ==================== STATE ====================
 const state = {
-  profile: "epson_fx",
-  dither: "floyd_steinberg",
+  profile: "oki_microline",
+  dither: "threshold",
   threshold: 128,
   ink: [25,25,30],
-  paper: [248,245,232],
+  paper: [255,255,255],
   paperFormat: "Fit",
   orientation: "Portrait",
-  doubleStrike: true,
+  doubleStrike: false,
   condensed: false,
   brightness: 0,
-  contrast: 0,
+  contrast: 20,
   gamma: 1.0,
   invert: false,
   dpi: 200,
@@ -608,7 +608,6 @@ async function render(srcImage) {
   const printPxW = gridW / dpiH * effDpi;
   const printPxH = gridH / dpiV * effDpi;
   
-  // BUGFIX: Math.round() prevents NaN coordinates in Javascript TypedArrays
   const offsetX = Math.round((outW - printPxW) / 2);
   const offsetY = Math.round((outH - printPxH) / 2);
   
@@ -667,7 +666,6 @@ async function render(srcImage) {
   return { imageData: finalImg, width: outW, height: outH };
 }
 
-// BUGFIX: Explicitly force coordinates to integer in stampInto
 function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
   x0 = Math.round(x0);
   y0 = Math.round(y0);
@@ -860,7 +858,6 @@ async function handleFile(file) {
   const img = new Image();
   img.onload = () => {
     state.sourceImage = img;
-    // BUGFIX: Prevent overriding the <input> element so users can upload an image again
     document.getElementById("dzBig").textContent = file.name;
     document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · tap to change`;
     
@@ -932,5 +929,3 @@ updateProfileMeta();
 
 </body>
 </html>
-
-```
