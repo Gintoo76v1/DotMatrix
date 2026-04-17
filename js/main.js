@@ -51,12 +51,12 @@ function detectAndSetPaperColor(img) {
     c.width = 64; c.height = 64;
     const ctx = c.getContext("2d");
     ctx.drawImage(img, 0, 0, 64, 64);
-    const data = ctx.getImageData(0,0,64,64).data;
-    
+    const data = ctx.getImageData(0, 0, 64, 64).data;
+
     let r = 0, g = 0, b = 0, count = 0;
-    for(let y = 0; y < 64; y++) {
-      for(let x = 0; x < 64; x++) {
-        if(x < 4 || x > 59 || y < 4 || y > 59) {
+    for (let y = 0; y < 64; y++) {
+      for (let x = 0; x < 64; x++) {
+        if (x < 4 || x > 59 || y < 4 || y > 59) {
           const idx = (y * 64 + x) * 4;
           r += data[idx]; g += data[idx+1]; b += data[idx+2]; count++;
         }
@@ -64,23 +64,80 @@ function detectAndSetPaperColor(img) {
     }
     r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
 
-    let bestSwatch = null;
-    let minDist = Infinity;
-    
-    const swatches = document.querySelectorAll('#paperSwatches .swatch');
-    swatches.forEach(swatch => {
-      const rgb = swatch.dataset.paper.split(",").map(Number);
-      const dist = Math.pow(r - rgb[0], 2) + Math.pow(g - rgb[1], 2) + Math.pow(b - rgb[2], 2);
-      if(dist < minDist) { minDist = dist; bestSwatch = swatch; }
+    let bestSwatch = null, minDist = Infinity;
+    document.querySelectorAll('#paperSwatches .swatch').forEach(sw => {
+      const rgb = sw.dataset.paper.split(",").map(Number);
+      const dist = (r-rgb[0])**2 + (g-rgb[1])**2 + (b-rgb[2])**2;
+      if (dist < minDist) { minDist = dist; bestSwatch = sw; }
     });
-
-    if(bestSwatch) {
-      swatches.forEach(s => s.classList.remove("active"));
+    if (bestSwatch) {
+      document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.remove("active"));
       bestSwatch.classList.add("active");
       state.paper = bestSwatch.dataset.paper.split(",").map(Number);
     }
   } catch (e) {
-    console.warn("Auto-detect failed", e);
+    console.warn("Paper auto-detect failed", e);
+  }
+}
+
+// Analyse des Histogramms: setzt Helligkeit, Kontrast und Schwellwert
+// automatisch anhand des Tondynamikumfangs des Quellbildes.
+function analyzeAndAdaptImage(img) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 160; c.height = 160;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, 160, 160);
+    const { data } = ctx.getImageData(0, 0, 160, 160);
+
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < data.length; i += 4) {
+      const luma = Math.round(0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]);
+      hist[luma]++;
+    }
+
+    // Find 2nd and 98th percentile to stretch dynamic range
+    const total = 160 * 160;
+    let cumSum = 0, p2 = 0, p98 = 255;
+    for (let i = 0; i < 256; i++) {
+      cumSum += hist[i];
+      if (cumSum / total < 0.02) p2 = i;
+      if (cumSum / total < 0.98) p98 = i;
+    }
+
+    const range = Math.max(p98 - p2, 20);
+    const midpoint = (p2 + p98) / 2;
+
+    // Auto-brightness: shift midpoint toward 140 (slightly above center,
+    // so print output looks rich rather than grey)
+    const newBrightness = Math.round((140 - midpoint) * 0.45);
+    // Auto-contrast: stretch range to fill ~80% of dynamic range
+    const newContrast = Math.round((200 / range - 1) * 45);
+
+    state.brightness = Math.max(-80, Math.min(80, newBrightness));
+    state.contrast   = Math.max(-60, Math.min(80, newContrast));
+
+    document.getElementById("brightnessSlider").value = state.brightness;
+    document.getElementById("brightnessVal").textContent = state.brightness;
+    document.getElementById("contrastSlider").value = state.contrast;
+    document.getElementById("contrastVal").textContent = state.contrast;
+
+    // If mostly bright content (document / form), switch to threshold mode
+    // with a value tuned to the upper end of the histogram.
+    const brightPixels = hist.slice(180).reduce((a, b) => a + b, 0);
+    if (brightPixels / total > 0.45) {
+      const newThreshold = Math.min(220, Math.round(p2 + range * 0.58));
+      state.dither = "threshold";
+      state.threshold = newThreshold;
+      document.getElementById("thresholdSlider").value = newThreshold;
+      document.getElementById("thresholdVal").textContent = newThreshold;
+      document.querySelectorAll("#ditherBtns button").forEach(b => {
+        b.classList.toggle("active", b.dataset.dither === "threshold");
+      });
+      document.getElementById("thresholdField").style.display = "block";
+    }
+  } catch (e) {
+    console.warn("Image analysis failed", e);
   }
 }
 
@@ -202,6 +259,7 @@ async function handleFile(file) {
   img.onload = () => {
     state.sourceImage = img;
     detectAndSetPaperColor(img);
+    analyzeAndAdaptImage(img);
 
     document.getElementById("dzBig").textContent = file.name;
     document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · tap to change`;

@@ -12,11 +12,12 @@ export function makeDotStamp(diameterPx, softness, density) {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const dx = x - cx, dy = y - cx;
-      const r = Math.sqrt(dx*dx + dy*dy);
+      // Slight horizontal elongation simulates pin contact while head moves
+      const r = Math.sqrt(dx * dx * 0.88 + dy * dy);
       let v;
       if (r <= inner) v = 1;
       else v = Math.max(0, 1 - (r - inner) / Math.max(0.01, radius - inner));
-      stamp[y*size+x] = v * density;
+      stamp[y * size + x] = v * density;
     }
   }
   return { data: stamp, size };
@@ -44,71 +45,68 @@ export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
   }
 }
 
+// Bilinear-interpolated value noise for realistic cloudy effects
+function makeValueNoise(rng, noiseW, noiseH) {
+  const grid = new Float32Array(noiseW * noiseH);
+  for (let i = 0; i < grid.length; i++) grid[i] = rng();
+  return (x, y, totalW, totalH) => {
+    const nx = (x / totalW) * (noiseW - 1);
+    const ny = (y / totalH) * (noiseH - 1);
+    const x0 = Math.floor(nx), x1 = Math.min(x0 + 1, noiseW - 1);
+    const y0 = Math.floor(ny), y1 = Math.min(y0 + 1, noiseH - 1);
+    const fx = nx - x0, fy = ny - y0;
+    const v00 = grid[y0 * noiseW + x0], v10 = grid[y0 * noiseW + x1];
+    const v01 = grid[y1 * noiseW + x0], v11 = grid[y1 * noiseW + x1];
+    return v00*(1-fx)*(1-fy) + v10*fx*(1-fy) + v01*(1-fx)*fy + v11*fx*fy;
+  };
+}
+
 export async function render(srcImage, onProgressUpdate) {
   const profile = PROFILES[state.profile];
   const seed = state.seed || Math.floor(Math.random() * 1e9);
   const rng = mulberry32(seed);
   const srcAspect = srcImage.width / srcImage.height;
-  
+
   const condensedMult = (state.condensed && profile.supports_condensed) ? 1.5 : 1.0;
   const dpiH = profile.dpi_h * condensedMult;
   const dpiV = profile.dpi_v;
 
-  let outW, outH, gridW, gridH, printPxW, printPxH, offsetX, offsetY, stepX, stepY, effDpi;
+  let outW, outH, gridW, gridH, offsetX, offsetY, stepX, stepY, effDpi;
 
-  // FIX: Im Original Modus wird die Bild-Geometrie jetzt zu 100% erhalten. Keine Ränder, kein Stauchen.
   if (state.paperFormat === "Original") {
     outW = srcImage.width;
     outH = srcImage.height;
-    
     const longEdge = Math.max(outW, outH);
     if (longEdge > state.maxSize) {
       const scale = state.maxSize / longEdge;
       outW = Math.round(outW * scale);
       outH = Math.round(outH * scale);
     }
-    
-    let physW_inch = outW / state.dpi;
-    let physH_inch = outH / state.dpi;
-    
-    gridW = Math.max(1, Math.round(physW_inch * dpiH));
-    gridH = Math.max(1, Math.round(physH_inch * dpiV));
-    
+    gridW = Math.max(1, Math.round((outW / state.dpi) * dpiH));
+    gridH = Math.max(1, Math.round((outH / state.dpi) * dpiV));
     effDpi = state.dpi;
-    printPxW = outW;
-    printPxH = outH;
-    offsetX = 0;
-    offsetY = 0;
-    stepX = outW / gridW;
-    stepY = outH / gridH;
-    
+    offsetX = 0; offsetY = 0;
+    stepX = outW / gridW; stepY = outH / gridH;
   } else {
     let paperW, paperH;
     if (state.paperFormat === "Fit") {
-      paperH = 297;
-      paperW = paperH * srcAspect;
+      paperH = 297; paperW = paperH * srcAspect;
     } else {
       const size = PAPER_SIZES_MM[state.paperFormat];
       if (state.orientation === "Landscape") { paperW = size[1]; paperH = size[0]; }
       else { paperW = size[0]; paperH = size[1]; }
     }
-
     const marginMm = 10;
     const printableW = Math.max(1, paperW - 2 * marginMm);
     const printableH = Math.max(1, paperH - 2 * marginMm);
-
     const maxGridW = Math.round(printableW / MM_PER_INCH * dpiH);
     const maxGridH = Math.round(printableH / MM_PER_INCH * dpiV);
     const targetGridAspect = srcAspect * (dpiH / dpiV);
-
     if ((maxGridW / maxGridH) > targetGridAspect) {
-      gridH = maxGridH;
-      gridW = Math.round(gridH * targetGridAspect);
+      gridH = maxGridH; gridW = Math.round(gridH * targetGridAspect);
     } else {
-      gridW = maxGridW;
-      gridH = Math.round(gridW / targetGridAspect);
+      gridW = maxGridW; gridH = Math.round(gridW / targetGridAspect);
     }
-
     outW = Math.round(paperW / MM_PER_INCH * state.dpi);
     outH = Math.round(paperH / MM_PER_INCH * state.dpi);
     const longEdge = Math.max(outW, outH);
@@ -117,20 +115,16 @@ export async function render(srcImage, onProgressUpdate) {
       outW = Math.round(outW * scale);
       outH = Math.round(outH * scale);
     }
-    
     effDpi = outW / (paperW / MM_PER_INCH);
-    printPxW = gridW / dpiH * effDpi;
-    printPxH = gridH / dpiV * effDpi;
-    
+    const printPxW = gridW / dpiH * effDpi;
+    const printPxH = gridH / dpiV * effDpi;
     offsetX = Math.round((outW - printPxW) / 2);
     offsetY = Math.round((outH - printPxH) / 2);
-    stepX = effDpi / dpiH;
-    stepY = effDpi / dpiV;
+    stepX = effDpi / dpiH; stepY = effDpi / dpiV;
   }
 
   const gridCanvas = document.createElement("canvas");
-  gridCanvas.width = gridW;
-  gridCanvas.height = gridH;
+  gridCanvas.width = gridW; gridCanvas.height = gridH;
   const gctx = gridCanvas.getContext("2d");
   gctx.fillStyle = "#fff";
   gctx.fillRect(0, 0, gridW, gridH);
@@ -145,7 +139,7 @@ export async function render(srcImage, onProgressUpdate) {
 
   const ink = new Float32Array(outW * outH);
   const dotPx = Math.max(2, Math.round(profile.dot_diameter_mm / MM_PER_INCH * effDpi));
-  const {data: stamp, size: stampSize} = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density);
+  const { data: stamp, size: stampSize } = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density);
   const stampR = (stampSize - 1) / 2;
 
   const passes = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
@@ -153,77 +147,168 @@ export async function render(srcImage, onProgressUpdate) {
   const bandAmp = profile.banding * state.bandingScale;
   const wearStrength = state.wearStrength / 100;
 
+  // ── PER-PIN CHARACTERISTICS ──────────────────────────────────────────────
+  // Each physical pin has fixed tolerances: slightly different Y position,
+  // small X bias, and varying ink density (center pins get more ribbon ink).
+  const numPins = profile.pins;
+  const pinYOff = new Float32Array(numPins);
+  const pinXOff = new Float32Array(numPins);
+  const pinDensMod = new Float32Array(numPins);
+  const pinHealth = new Float32Array(numPins).fill(1.0);
+
+  // Tolerance range: ~20% of dot diameter → visible but realistic non-parallelism
+  const pinTolPx = dotPx * 0.22;
+  for (let p = 0; p < numPins; p++) {
+    pinYOff[p] = (rng() - 0.5) * 2 * pinTolPx;
+    pinXOff[p] = (rng() - 0.5) * pinTolPx * 0.35;
+    // Bell-curve density: center pins (middle of ribbon) print darker
+    const norm = (p - (numPins - 1) / 2) / Math.max(1, (numPins - 1) / 2);
+    pinDensMod[p] = 1.0 - 0.14 * norm * norm;
+  }
+
+  // ── WEAR PATTERN PRE-COMPUTATION ─────────────────────────────────────────
+  // Pre-compute noise and wear data once so patterns are spatially coherent
+  const noise1 = makeValueNoise(rng, 16, 16);  // coarse blobs
+  const noise2 = makeValueNoise(rng, 52, 52);  // fine texture
+
+  // Misaligned: correlated random walk (adjacent rows have similar offsets)
+  const rowMisalign = new Float32Array(gridH);
+  if (state.wearPattern === "misaligned") {
+    let acc = 0;
+    for (let y = 0; y < gridH; y++) {
+      acc += (rng() - 0.5) * 1.4;
+      acc *= 0.91; // damping keeps drift bounded
+      rowMisalign[y] = acc;
+    }
+  }
+
+  // Pin-skip: degrade specific pins — broken pin = every Nth row always missing
+  if (state.wearPattern === "pin_skip") {
+    for (let p = 0; p < numPins; p++) {
+      const roll = rng();
+      if (roll < wearStrength * 0.22) {
+        pinHealth[p] = 0;             // completely dead
+      } else if (roll < wearStrength * 0.55) {
+        pinHealth[p] = Math.max(0.08, 1.0 - wearStrength * (0.3 + rng() * 0.5));
+      }
+    }
+  }
+
+  // Smudge: pre-compute which row bands are affected (paper wrinkle zones)
+  const smudgeRows = new Uint8Array(gridH);
+  if (state.wearPattern === "smudge") {
+    let inSmudge = false;
+    for (let y = 0; y < gridH; y++) {
+      if (!inSmudge && rng() < 0.04 * wearStrength) inSmudge = true;
+      else if (inSmudge && rng() < 0.22) inSmudge = false;
+      smudgeRows[y] = inSmudge ? 1 : 0;
+    }
+  }
+
+  // Ribbon twist: pre-compute per-column ink availability (random walk)
+  const ribbonCol = new Float32Array(gridW).fill(1.0);
+  if (state.wearPattern === "ribbon_twist") {
+    let val = 0.85 + rng() * 0.15;
+    for (let x = 0; x < gridW; x++) {
+      val += (rng() - 0.5) * 0.06;
+      val = Math.max(0.25, Math.min(1.0, val));
+      ribbonCol[x] = 1.0 - (1.0 - val) * wearStrength;
+    }
+  }
+
+  // Row banding: slight row-to-row density variation (paper/head oscillation)
   const rowBands = new Float32Array(gridH);
   for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
 
   const onCells = [];
-  for (let y = 0; y < gridH; y++) {
-    for (let x = 0; x < gridW; x++) {
-      if (dots[y*gridW+x]) onCells.push([x, y]);
-    }
-  }
+  for (let y = 0; y < gridH; y++)
+    for (let x = 0; x < gridW; x++)
+      if (dots[y * gridW + x]) onCells.push([x, y]);
 
   let processed = 0;
   const total = onCells.length * passes;
   await yieldUI();
-  
+
   for (let p = 0; p < passes; p++) {
     const passJitter = jitterPx * (1 + 0.3 * p);
-    
+
     for (let idx = 0; idx < onCells.length; idx++) {
       const [gx, gy] = onCells[idx];
-      let cx = offsetX + Math.round(gx * stepX + stepX / 2);
-      let cy = offsetY + Math.round(gy * stepY + stepY / 2);
-      
-      let wearFactor = 1.0;
-      let isGhosting = false;
+      const pinIdx = gy % numPins;
 
-      if (state.wearPattern === "cloudy") {
-        let noise = Math.sin(gx * 0.05) * Math.sin(gy * 0.05) * 0.5 + 0.5;
-        wearFactor = 1.0 - (noise * wearStrength * 0.6); 
-      } 
-      // Hier ist der alte extreme Wolken-Effekt!
-      else if (state.wearPattern === "alt_cloudy") {
-        let noise = Math.sin(gx * 0.02) * Math.sin(gy * 0.03) * 0.5 + 0.5;
-        wearFactor = 1.0 - (noise * wearStrength); 
-      }
-      else if (state.wearPattern === "pin_skip") {
-        if (rng() < (wearStrength * 0.3)) continue; 
-      } 
-      else if (state.wearPattern === "misaligned") {
-        let shiftOscillation = Math.sin(gy * 0.8) * 2.0; 
-        cx += Math.round(shiftOscillation * wearStrength * (effDpi / 150)); 
-      }
-      else if (state.wearPattern === "ghosting") {
-        isGhosting = true;
-      }
-      else if (state.wearPattern === "ribbon_twist") {
-        let twist = Math.sin(gx * 0.005 + gy * 0.01);
-        if (twist > 0.5) wearFactor = 1.0 - (wearStrength * twist);
-      }
-      else if (state.wearPattern === "smudge") {
-        if (Math.sin(gy * 0.2) > 0.95 && Math.sin(gx * 0.05) > 0) {
-             cx += Math.round(rng() * 5 * wearStrength);
-             wearFactor *= 0.5;
+      // Base pixel position + per-pin fixed physical offset
+      let cx = offsetX + gx * stepX + stepX / 2 + pinXOff[pinIdx];
+      let cy = offsetY + gy * stepY + stepY / 2 + pinYOff[pinIdx];
+
+      let wearFactor = 1.0;
+      let ghostDx = 0, ghostDy = 0, doGhost = false;
+
+      switch (state.wearPattern) {
+        case "cloudy": {
+          const n = noise1(gx, gy, gridW, gridH);
+          wearFactor = 1.0 - n * wearStrength * 0.72;
+          break;
+        }
+        case "alt_cloudy": {
+          // Two octaves: coarse blobs + fine texture
+          const n = noise1(gx, gy, gridW, gridH) * 0.6
+                  + noise2(gx, gy, gridW, gridH) * 0.4;
+          wearFactor = 1.0 - n * wearStrength;
+          break;
+        }
+        case "pin_skip": {
+          const h = pinHealth[pinIdx];
+          if (h <= 0) { processed++; continue; }
+          wearFactor = h;
+          break;
+        }
+        case "misaligned": {
+          cx += rowMisalign[gy] * wearStrength * (effDpi / 160);
+          break;
+        }
+        case "ghosting": {
+          // Bi-directional printing: ghost shifts opposite direction per pass row
+          doGhost = true;
+          const dir = (Math.floor(gy / numPins) % 2 === 0) ? 1 : -1;
+          ghostDx = dir * Math.round(7 * wearStrength * (effDpi / 300));
+          ghostDy = Math.round((rng() - 0.5) * 2);
+          break;
+        }
+        case "smudge": {
+          if (smudgeRows[gy]) {
+            cx += (rng() - 0.25) * 9 * wearStrength;
+            wearFactor = 0.55 + rng() * 0.3;
+          }
+          break;
+        }
+        case "ribbon_twist": {
+          wearFactor = ribbonCol[gx];
+          break;
         }
       }
 
+      // Global ribbon depletion: subtle left-to-right density fade (≤9%)
+      // Simulates ribbon feed direction as head traverses the line
+      const ribbonFade = 1.0 - (gx / gridW) * 0.09;
+
+      // Per-pass mechanical jitter (increases slightly each pass)
       if (passJitter > 0) {
-        cx += Math.round(gaussian(rng) * passJitter);
-        cy += Math.round(gaussian(rng) * passJitter);
+        cx += gaussian(rng) * passJitter;
+        cy += gaussian(rng) * passJitter;
       }
 
-      const band = rowBands[gy] * wearFactor;
+      const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade;
       stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
 
-      // Zusätzlicher Stempel für Ghosting
-      if (isGhosting) {
-        stampInto(ink, outW, outH, stamp, stampSize, cx - stampR + Math.round(6 * wearStrength), cy - stampR, band * 0.3 * wearStrength);
+      if (doGhost) {
+        stampInto(ink, outW, outH, stamp, stampSize,
+          cx - stampR + ghostDx, cy - stampR + ghostDy,
+          band * 0.26 * wearStrength);
       }
 
       processed++;
       if ((processed & 0x7FFF) === 0) {
-        if(onProgressUpdate) onProgressUpdate(`Rendering · ${((processed/total)*100).toFixed(0)}%`);
+        if (onProgressUpdate) onProgressUpdate(`Rendering · ${((processed / total) * 100).toFixed(0)}%`);
         await yieldUI();
       }
     }
@@ -256,7 +341,7 @@ export function asciiPreview(srcImage, width = 60) {
   ctx.fillRect(0, 0, width, h);
   ctx.drawImage(srcImage, 0, 0, width, h);
   const gray = toGrayscale(ctx.getImageData(0, 0, width, h), state);
-  
+
   let dots;
   if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, width, h);
   else if (state.dither === "ordered")    dots = orderedDither(gray, width, h);
@@ -268,10 +353,10 @@ export function asciiPreview(srcImage, width = 60) {
     for (let x = 0; x < width; x++) {
       const top = dots[y * width + x];
       const bot = dots[(y + 1) * width + x];
-      if (top && bot) line += "\u2588";
-      else if (top)   line += "\u2580";
-      else if (bot)   line += "\u2584";
-      else            line += " ";
+      if (top && bot)     line += "\u2588";
+      else if (top)       line += "\u2580";
+      else if (bot)       line += "\u2584";
+      else                line += " ";
     }
     out += line + "\n";
   }
