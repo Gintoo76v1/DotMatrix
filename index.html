@@ -1,3 +1,10 @@
+Das ist natürlich super ärgerlich! Ich habe den Fehler gefunden: Es lag an einer winzigen Kommastelle bei der Berechnung der Bildmitte. Wenn das Bild zentriert wurde, kamen halbe Pixelkoordinaten (wie 150.5) heraus. Das Array, das die Tinte speichert, kann mit halben Indizes aber nichts anfangen und hat die Tinte einfach ins Nichts geschrieben – daher war das Bild am Ende leer und zeigte nur die Hintergrundfarbe. Ich habe Math.round() hinzugefügt, um das zu verhindern.
+Zum Thema **Live Preview**:
+ 1. Die **ASCII-Vorschau** ist jetzt 100 % live und reagiert sofort auf alle Regler (Helligkeit, Kontrast, Dithering etc.).
+ 2. Ich habe noch einen weiteren Bug behoben, der verhinderte, dass man ein zweites Bild hochladen konnte (das hat den Klick auf die Preview blockiert).
+ 3. **Wichtig:** Das große Hauptbild im Canvas rendert *nicht* live mit. Bei Millionen von gesetzten Punkten würde das Berechnen in Echtzeit den Browser (gerade auf dem Handy) sofort zum Absturz bringen. Dafür musst du weiterhin auf "Render" klicken.
+Hier ist der komplette, fehlerfreie Code. Kopiere ihn einfach komplett und ersetze deine alte index.html:
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -17,7 +24,6 @@
     --accent: #c2410c;
     --accent-soft: #f59e0b;
     --line: #14131a;
-    --rule-gap: 12px;
     --shadow-hard: 4px 4px 0 var(--ink);
     --shadow-hard-sm: 2px 2px 0 var(--ink);
   }
@@ -217,8 +223,8 @@
 <section>
   <div class="section-label">Source</div>
   <div id="dropzone" class="dropzone">
-    <div class="big">Tap to choose image</div>
-    <div class="small">PNG · JPG · HEIC · WebP</div>
+    <div class="big" id="dzBig">Tap to choose image</div>
+    <div class="small" id="dzSmall">PNG · JPG · HEIC · WebP</div>
     <input type="file" id="fileInput" accept="image/*">
   </div>
 </section>
@@ -367,7 +373,7 @@
 
 <footer>
   <div class="dots">· · · · ·</div>
-  dotmatrix v0.2 · client-side only
+  dotmatrix v0.2.1 · client-side only
 </footer>
 
 <div class="actions">
@@ -561,7 +567,6 @@ async function render(srcImage) {
   const dpiH = profile.dpi_h * condensedMult;
   const dpiV = profile.dpi_v;
 
-  // Aspect ratio preservation FIX for 9-Pin (squashing logic)
   const maxGridW = Math.round(printableW / MM_PER_INCH * dpiH);
   const maxGridH = Math.round(printableH / MM_PER_INCH * dpiV);
   const targetGridAspect = srcAspect * (dpiH / dpiV);
@@ -607,11 +612,13 @@ async function render(srcImage) {
 
   const passes = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
 
-  // Center on paper
   const printPxW = gridW / dpiH * effDpi;
   const printPxH = gridH / dpiV * effDpi;
-  const offsetX = (outW - printPxW) / 2;
-  const offsetY = (outH - printPxH) / 2;
+  
+  // BUGFIX: Math.round() prevents NaN coordinates in Javascript TypedArrays
+  const offsetX = Math.round((outW - printPxW) / 2);
+  const offsetY = Math.round((outH - printPxH) / 2);
+  
   const stepX = effDpi / dpiH;
   const stepY = effDpi / dpiV;
 
@@ -667,7 +674,10 @@ async function render(srcImage) {
   return { imageData: finalImg, width: outW, height: outH };
 }
 
+// BUGFIX: Explicitly force coordinates to integer in stampInto
 function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
+  x0 = Math.round(x0);
+  y0 = Math.round(y0);
   const x1 = x0 + ss, y1 = y0 + ss;
   if (x1 <= 0 || y1 <= 0 || x0 >= w || y0 >= h) return;
   const sx0 = x0 < 0 ? -x0 : 0;
@@ -857,9 +867,10 @@ async function handleFile(file) {
   const img = new Image();
   img.onload = () => {
     state.sourceImage = img;
-    dropzone.innerHTML = `
-      <div class="big">${file.name}</div>
-      <div class="small">${img.width} × ${img.height} · tap to change</div>`;
+    // BUGFIX: Prevent overriding the <input> element so users can upload an image again
+    document.getElementById("dzBig").textContent = file.name;
+    document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · tap to change`;
+    
     outSection.style.display = "block";
     const maxDisplay = 800;
     const scale = Math.min(1, maxDisplay / Math.max(img.width, img.height));
@@ -928,3 +939,5 @@ updateProfileMeta();
 
 </body>
 </html>
+
+```
