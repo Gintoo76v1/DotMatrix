@@ -1,5 +1,3 @@
-// js/filters.js
-
 export function toGrayscale(imgData, stateObj) {
   const {width, height, data} = imgData;
   const out = new Float32Array(width * height);
