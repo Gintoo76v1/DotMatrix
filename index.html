@@ -1,0 +1,1056 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>dotmatrix — retro printer renderer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f4eede;
+    --paper-dark: #e8ddc0;
+    --ink: #14131a;
+    --ink-soft: #3a3540;
+    --accent: #c2410c;
+    --accent-soft: #f59e0b;
+    --line: #14131a;
+    --rule-gap: 12px;
+    --shadow-hard: 4px 4px 0 var(--ink);
+    --shadow-hard-sm: 2px 2px 0 var(--ink);
+  }
+
+- { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+
+body {
+background: var(–paper);
+color: var(–ink);
+font-family: “IBM Plex Mono”, ui-monospace, Menlo, Consolas, monospace;
+font-size: 14px;
+line-height: 1.45;
+padding: max(12px, env(safe-area-inset-top)) 12px
+calc(96px + env(safe-area-inset-bottom)) 12px;
+/* Subtle paper fiber texture using two radial gradients */
+background-image:
+radial-gradient(circle at 20% 30%, rgba(20,19,26,.035) 0, transparent 30%),
+radial-gradient(circle at 80% 70%, rgba(20,19,26,.025) 0, transparent 35%),
+repeating-linear-gradient(0deg, transparent 0 3px, rgba(20,19,26,.015) 3px 4px);
+min-height: 100vh;
+}
+
+h1, h2, .display { font-family: “VT323”, monospace; font-weight: normal; letter-spacing: 0.5px; }
+
+header {
+border: 2px solid var(–line);
+box-shadow: var(–shadow-hard);
+padding: 8px 12px 10px;
+margin-bottom: 18px;
+background: var(–paper);
+position: relative;
+overflow: hidden;
+}
+header::before {
+content: “”;
+position: absolute; top: 0; left: 0; right: 0; height: 18px;
+background-image: repeating-linear-gradient(90deg,
+var(–ink) 0 3px, transparent 3px 8px);
+opacity: .85;
+}
+header h1 {
+margin: 18px 0 0;
+font-size: 40px;
+line-height: 0.95;
+}
+header h1 .dot { color: var(–accent); }
+header .tag {
+font-size: 11px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: var(–ink-soft);
+margin-top: 2px;
+}
+
+section {
+border: 2px solid var(–line);
+box-shadow: var(–shadow-hard);
+background: var(–paper);
+margin-bottom: 18px;
+padding: 14px;
+}
+
+.section-label {
+font-size: 10px;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+font-weight: 600;
+color: var(–ink);
+margin: 0 0 10px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.section-label::before {
+content: “█”;
+color: var(–accent);
+font-size: 10px;
+}
+
+/* –– File drop / preview –– */
+.dropzone {
+border: 2px dashed var(–ink);
+padding: 28px 14px;
+text-align: center;
+background: var(–paper-dark);
+cursor: pointer;
+position: relative;
+}
+.dropzone.dragover { background: var(–accent-soft); }
+.dropzone .big {
+font-family: “VT323”, monospace;
+font-size: 28px;
+line-height: 1;
+margin-bottom: 6px;
+}
+.dropzone .small {
+font-size: 11px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: var(–ink-soft);
+}
+input[type=file] { display: none; }
+
+.canvas-wrap {
+position: relative;
+background:
+repeating-linear-gradient(45deg,
+var(–paper-dark) 0 8px, var(–paper) 8px 16px);
+border: 2px solid var(–ink);
+padding: 6px;
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 120px;
+}
+canvas { max-width: 100%; height: auto; display: block; background: #fff; }
+
+/* –– Controls –– */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.segmented {
+display: grid;
+gap: -2px;
+border: 2px solid var(–ink);
+overflow: hidden;
+}
+.segmented.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.segmented.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.segmented.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.segmented button {
+appearance: none;
+background: var(–paper);
+border: 0;
+border-right: 2px solid var(–ink);
+font-family: “IBM Plex Mono”, monospace;
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+padding: 10px 4px;
+cursor: pointer;
+color: var(–ink);
+min-height: 44px;
+}
+.segmented button:last-child { border-right: 0; }
+.segmented button.active {
+background: var(–ink);
+color: var(–paper);
+}
+.segmented button:active { transform: translate(1px, 1px); }
+
+.profile-meta {
+font-size: 10px;
+letter-spacing: 0.1em;
+color: var(–ink-soft);
+margin-top: 6px;
+font-variant-numeric: tabular-nums;
+}
+
+label.field {
+display: block;
+margin-top: 10px;
+}
+label.field .name {
+font-size: 10px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: var(–ink-soft);
+display: flex;
+justify-content: space-between;
+}
+label.field .name b {
+color: var(–ink);
+font-variant-numeric: tabular-nums;
+}
+
+input[type=range] {
+-webkit-appearance: none;
+appearance: none;
+width: 100%;
+height: 28px;
+background: transparent;
+margin: 4px 0 0;
+}
+input[type=range]::-webkit-slider-runnable-track {
+height: 4px;
+background: var(–ink);
+}
+input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none;
+appearance: none;
+height: 22px; width: 22px;
+background: var(–accent);
+border: 2px solid var(–ink);
+margin-top: -10px;
+cursor: pointer;
+}
+input[type=range]::-moz-range-track { height: 4px; background: var(–ink); }
+input[type=range]::-moz-range-thumb {
+height: 22px; width: 22px;
+background: var(–accent);
+border: 2px solid var(–ink);
+cursor: pointer;
+}
+
+.swatches {
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+}
+.swatch {
+width: 36px; height: 36px;
+border: 2px solid var(–ink);
+cursor: pointer;
+position: relative;
+}
+.swatch.active::after {
+content: “”;
+position: absolute; inset: -4px;
+border: 2px solid var(–accent);
+pointer-events: none;
+}
+
+.checks { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.check {
+display: flex; align-items: center; gap: 10px;
+padding: 8px;
+border: 2px solid var(–ink);
+cursor: pointer;
+user-select: none;
+min-height: 44px;
+font-size: 12px;
+font-weight: 600;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+}
+.check .box {
+width: 18px; height: 18px;
+border: 2px solid var(–ink);
+display: inline-flex; align-items: center; justify-content: center;
+flex-shrink: 0;
+}
+.check.on .box { background: var(–ink); }
+.check.on .box::after {
+content: “×”;
+color: var(–paper);
+font-size: 18px;
+line-height: 1;
+font-family: “VT323”, monospace;
+margin-top: -2px;
+}
+.check[data-disabled=“true”] {
+opacity: 0.4;
+cursor: not-allowed;
+}
+
+/* ASCII preview */
+.ascii {
+font-family: ui-monospace, Menlo, Consolas, monospace;
+font-size: 8px;
+line-height: 0.9;
+white-space: pre;
+overflow-x: auto;
+padding: 10px;
+background: #0d0c13;
+color: var(–accent-soft);
+border: 2px solid var(–ink);
+letter-spacing: 0.02em;
+}
+.ascii.empty { color: #5a5460; }
+
+/* Sticky action bar */
+.actions {
+position: fixed;
+left: 0; right: 0;
+bottom: 0;
+padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+background: var(–paper);
+border-top: 2px solid var(–ink);
+display: flex;
+gap: 8px;
+z-index: 20;
+}
+.btn {
+flex: 1;
+appearance: none;
+border: 2px solid var(–ink);
+background: var(–paper);
+color: var(–ink);
+padding: 14px;
+font-family: “IBM Plex Mono”, monospace;
+font-size: 13px;
+font-weight: 700;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+cursor: pointer;
+box-shadow: var(–shadow-hard-sm);
+min-height: 52px;
+}
+.btn:active { transform: translate(2px, 2px); box-shadow: none; }
+.btn.primary { background: var(–ink); color: var(–paper); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.status {
+font-size: 10px;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+color: var(–ink-soft);
+margin-top: 8px;
+font-variant-numeric: tabular-nums;
+}
+.status.working { color: var(–accent); }
+
+details summary {
+cursor: pointer;
+list-style: none;
+padding: 6px 0;
+font-size: 10px;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 8px;
+user-select: none;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::before {
+content: “[+]”;
+color: var(–accent);
+font-family: “VT323”, monospace;
+font-size: 14px;
+}
+details[open] summary::before { content: “[−]”; }
+
+footer {
+text-align: center;
+font-size: 10px;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+color: var(–ink-soft);
+padding: 20px 0 0;
+}
+footer .dots { color: var(–accent); letter-spacing: 0.4em; }
+</style>
+
+</head>
+<body>
+
+<header>
+  <h1>dotmatrix<span class="dot">.</span></h1>
+  <div class="tag">retro printer aesthetic · ∎ 9-pin · 24-pin</div>
+</header>
+
+<section>
+  <div class="section-label">Source</div>
+  <div id="dropzone" class="dropzone">
+    <div class="big">Tap to choose image</div>
+    <div class="small">PNG · JPG · HEIC · WebP</div>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+</section>
+
+<section id="outputSection" style="display:none">
+  <div class="section-label">Output</div>
+  <div class="canvas-wrap">
+    <canvas id="outCanvas" width="400" height="300"></canvas>
+  </div>
+  <div id="status" class="status">Ready.</div>
+</section>
+
+<section>
+  <div class="section-label">Printer profile</div>
+  <div class="segmented cols-4" id="profileBtns">
+    <button data-profile="epson_fx" class="active">FX<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+    <button data-profile="epson_lq">LQ<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
+    <button data-profile="ibm_proprinter">IBM<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+    <button data-profile="oki_microline">OKI<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+  </div>
+  <div class="profile-meta" id="profileMeta"></div>
+
+  <div class="checks">
+    <label class="check on" data-flag="doubleStrike">
+      <span class="box"></span><span>Double-strike</span>
+    </label>
+    <label class="check" data-flag="condensed">
+      <span class="box"></span><span>Condensed (17 CPI)</span>
+    </label>
+  </div>
+</section>
+
+<section>
+  <div class="section-label">Halftone</div>
+  <div class="segmented cols-3" id="ditherBtns">
+    <button data-dither="floyd_steinberg" class="active">Floyd-S</button>
+    <button data-dither="ordered">Ordered</button>
+    <button data-dither="threshold">Thresh</button>
+  </div>
+  <label class="field" id="thresholdField" style="display:none">
+    <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
+    <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+  </label>
+</section>
+
+<section>
+  <div class="section-label">Ribbon · Paper</div>
+  <div class="grid-2">
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Ink</div>
+      <div class="swatches" id="inkSwatches">
+        <div class="swatch active" style="background:#19191e" data-ink="25,25,30" title="black"></div>
+        <div class="swatch" style="background:#142d82" data-ink="20,45,130" title="blue"></div>
+        <div class="swatch" style="background:#a01e23" data-ink="160,30,35" title="red"></div>
+        <div class="swatch" style="background:#5a286e" data-ink="90,40,110" title="purple"></div>
+        <div class="swatch" style="background:#2e5f36" data-ink="46,95,54" title="green"></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Paper</div>
+      <div class="swatches" id="paperSwatches">
+        <div class="swatch active" style="background:#f8f5e8" data-paper="248,245,232" title="cream"></div>
+        <div class="swatch" style="background:#ffffff" data-paper="255,255,255" title="white"></div>
+        <div class="swatch" style="background:#eadfb8" data-paper="234,223,184" title="aged"></div>
+        <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160" title="kraft"></div>
+        <div class="swatch" style="background:#f0d9cf" data-paper="240,217,207" title="pink form"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <details>
+    <summary>Advanced</summary>
+
+```
+<label class="field">
+  <span class="name"><span>Output DPI</span><b id="dpiVal">200</b></span>
+  <input type="range" id="dpiSlider" min="100" max="400" step="50" value="200">
+</label>
+
+<label class="field">
+  <span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span>
+  <input type="range" id="jitterSlider" min="0" max="30" value="10">
+</label>
+
+<label class="field">
+  <span class="name"><span>Banding scale</span><b id="bandingVal">1.0</b></span>
+  <input type="range" id="bandingSlider" min="0" max="20" value="10">
+</label>
+
+<label class="field">
+  <span class="name"><span>Max output size (px, long edge)</span><b id="maxSizeVal">1600</b></span>
+  <input type="range" id="maxSizeSlider" min="600" max="3000" step="100" value="1600">
+</label>
+
+<label class="field">
+  <span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span>
+  <input type="range" id="seedSlider" min="0" max="9999" value="0">
+</label>
+```
+
+  </details>
+</section>
+
+<section>
+  <div class="section-label">Ascii preview</div>
+  <pre id="ascii" class="ascii empty">// upload an image to see the preview //</pre>
+</section>
+
+<footer>
+  <div class="dots">· · · · ·</div>
+  dotmatrix v0.1 · client-side only
+</footer>
+
+<div class="actions">
+  <button class="btn primary" id="renderBtn" disabled>Render</button>
+  <button class="btn" id="downloadBtn" disabled>PNG</button>
+</div>
+
+<script>
+// ==================== PROFILES ====================
+const PROFILES = {
+  epson_fx: {
+    label: "Epson FX-80/85",
+    pins: 9, dpi_h: 120, dpi_v: 72,
+    dot_diameter_mm: 0.35, dot_softness: 0.30, ink_density: 0.88,
+    passes: 1, jitter_mm: 0.04, banding: 0.08,
+    supports_condensed: true,
+  },
+  epson_lq: {
+    label: "Epson LQ-500/850",
+    pins: 24, dpi_h: 180, dpi_v: 180,
+    dot_diameter_mm: 0.20, dot_softness: 0.22, ink_density: 0.82,
+    passes: 1, jitter_mm: 0.02, banding: 0.04,
+    supports_condensed: true,
+  },
+  ibm_proprinter: {
+    label: "IBM Proprinter",
+    pins: 9, dpi_h: 120, dpi_v: 72,
+    dot_diameter_mm: 0.38, dot_softness: 0.26, ink_density: 0.95,
+    passes: 2, jitter_mm: 0.05, banding: 0.10,
+    supports_condensed: false,
+  },
+  oki_microline: {
+    label: "OKI Microline 320/390",
+    pins: 9, dpi_h: 144, dpi_v: 72,
+    dot_diameter_mm: 0.33, dot_softness: 0.34, ink_density: 0.85,
+    passes: 1, jitter_mm: 0.035, banding: 0.12,
+    supports_condensed: true,
+  },
+};
+
+// ==================== STATE ====================
+const state = {
+  profile: "epson_fx",
+  dither: "floyd_steinberg",
+  threshold: 128,
+  ink: [25,25,30],
+  paper: [248,245,232],
+  doubleStrike: true,     // default on for IBM feel; user can toggle
+  condensed: false,
+  dpi: 200,
+  jitterScale: 1.0,
+  bandingScale: 1.0,
+  maxSize: 1600,
+  seed: 0,
+  sourceImage: null,
+};
+
+// ==================== RNG ====================
+// Mulberry32 — small deterministic PRNG
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function() {
+    t = (t + 0x6D2B79F5) >>> 0;
+    let r = t;
+    r = Math.imul(r ^ (r >>> 15), r | 1);
+    r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function gaussian(rng) {
+  // Box-Muller
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// ==================== DITHERING ====================
+function toGrayscale(imgData) {
+  const {width, height, data} = imgData;
+  const out = new Float32Array(width * height);
+  for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+    // Rec.601 luma
+    out[j] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+  }
+  return out;
+}
+
+function floydSteinberg(gray, w, h) {
+  // "On" = dark (dot prints). Returns Uint8Array same size, 1 = dot on.
+  const buf = new Float32Array(gray); // copy, mutable
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const old = buf[i];
+      const n = old < 128 ? 0 : 255;
+      buf[i] = n;
+      out[i] = n === 0 ? 1 : 0;
+      const err = old - n;
+      if (x + 1 < w)  buf[i+1]     += err * 7/16;
+      if (y + 1 < h) {
+        if (x > 0)    buf[i+w-1]   += err * 3/16;
+                      buf[i+w]     += err * 5/16;
+        if (x + 1 < w) buf[i+w+1]  += err * 1/16;
+      }
+    }
+  }
+  return out;
+}
+
+const BAYER4 = new Float32Array([
+  0, 8, 2,10,
+ 12, 4,14, 6,
+  3,11, 1, 9,
+ 15, 7,13, 5,
+]).map(v => v / 16 * 255);
+
+function orderedDither(gray, w, h) {
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const t = BAYER4[(y & 3) * 4 + (x & 3)];
+      out[y*w+x] = gray[y*w+x] < t ? 1 : 0;
+    }
+  }
+  return out;
+}
+
+function thresholdDither(gray, w, h, t) {
+  const out = new Uint8Array(w * h);
+  for (let i = 0; i < gray.length; i++) out[i] = gray[i] < t ? 1 : 0;
+  return out;
+}
+
+// ==================== DOT STAMP ====================
+function makeDotStamp(diameterPx, softness, density) {
+  let size = Math.max(3, Math.round(diameterPx));
+  if (size % 2 === 0) size++;
+  const cx = (size - 1) / 2;
+  const radius = size / 2;
+  const inner = radius * (1 - softness);
+  const stamp = new Float32Array(size * size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = x - cx, dy = y - cx;
+      const r = Math.sqrt(dx*dx + dy*dy);
+      let v;
+      if (r <= inner) v = 1;
+      else v = Math.max(0, 1 - (r - inner) / Math.max(0.01, radius - inner));
+      stamp[y*size+x] = v * density;
+    }
+  }
+  return { data: stamp, size };
+}
+
+// ==================== MAIN RENDER ====================
+const MM_PER_INCH = 25.4;
+const PAPER_SIZES_MM = {
+  A4:     [210.0, 297.0],
+  A5:     [148.0, 210.0],
+  Letter: [215.9, 279.4],
+};
+
+async function render(srcImage) {
+  const profile = PROFILES[state.profile];
+  const seed = state.seed || Math.floor(Math.random() * 1e9);
+  const rng = mulberry32(seed);
+
+  // Derive paper size from source aspect (fit mode)
+  const srcAspect = srcImage.width / srcImage.height;
+  const paperH = 297;
+  const paperW = paperH * srcAspect;
+  const marginMm = 10;
+  const printableW = paperW - 2 * marginMm;
+  const printableH = paperH - 2 * marginMm;
+
+  // Dot grid resolution
+  const condensedMult = (state.condensed && profile.supports_condensed) ? 1.5 : 1.0;
+  const dpiH = profile.dpi_h * condensedMult;
+  const dpiV = profile.dpi_v;
+  const gridW = Math.round(printableW / MM_PER_INCH * dpiH);
+  const gridH = Math.round(printableH / MM_PER_INCH * dpiV);
+
+  // Draw source into grid-sized grayscale
+  const gridCanvas = document.createElement("canvas");
+  gridCanvas.width = gridW;
+  gridCanvas.height = gridH;
+  const gctx = gridCanvas.getContext("2d");
+  gctx.fillStyle = "#fff";
+  gctx.fillRect(0, 0, gridW, gridH);
+  // Fit source into grid preserving aspect
+  const fitScale = Math.min(gridW / srcImage.width, gridH / srcImage.height);
+  const fw = Math.round(srcImage.width * fitScale);
+  const fh = Math.round(srcImage.height * fitScale);
+  const fx = Math.floor((gridW - fw) / 2);
+  const fy = Math.floor((gridH - fh) / 2);
+  gctx.drawImage(srcImage, fx, fy, fw, fh);
+  const gridData = gctx.getImageData(0, 0, gridW, gridH);
+  const gray = toGrayscale(gridData);
+
+  // Halftone
+  let dots;
+  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, gridW, gridH);
+  else if (state.dither === "ordered")    dots = orderedDither(gray, gridW, gridH);
+  else                                    dots = thresholdDither(gray, gridW, gridH, state.threshold);
+
+  // Output canvas sized by DPI, then capped to maxSize
+  let outW = Math.round(paperW / MM_PER_INCH * state.dpi);
+  let outH = Math.round(paperH / MM_PER_INCH * state.dpi);
+  const longEdge = Math.max(outW, outH);
+  if (longEdge > state.maxSize) {
+    const scale = state.maxSize / longEdge;
+    outW = Math.round(outW * scale);
+    outH = Math.round(outH * scale);
+  }
+  const effDpi = outW / (paperW / MM_PER_INCH);
+
+  // Accumulator buffer (0..1 ink)
+  const ink = new Float32Array(outW * outH);
+
+  // Dot stamp in output px
+  const dotPx = Math.max(2, Math.round(profile.dot_diameter_mm / MM_PER_INCH * effDpi));
+  const {data: stamp, size: stampSize} = makeDotStamp(
+    dotPx, profile.dot_softness, profile.ink_density
+  );
+  const stampR = (stampSize - 1) / 2;
+
+  const passes = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
+
+  // grid -> output mapping
+  const marginPx = Math.round(marginMm / MM_PER_INCH * effDpi);
+  const cellW = outW - 2 * marginPx;
+  const cellH = outH - 2 * marginPx;
+  const stepX = cellW / gridW;
+  const stepY = cellH / gridH;
+
+  const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
+  const bandAmp = profile.banding * state.bandingScale;
+  const rowBands = new Float32Array(gridH);
+  for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
+
+  // Render — yield to UI every 20k dots so the page stays responsive on iOS
+  const onCells = [];
+  for (let y = 0; y < gridH; y++) {
+    for (let x = 0; x < gridW; x++) {
+      if (dots[y*gridW+x]) onCells.push([x, y]);
+    }
+  }
+
+  let processed = 0;
+  const total = onCells.length * passes;
+  await yieldUI();
+  for (let p = 0; p < passes; p++) {
+    const passJitter = jitterPx * (1 + 0.3 * p);
+    for (let idx = 0; idx < onCells.length; idx++) {
+      const [gx, gy] = onCells[idx];
+      let cx = marginPx + Math.round(gx * stepX + stepX / 2);
+      let cy = marginPx + Math.round(gy * stepY + stepY / 2);
+      if (passJitter > 0) {
+        cx += Math.round(gaussian(rng) * passJitter);
+        cy += Math.round(gaussian(rng) * passJitter);
+      }
+      const band = rowBands[gy];
+      stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
+
+      processed++;
+      if ((processed & 0x7FFF) === 0) {
+        setStatus(`Rendering · ${((processed/total)*100).toFixed(0)}%`, true);
+        await yieldUI();
+      }
+    }
+  }
+
+  // Composite onto paper
+  const finalImg = new ImageData(outW, outH);
+  const [pr, pg, pb] = state.paper;
+  const [ir, ig, ib] = state.ink;
+  const d = finalImg.data;
+  for (let i = 0, j = 0; i < ink.length; i++, j += 4) {
+    const a = ink[i];
+    d[j]   = Math.round(pr * (1 - a) + ir * a);
+    d[j+1] = Math.round(pg * (1 - a) + ig * a);
+    d[j+2] = Math.round(pb * (1 - a) + ib * a);
+    d[j+3] = 255;
+  }
+
+  // Tiny blur for ink-bleed (1-pass 3x3 box) — done in output canvas via CSS filter would re-compose.
+  // We'll apply a cheap separable box blur with radius 1 for subtle softening.
+  boxBlur3x3(d, outW, outH);
+
+  return { imageData: finalImg, width: outW, height: outH };
+}
+
+function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
+  const x1 = x0 + ss, y1 = y0 + ss;
+  if (x1 <= 0 || y1 <= 0 || x0 >= w || y0 >= h) return;
+  const sx0 = x0 < 0 ? -x0 : 0;
+  const sy0 = y0 < 0 ? -y0 : 0;
+  const dx0 = Math.max(0, x0);
+  const dy0 = Math.max(0, y0);
+  const dx1 = Math.min(w, x1);
+  const dy1 = Math.min(h, y1);
+  for (let y = dy0; y < dy1; y++) {
+    const sy = sy0 + (y - dy0);
+    let di = y * w + dx0;
+    let si = sy * ss + sx0;
+    for (let x = dx0; x < dx1; x++, di++, si++) {
+      const v = ink[di] + stamp[si] * band;
+      ink[di] = v > 1 ? 1 : v;
+    }
+  }
+}
+
+function boxBlur3x3(data, w, h) {
+  // In-place 3x3 box blur on RGB channels. Used once — good enough for softening.
+  const copy = new Uint8ClampedArray(data);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = (y * w + x) * 4;
+      for (let c = 0; c < 3; c++) {
+        let s = 0;
+        for (let ky = -1; ky <= 1; ky++)
+          for (let kx = -1; kx <= 1; kx++)
+            s += copy[((y+ky) * w + (x+kx)) * 4 + c];
+        data[i + c] = (s / 9) | 0;
+      }
+    }
+  }
+}
+
+function yieldUI() { return new Promise(r => setTimeout(r, 0)); }
+
+// ==================== ASCII PREVIEW ====================
+function asciiPreview(srcImage, width = 60) {
+  const aspect = srcImage.width / srcImage.height;
+  // Two rows per char (half-blocks), char ~2x tall as wide → aspect factor 2
+  let h = Math.round(width / aspect / 2) * 2;
+  h = Math.max(8, Math.min(60, h));
+  const c = document.createElement("canvas");
+  c.width = width; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, width, h);
+  ctx.drawImage(srcImage, 0, 0, width, h);
+  const gray = toGrayscale(ctx.getImageData(0, 0, width, h));
+  let dots;
+  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, width, h);
+  else if (state.dither === "ordered")    dots = orderedDither(gray, width, h);
+  else                                    dots = thresholdDither(gray, width, h, state.threshold);
+
+  let out = "";
+  for (let y = 0; y < h - 1; y += 2) {
+    let line = "";
+    for (let x = 0; x < width; x++) {
+      const top = dots[y * width + x];
+      const bot = dots[(y + 1) * width + x];
+      if (top && bot) line += "\u2588";
+      else if (top)   line += "\u2580";
+      else if (bot)   line += "\u2584";
+      else            line += " ";
+    }
+    out += line + "\n";
+  }
+  return out;
+}
+
+// ==================== UI WIRING ====================
+const dropzone  = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const outCanvas = document.getElementById("outCanvas");
+const outCtx    = outCanvas.getContext("2d");
+const outSection = document.getElementById("outputSection");
+const asciiEl   = document.getElementById("ascii");
+const statusEl  = document.getElementById("status");
+const renderBtn = document.getElementById("renderBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const profileMeta = document.getElementById("profileMeta");
+
+let lastRenderedBlob = null;
+
+function setStatus(text, working = false) {
+  statusEl.textContent = text;
+  statusEl.className = "status" + (working ? " working" : "");
+}
+
+function updateProfileMeta() {
+  const p = PROFILES[state.profile];
+  profileMeta.textContent = `${p.label} · ${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · dot ⌀ ${p.dot_diameter_mm}mm`;
+  // Disable condensed for profiles that don't support it
+  const condCheck = document.querySelector('[data-flag="condensed"]');
+  if (!p.supports_condensed) {
+    condCheck.dataset.disabled = "true";
+    condCheck.classList.remove("on");
+    state.condensed = false;
+  } else {
+    condCheck.dataset.disabled = "false";
+  }
+}
+
+// Profile buttons
+document.getElementById("profileBtns").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#profileBtns button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.profile = btn.dataset.profile;
+  updateProfileMeta();
+  refreshAscii();
+});
+
+// Dither buttons
+const thresholdField = document.getElementById("thresholdField");
+document.getElementById("ditherBtns").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#ditherBtns button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.dither = btn.dataset.dither;
+  thresholdField.style.display = state.dither === "threshold" ? "block" : "none";
+  refreshAscii();
+});
+
+// Checkboxes
+document.querySelectorAll(".check").forEach(el => {
+  el.addEventListener("click", () => {
+    if (el.dataset.disabled === "true") return;
+    el.classList.toggle("on");
+    state[el.dataset.flag] = el.classList.contains("on");
+  });
+});
+
+// Swatches
+function wireSwatches(containerId, stateKey, attrKey) {
+  const box = document.getElementById(containerId);
+  box.addEventListener("click", (e) => {
+    const sw = e.target.closest(".swatch");
+    if (!sw) return;
+    box.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
+    sw.classList.add("active");
+    state[stateKey] = sw.dataset[attrKey].split(",").map(Number);
+  });
+}
+wireSwatches("inkSwatches", "ink", "ink");
+wireSwatches("paperSwatches", "paper", "paper");
+
+// Sliders
+function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v) {
+  const s = document.getElementById(id);
+  const v = document.getElementById(valId);
+  const apply = () => {
+    const raw = transform(s.value);
+    state[stateKey] = raw;
+    v.textContent = format(raw);
+  };
+  s.addEventListener("input", apply);
+  apply();
+}
+wireSlider("thresholdSlider", "thresholdVal", "threshold", v => +v, v => v);
+wireSlider("dpiSlider", "dpiVal", "dpi", v => +v, v => v);
+wireSlider("jitterSlider", "jitterVal", "jitterScale",
+  v => +v / 10, v => v.toFixed(1));
+wireSlider("bandingSlider", "bandingVal", "bandingScale",
+  v => +v / 10, v => v.toFixed(1));
+wireSlider("maxSizeSlider", "maxSizeVal", "maxSize", v => +v, v => v);
+wireSlider("seedSlider", "seedVal", "seed", v => +v, v => v);
+document.getElementById("thresholdSlider").addEventListener("input", refreshAscii);
+document.getElementById("ditherBtns").addEventListener("click", refreshAscii);
+
+// File handling
+dropzone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+async function handleFile(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    setStatus("Not an image file.");
+    return;
+  }
+  setStatus("Loading image...");
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    state.sourceImage = img;
+    dropzone.innerHTML = `
+      <div class="big">${file.name}</div>
+      <div class="small">${img.width} × ${img.height} · tap to change</div>`;
+    outSection.style.display = "block";
+    // Show source preview on canvas
+    const maxDisplay = 800;
+    const scale = Math.min(1, maxDisplay / Math.max(img.width, img.height));
+    outCanvas.width = Math.round(img.width * scale);
+    outCanvas.height = Math.round(img.height * scale);
+    outCtx.drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
+    renderBtn.disabled = false;
+    setStatus("Ready. Tap RENDER.");
+    refreshAscii();
+  };
+  img.onerror = () => setStatus("Failed to load image.");
+  img.src = url;
+}
+
+function refreshAscii() {
+  if (!state.sourceImage) return;
+  try {
+    asciiEl.classList.remove("empty");
+    asciiEl.textContent = asciiPreview(state.sourceImage, 56);
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
+// Render action
+renderBtn.addEventListener("click", async () => {
+  if (!state.sourceImage) return;
+  renderBtn.disabled = true;
+  downloadBtn.disabled = true;
+  setStatus("Rendering...", true);
+  try {
+    const t0 = performance.now();
+    const { imageData, width, height } = await render(state.sourceImage);
+    outCanvas.width = width;
+    outCanvas.height = height;
+    outCtx.putImageData(imageData, 0, 0);
+    outCanvas.toBlob((blob) => {
+      lastRenderedBlob = blob;
+      downloadBtn.disabled = false;
+    }, "image/png");
+    const dt = ((performance.now() - t0) / 1000).toFixed(2);
+    setStatus(`Done in ${dt}s · ${width}×${height}`);
+  } catch (e) {
+    console.error(e);
+    setStatus("Render failed: " + e.message);
+  } finally {
+    renderBtn.disabled = false;
+  }
+});
+
+// Download action
+downloadBtn.addEventListener("click", () => {
+  if (!lastRenderedBlob) return;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(lastRenderedBlob);
+  const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  a.download = `dotmatrix_${state.profile}_${ts}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+});
+
+// Init
+updateProfileMeta();
+</script>
+
+</body>
+</html>
