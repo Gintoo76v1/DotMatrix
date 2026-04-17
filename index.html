@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -23,349 +22,190 @@
     --shadow-hard-sm: 2px 2px 0 var(--ink);
   }
 
-- { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
 
-body {
-background: var(–paper);
-color: var(–ink);
-font-family: “IBM Plex Mono”, ui-monospace, Menlo, Consolas, monospace;
-font-size: 14px;
-line-height: 1.45;
-padding: max(12px, env(safe-area-inset-top)) 12px
-calc(96px + env(safe-area-inset-bottom)) 12px;
-/* Subtle paper fiber texture using two radial gradients */
-background-image:
-radial-gradient(circle at 20% 30%, rgba(20,19,26,.035) 0, transparent 30%),
-radial-gradient(circle at 80% 70%, rgba(20,19,26,.025) 0, transparent 35%),
-repeating-linear-gradient(0deg, transparent 0 3px, rgba(20,19,26,.015) 3px 4px);
-min-height: 100vh;
-}
+  body {
+    background-color: var(--paper, #f4eede);
+    color: var(--ink, #14131a);
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.45;
+    padding: max(12px, env(safe-area-inset-top)) 12px calc(96px + env(safe-area-inset-bottom)) 12px;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(20,19,26,.035) 0, transparent 30%),
+      radial-gradient(circle at 80% 70%, rgba(20,19,26,.025) 0, transparent 35%),
+      repeating-linear-gradient(0deg, transparent 0 3px, rgba(20,19,26,.015) 3px 4px);
+    min-height: 100vh;
+  }
 
-h1, h2, .display { font-family: “VT323”, monospace; font-weight: normal; letter-spacing: 0.5px; }
+  h1, h2, .display { font-family: "VT323", monospace; font-weight: normal; letter-spacing: 0.5px; }
 
-header {
-border: 2px solid var(–line);
-box-shadow: var(–shadow-hard);
-padding: 8px 12px 10px;
-margin-bottom: 18px;
-background: var(–paper);
-position: relative;
-overflow: hidden;
-}
-header::before {
-content: “”;
-position: absolute; top: 0; left: 0; right: 0; height: 18px;
-background-image: repeating-linear-gradient(90deg,
-var(–ink) 0 3px, transparent 3px 8px);
-opacity: .85;
-}
-header h1 {
-margin: 18px 0 0;
-font-size: 40px;
-line-height: 0.95;
-}
-header h1 .dot { color: var(–accent); }
-header .tag {
-font-size: 11px;
-letter-spacing: 0.15em;
-text-transform: uppercase;
-color: var(–ink-soft);
-margin-top: 2px;
-}
+  header {
+    border: 2px solid var(--line);
+    box-shadow: var(--shadow-hard);
+    padding: 8px 12px 10px;
+    margin-bottom: 18px;
+    background: var(--paper);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 18px;
+    background-image: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 8px);
+    opacity: .85;
+  }
+  header h1 { margin: 18px 0 0; font-size: 40px; line-height: 0.95; }
+  header h1 .dot { color: var(--accent); }
+  header .tag { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-soft); margin-top: 2px; }
 
-section {
-border: 2px solid var(–line);
-box-shadow: var(–shadow-hard);
-background: var(–paper);
-margin-bottom: 18px;
-padding: 14px;
-}
+  section {
+    border: 2px solid var(--line);
+    box-shadow: var(--shadow-hard);
+    background: var(--paper);
+    margin-bottom: 18px;
+    padding: 14px;
+  }
 
-.section-label {
-font-size: 10px;
-letter-spacing: 0.2em;
-text-transform: uppercase;
-font-weight: 600;
-color: var(–ink);
-margin: 0 0 10px;
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.section-label::before {
-content: “█”;
-color: var(–accent);
-font-size: 10px;
-}
+  .section-label {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    font-weight: 600; color: var(--ink); margin: 0 0 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::before { content: "█"; color: var(--accent); font-size: 10px; }
 
-/* –– File drop / preview –– */
-.dropzone {
-border: 2px dashed var(–ink);
-padding: 28px 14px;
-text-align: center;
-background: var(–paper-dark);
-cursor: pointer;
-position: relative;
-}
-.dropzone.dragover { background: var(–accent-soft); }
-.dropzone .big {
-font-family: “VT323”, monospace;
-font-size: 28px;
-line-height: 1;
-margin-bottom: 6px;
-}
-.dropzone .small {
-font-size: 11px;
-letter-spacing: 0.1em;
-text-transform: uppercase;
-color: var(–ink-soft);
-}
-input[type=file] { display: none; }
+  /* -- File drop / preview -- */
+  .dropzone {
+    border: 2px dashed var(--ink); padding: 28px 14px; text-align: center;
+    background: var(--paper-dark); cursor: pointer; position: relative;
+  }
+  .dropzone.dragover { background: var(--accent-soft); }
+  .dropzone .big { font-family: "VT323", monospace; font-size: 28px; line-height: 1; margin-bottom: 6px; }
+  .dropzone .small { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  input[type=file] { display: none; }
 
-.canvas-wrap {
-position: relative;
-background:
-repeating-linear-gradient(45deg,
-var(–paper-dark) 0 8px, var(–paper) 8px 16px);
-border: 2px solid var(–ink);
-padding: 6px;
-display: flex;
-justify-content: center;
-align-items: center;
-min-height: 120px;
-}
-canvas { max-width: 100%; height: auto; display: block; background: #fff; }
+  .canvas-wrap {
+    position: relative;
+    background: repeating-linear-gradient(45deg, var(--paper-dark) 0 8px, var(--paper) 8px 16px);
+    border: 2px solid var(--ink); padding: 6px; display: flex;
+    justify-content: center; align-items: center; min-height: 120px;
+    margin-bottom: 14px;
+  }
+  canvas { max-width: 100%; height: auto; display: block; background: #fff; }
 
-/* –– Controls –– */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* -- Controls -- */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-.segmented {
-display: grid;
-gap: -2px;
-border: 2px solid var(–ink);
-overflow: hidden;
-}
-.segmented.cols-4 { grid-template-columns: repeat(4, 1fr); }
-.segmented.cols-3 { grid-template-columns: repeat(3, 1fr); }
-.segmented.cols-2 { grid-template-columns: repeat(2, 1fr); }
-.segmented button {
-appearance: none;
-background: var(–paper);
-border: 0;
-border-right: 2px solid var(–ink);
-font-family: “IBM Plex Mono”, monospace;
-font-size: 11px;
-font-weight: 600;
-letter-spacing: 0.08em;
-text-transform: uppercase;
-padding: 10px 4px;
-cursor: pointer;
-color: var(–ink);
-min-height: 44px;
-}
-.segmented button:last-child { border-right: 0; }
-.segmented button.active {
-background: var(–ink);
-color: var(–paper);
-}
-.segmented button:active { transform: translate(1px, 1px); }
+  button {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    color: var(--ink) !important;
+  }
 
-.profile-meta {
-font-size: 10px;
-letter-spacing: 0.1em;
-color: var(–ink-soft);
-margin-top: 6px;
-font-variant-numeric: tabular-nums;
-}
+  .segmented {
+    display: flex;
+    border: 2px solid var(--ink);
+    overflow: hidden;
+    background: var(--paper);
+  }
+  .segmented.scrollable {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .segmented button {
+    flex: 1;
+    background: var(--paper);
+    border: 0; border-right: 2px solid var(--ink);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 10px 4px;
+    cursor: pointer; min-height: 44px;
+  }
+  .segmented.scrollable button {
+    flex: 0 0 auto;
+    min-width: 90px;
+  }
+  .segmented button:last-child { border-right: 0; }
+  .segmented button.active { background: var(--ink) !important; color: var(--paper) !important; }
+  .segmented button:active { transform: translate(1px, 1px); }
 
-label.field {
-display: block;
-margin-top: 10px;
-}
-label.field .name {
-font-size: 10px;
-letter-spacing: 0.15em;
-text-transform: uppercase;
-color: var(–ink-soft);
-display: flex;
-justify-content: space-between;
-}
-label.field .name b {
-color: var(–ink);
-font-variant-numeric: tabular-nums;
-}
+  .profile-meta { font-size: 10px; letter-spacing: 0.1em; color: var(--ink-soft); margin-top: 6px; font-variant-numeric: tabular-nums; }
 
-input[type=range] {
--webkit-appearance: none;
-appearance: none;
-width: 100%;
-height: 28px;
-background: transparent;
-margin: 4px 0 0;
-}
-input[type=range]::-webkit-slider-runnable-track {
-height: 4px;
-background: var(–ink);
-}
-input[type=range]::-webkit-slider-thumb {
--webkit-appearance: none;
-appearance: none;
-height: 22px; width: 22px;
-background: var(–accent);
-border: 2px solid var(–ink);
-margin-top: -10px;
-cursor: pointer;
-}
-input[type=range]::-moz-range-track { height: 4px; background: var(–ink); }
-input[type=range]::-moz-range-thumb {
-height: 22px; width: 22px;
-background: var(–accent);
-border: 2px solid var(–ink);
-cursor: pointer;
-}
+  label.field { display: block; margin-top: 10px; }
+  label.field .name { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-soft); display: flex; justify-content: space-between; }
+  label.field .name b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
-.swatches {
-display: flex;
-gap: 6px;
-flex-wrap: wrap;
-}
-.swatch {
-width: 36px; height: 36px;
-border: 2px solid var(–ink);
-cursor: pointer;
-position: relative;
-}
-.swatch.active::after {
-content: “”;
-position: absolute; inset: -4px;
-border: 2px solid var(–accent);
-pointer-events: none;
-}
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 4px 0 0; }
+  input[type=range]::-webkit-slider-runnable-track { height: 4px; background: var(--ink); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; height: 22px; width: 22px;
+    background: var(--accent); border: 2px solid var(--ink); margin-top: -10px; cursor: pointer;
+  }
+  input[type=range]::-moz-range-track { height: 4px; background: var(--ink); }
+  input[type=range]::-moz-range-thumb { height: 22px; width: 22px; background: var(--accent); border: 2px solid var(--ink); cursor: pointer; }
 
-.checks { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-.check {
-display: flex; align-items: center; gap: 10px;
-padding: 8px;
-border: 2px solid var(–ink);
-cursor: pointer;
-user-select: none;
-min-height: 44px;
-font-size: 12px;
-font-weight: 600;
-letter-spacing: 0.08em;
-text-transform: uppercase;
-}
-.check .box {
-width: 18px; height: 18px;
-border: 2px solid var(–ink);
-display: inline-flex; align-items: center; justify-content: center;
-flex-shrink: 0;
-}
-.check.on .box { background: var(–ink); }
-.check.on .box::after {
-content: “×”;
-color: var(–paper);
-font-size: 18px;
-line-height: 1;
-font-family: “VT323”, monospace;
-margin-top: -2px;
-}
-.check[data-disabled=“true”] {
-opacity: 0.4;
-cursor: not-allowed;
-}
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swatch { width: 36px; height: 36px; border: 2px solid var(--ink); cursor: pointer; position: relative; }
+  .swatch.active::after { content: ""; position: absolute; inset: -4px; border: 2px solid var(--accent); pointer-events: none; }
 
-/* ASCII preview */
-.ascii {
-font-family: ui-monospace, Menlo, Consolas, monospace;
-font-size: 8px;
-line-height: 0.9;
-white-space: pre;
-overflow-x: auto;
-padding: 10px;
-background: #0d0c13;
-color: var(–accent-soft);
-border: 2px solid var(–ink);
-letter-spacing: 0.02em;
-}
-.ascii.empty { color: #5a5460; }
+  .checks { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .check {
+    display: flex; align-items: center; gap: 10px; padding: 8px;
+    border: 2px solid var(--ink); cursor: pointer; user-select: none;
+    min-height: 44px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .check .box {
+    width: 18px; height: 18px; border: 2px solid var(--ink);
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .check.on .box { background: var(--ink); }
+  .check.on .box::after {
+    content: "×"; color: var(--paper); font-size: 18px; line-height: 1;
+    font-family: "VT323", monospace; margin-top: -2px;
+  }
+  .check[data-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
 
-/* Sticky action bar */
-.actions {
-position: fixed;
-left: 0; right: 0;
-bottom: 0;
-padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-background: var(–paper);
-border-top: 2px solid var(–ink);
-display: flex;
-gap: 8px;
-z-index: 20;
-}
-.btn {
-flex: 1;
-appearance: none;
-border: 2px solid var(–ink);
-background: var(–paper);
-color: var(–ink);
-padding: 14px;
-font-family: “IBM Plex Mono”, monospace;
-font-size: 13px;
-font-weight: 700;
-letter-spacing: 0.12em;
-text-transform: uppercase;
-cursor: pointer;
-box-shadow: var(–shadow-hard-sm);
-min-height: 52px;
-}
-.btn:active { transform: translate(2px, 2px); box-shadow: none; }
-.btn.primary { background: var(–ink); color: var(–paper); }
-.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  /* ASCII preview */
+  .ascii {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 8px; line-height: 0.9;
+    white-space: pre; overflow-x: auto; padding: 10px; background: #0d0c13; color: var(--accent-soft);
+    border: 2px solid var(--ink); letter-spacing: 0.02em; margin: 0;
+  }
+  .ascii.empty { color: #5a5460; }
 
-.status {
-font-size: 10px;
-letter-spacing: 0.15em;
-text-transform: uppercase;
-color: var(–ink-soft);
-margin-top: 8px;
-font-variant-numeric: tabular-nums;
-}
-.status.working { color: var(–accent); }
+  /* Sticky action bar */
+  .actions {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: var(--paper); border-top: 2px solid var(--ink);
+    display: flex; gap: 8px; z-index: 20;
+  }
+  .btn {
+    flex: 1; border: 2px solid var(--ink); background: var(--paper); padding: 14px;
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
+    box-shadow: var(--shadow-hard-sm); min-height: 52px;
+  }
+  .btn:active { transform: translate(2px, 2px); box-shadow: none; }
+  .btn.primary { background: var(--ink) !important; color: var(--paper) !important; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-details summary {
-cursor: pointer;
-list-style: none;
-padding: 6px 0;
-font-size: 10px;
-letter-spacing: 0.2em;
-text-transform: uppercase;
-font-weight: 600;
-display: flex;
-align-items: center;
-gap: 8px;
-user-select: none;
-}
-details summary::-webkit-details-marker { display: none; }
-details summary::before {
-content: “[+]”;
-color: var(–accent);
-font-family: “VT323”, monospace;
-font-size: 14px;
-}
-details[open] summary::before { content: “[−]”; }
+  .status { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-soft); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .status.working { color: var(--accent); }
 
-footer {
-text-align: center;
-font-size: 10px;
-letter-spacing: 0.2em;
-text-transform: uppercase;
-color: var(–ink-soft);
-padding: 20px 0 0;
-}
-footer .dots { color: var(–accent); letter-spacing: 0.4em; }
+  details summary {
+    cursor: pointer; list-style: none; padding: 6px 0; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600;
+    display: flex; align-items: center; gap: 8px; user-select: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: "[+]"; color: var(--accent); font-family: "VT323", monospace; font-size: 14px; }
+  details[open] summary::before { content: "[−]"; }
+
+  footer { text-align: center; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); padding: 20px 0 0; }
+  footer .dots { color: var(--accent); letter-spacing: 0.4em; }
 </style>
-
 </head>
 <body>
 
@@ -384,20 +224,27 @@ footer .dots { color: var(–accent); letter-spacing: 0.4em; }
 </section>
 
 <section id="outputSection" style="display:none">
-  <div class="section-label">Output</div>
+  <div class="section-label">Output & Preview</div>
   <div class="canvas-wrap">
     <canvas id="outCanvas" width="400" height="300"></canvas>
   </div>
+  <pre id="ascii" class="ascii empty">// upload an image to see the preview //</pre>
   <div id="status" class="status">Ready.</div>
 </section>
 
 <section>
   <div class="section-label">Printer profile</div>
-  <div class="segmented cols-4" id="profileBtns">
+  <div class="segmented scrollable" id="profileBtns">
     <button data-profile="epson_fx" class="active">FX<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
     <button data-profile="epson_lq">LQ<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
     <button data-profile="ibm_proprinter">IBM<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
     <button data-profile="oki_microline">OKI<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+    <button data-profile="star_nx1000">STAR<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+    <button data-profile="panasonic_kx">PANA<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
+    <button data-profile="dec_la75">DEC<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
+    <button data-profile="nec_p6">NEC<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
+    <button data-profile="commodore_mps">C64<br><span style="font-size:9px;opacity:.7">7-PIN</span></button>
+    <button data-profile="apple_imagewriter">APPLE<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
   </div>
   <div class="profile-meta" id="profileMeta"></div>
 
@@ -406,14 +253,35 @@ footer .dots { color: var(–accent); letter-spacing: 0.4em; }
       <span class="box"></span><span>Double-strike</span>
     </label>
     <label class="check" data-flag="condensed">
-      <span class="box"></span><span>Condensed (17 CPI)</span>
+      <span class="box"></span><span>Condensed Mode</span>
+    </label>
+  </div>
+</section>
+
+<section>
+  <div class="section-label">Image Adjustments</div>
+  <label class="field">
+    <span class="name"><span>Brightness</span><b id="brightnessVal">0</b></span>
+    <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
+  </label>
+  <label class="field">
+    <span class="name"><span>Contrast</span><b id="contrastVal">0</b></span>
+    <input type="range" id="contrastSlider" min="-100" max="100" value="0">
+  </label>
+  <label class="field">
+    <span class="name"><span>Gamma</span><b id="gammaVal">1.0</b></span>
+    <input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0">
+  </label>
+  <div class="checks" style="margin-top: 14px;">
+    <label class="check" data-flag="invert">
+      <span class="box"></span><span>Invert Image</span>
     </label>
   </div>
 </section>
 
 <section>
   <div class="section-label">Halftone</div>
-  <div class="segmented cols-3" id="ditherBtns">
+  <div class="segmented" id="ditherBtns">
     <button data-dither="floyd_steinberg" class="active">Floyd-S</button>
     <button data-dither="ordered">Ordered</button>
     <button data-dither="threshold">Thresh</button>
@@ -425,7 +293,28 @@ footer .dots { color: var(–accent); letter-spacing: 0.4em; }
 </section>
 
 <section>
-  <div class="section-label">Ribbon · Paper</div>
+  <div class="section-label">Paper & Format</div>
+  <div class="grid-2">
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Format</div>
+      <div class="segmented" id="paperFormatBtns" style="flex-direction: column;">
+        <button data-format="Fit" class="active" style="border-right: 0; border-bottom: 2px solid var(--ink);">Auto/Fit</button>
+        <button data-format="A4" style="border-right: 0; border-bottom: 2px solid var(--ink);">A4</button>
+        <button data-format="Letter" style="border-right: 0;">Letter</button>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Orientation</div>
+      <div class="segmented" id="orientationBtns" style="flex-direction: column;">
+        <button data-orient="Portrait" class="active" style="border-right: 0; border-bottom: 2px solid var(--ink);">Portrait</button>
+        <button data-orient="Landscape" style="border-right: 0;">Landscape</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-label">Ribbon · Media</div>
   <div class="grid-2">
     <div>
       <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Ink</div>
@@ -452,46 +341,33 @@ footer .dots { color: var(–accent); letter-spacing: 0.4em; }
 
 <section>
   <details>
-    <summary>Advanced</summary>
-
-```
-<label class="field">
-  <span class="name"><span>Output DPI</span><b id="dpiVal">200</b></span>
-  <input type="range" id="dpiSlider" min="100" max="400" step="50" value="200">
-</label>
-
-<label class="field">
-  <span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span>
-  <input type="range" id="jitterSlider" min="0" max="30" value="10">
-</label>
-
-<label class="field">
-  <span class="name"><span>Banding scale</span><b id="bandingVal">1.0</b></span>
-  <input type="range" id="bandingSlider" min="0" max="20" value="10">
-</label>
-
-<label class="field">
-  <span class="name"><span>Max output size (px, long edge)</span><b id="maxSizeVal">1600</b></span>
-  <input type="range" id="maxSizeSlider" min="600" max="3000" step="100" value="1600">
-</label>
-
-<label class="field">
-  <span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span>
-  <input type="range" id="seedSlider" min="0" max="9999" value="0">
-</label>
-```
-
+    <summary>Advanced Rendering</summary>
+    <label class="field">
+      <span class="name"><span>Output DPI</span><b id="dpiVal">200</b></span>
+      <input type="range" id="dpiSlider" min="100" max="900" step="50" value="200">
+    </label>
+    <label class="field">
+      <span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span>
+      <input type="range" id="jitterSlider" min="0" max="30" value="10">
+    </label>
+    <label class="field">
+      <span class="name"><span>Banding scale</span><b id="bandingVal">1.0</b></span>
+      <input type="range" id="bandingSlider" min="0" max="20" value="10">
+    </label>
+    <label class="field">
+      <span class="name"><span>Max output size (px)</span><b id="maxSizeVal">1600</b></span>
+      <input type="range" id="maxSizeSlider" min="600" max="3500" step="100" value="1600">
+    </label>
+    <label class="field">
+      <span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span>
+      <input type="range" id="seedSlider" min="0" max="9999" value="0">
+    </label>
   </details>
-</section>
-
-<section>
-  <div class="section-label">Ascii preview</div>
-  <pre id="ascii" class="ascii empty">// upload an image to see the preview //</pre>
 </section>
 
 <footer>
   <div class="dots">· · · · ·</div>
-  dotmatrix v0.1 · client-side only
+  dotmatrix v0.2 · client-side only
 </footer>
 
 <div class="actions">
@@ -502,34 +378,16 @@ footer .dots { color: var(–accent); letter-spacing: 0.4em; }
 <script>
 // ==================== PROFILES ====================
 const PROFILES = {
-  epson_fx: {
-    label: "Epson FX-80/85",
-    pins: 9, dpi_h: 120, dpi_v: 72,
-    dot_diameter_mm: 0.35, dot_softness: 0.30, ink_density: 0.88,
-    passes: 1, jitter_mm: 0.04, banding: 0.08,
-    supports_condensed: true,
-  },
-  epson_lq: {
-    label: "Epson LQ-500/850",
-    pins: 24, dpi_h: 180, dpi_v: 180,
-    dot_diameter_mm: 0.20, dot_softness: 0.22, ink_density: 0.82,
-    passes: 1, jitter_mm: 0.02, banding: 0.04,
-    supports_condensed: true,
-  },
-  ibm_proprinter: {
-    label: "IBM Proprinter",
-    pins: 9, dpi_h: 120, dpi_v: 72,
-    dot_diameter_mm: 0.38, dot_softness: 0.26, ink_density: 0.95,
-    passes: 2, jitter_mm: 0.05, banding: 0.10,
-    supports_condensed: false,
-  },
-  oki_microline: {
-    label: "OKI Microline 320/390",
-    pins: 9, dpi_h: 144, dpi_v: 72,
-    dot_diameter_mm: 0.33, dot_softness: 0.34, ink_density: 0.85,
-    passes: 1, jitter_mm: 0.035, banding: 0.12,
-    supports_condensed: true,
-  },
+  epson_fx: { label: "Epson FX-80", pins: 9, dpi_h: 120, dpi_v: 72, dot_diameter_mm: 0.35, dot_softness: 0.30, ink_density: 0.88, passes: 1, jitter_mm: 0.04, banding: 0.08, supports_condensed: true },
+  epson_lq: { label: "Epson LQ-850", pins: 24, dpi_h: 180, dpi_v: 180, dot_diameter_mm: 0.20, dot_softness: 0.22, ink_density: 0.82, passes: 1, jitter_mm: 0.02, banding: 0.04, supports_condensed: true },
+  ibm_proprinter: { label: "IBM Proprinter", pins: 9, dpi_h: 120, dpi_v: 72, dot_diameter_mm: 0.38, dot_softness: 0.26, ink_density: 0.95, passes: 2, jitter_mm: 0.05, banding: 0.10, supports_condensed: false },
+  oki_microline: { label: "OKI Microline", pins: 9, dpi_h: 144, dpi_v: 72, dot_diameter_mm: 0.33, dot_softness: 0.34, ink_density: 0.85, passes: 1, jitter_mm: 0.035, banding: 0.12, supports_condensed: true },
+  star_nx1000: { label: "Star NX-1000", pins: 9, dpi_h: 144, dpi_v: 144, dot_diameter_mm: 0.32, dot_softness: 0.28, ink_density: 0.87, passes: 1, jitter_mm: 0.03, banding: 0.07, supports_condensed: true },
+  panasonic_kx: { label: "Panasonic KX-P", pins: 24, dpi_h: 360, dpi_v: 180, dot_diameter_mm: 0.22, dot_softness: 0.20, ink_density: 0.88, passes: 1, jitter_mm: 0.02, banding: 0.04, supports_condensed: true },
+  dec_la75: { label: "DEC LA75", pins: 9, dpi_h: 144, dpi_v: 144, dot_diameter_mm: 0.35, dot_softness: 0.25, ink_density: 0.90, passes: 1, jitter_mm: 0.02, banding: 0.05, supports_condensed: false },
+  nec_p6: { label: "NEC P6", pins: 24, dpi_h: 360, dpi_v: 360, dot_diameter_mm: 0.15, dot_softness: 0.15, ink_density: 0.85, passes: 1, jitter_mm: 0.015, banding: 0.03, supports_condensed: true },
+  commodore_mps: { label: "MPS-803", pins: 7, dpi_h: 60, dpi_v: 72, dot_diameter_mm: 0.45, dot_softness: 0.40, ink_density: 0.80, passes: 1, jitter_mm: 0.08, banding: 0.15, supports_condensed: false },
+  apple_imagewriter: { label: "ImageWriter II", pins: 9, dpi_h: 144, dpi_v: 72, dot_diameter_mm: 0.35, dot_softness: 0.25, ink_density: 0.85, passes: 1, jitter_mm: 0.03, banding: 0.06, supports_condensed: true }
 };
 
 // ==================== STATE ====================
@@ -539,8 +397,14 @@ const state = {
   threshold: 128,
   ink: [25,25,30],
   paper: [248,245,232],
-  doubleStrike: true,     // default on for IBM feel; user can toggle
+  paperFormat: "Fit",
+  orientation: "Portrait",
+  doubleStrike: true,
   condensed: false,
+  brightness: 0,
+  contrast: 0,
+  gamma: 1.0,
+  invert: false,
   dpi: 200,
   jitterScale: 1.0,
   bandingScale: 1.0,
@@ -550,7 +414,6 @@ const state = {
 };
 
 // ==================== RNG ====================
-// Mulberry32 — small deterministic PRNG
 function mulberry32(seed) {
   let t = seed >>> 0;
   return function() {
@@ -562,27 +425,45 @@ function mulberry32(seed) {
   };
 }
 function gaussian(rng) {
-  // Box-Muller
   let u = 0, v = 0;
   while (u === 0) u = rng();
   while (v === 0) v = rng();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
-// ==================== DITHERING ====================
-function toGrayscale(imgData) {
+// ==================== PREPROCESSING & DITHERING ====================
+function toGrayscale(imgData, stateObj) {
   const {width, height, data} = imgData;
   const out = new Float32Array(width * height);
+  const c = (stateObj.contrast / 100) + 1;
+  const intercept = 128 * (1 - c);
+  const b = stateObj.brightness;
+  const g = stateObj.gamma;
+  const inv = stateObj.invert;
+
   for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-    // Rec.601 luma
-    out[j] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+    let r = data[i], green = data[i+1], blue = data[i+2];
+
+    // Contrast & Brightness
+    r = r * c + intercept + b;
+    green = green * c + intercept + b;
+    blue = blue * c + intercept + b;
+
+    // Gamma
+    r = 255 * Math.pow(Math.max(0, Math.min(255, r)) / 255, g);
+    green = 255 * Math.pow(Math.max(0, Math.min(255, green)) / 255, g);
+    blue = 255 * Math.pow(Math.max(0, Math.min(255, blue)) / 255, g);
+
+    // Luma
+    let luma = 0.299 * r + 0.587 * green + 0.114 * blue;
+    if (inv) luma = 255 - luma;
+    out[j] = Math.max(0, Math.min(255, luma));
   }
   return out;
 }
 
 function floydSteinberg(gray, w, h) {
-  // "On" = dark (dot prints). Returns Uint8Array same size, 1 = dot on.
-  const buf = new Float32Array(gray); // copy, mutable
+  const buf = new Float32Array(gray);
   const out = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -652,7 +533,6 @@ function makeDotStamp(diameterPx, softness, density) {
 const MM_PER_INCH = 25.4;
 const PAPER_SIZES_MM = {
   A4:     [210.0, 297.0],
-  A5:     [148.0, 210.0],
   Letter: [215.9, 279.4],
 };
 
@@ -661,45 +541,55 @@ async function render(srcImage) {
   const seed = state.seed || Math.floor(Math.random() * 1e9);
   const rng = mulberry32(seed);
 
-  // Derive paper size from source aspect (fit mode)
   const srcAspect = srcImage.width / srcImage.height;
-  const paperH = 297;
-  const paperW = paperH * srcAspect;
-  const marginMm = 10;
-  const printableW = paperW - 2 * marginMm;
-  const printableH = paperH - 2 * marginMm;
+  let paperW, paperH;
 
-  // Dot grid resolution
+  if (state.paperFormat === "Fit") {
+    paperH = 297;
+    paperW = paperH * srcAspect;
+  } else {
+    const size = PAPER_SIZES_MM[state.paperFormat];
+    if (state.orientation === "Landscape") { paperW = size[1]; paperH = size[0]; }
+    else { paperW = size[0]; paperH = size[1]; }
+  }
+
+  const marginMm = 10;
+  const printableW = Math.max(1, paperW - 2 * marginMm);
+  const printableH = Math.max(1, paperH - 2 * marginMm);
+
   const condensedMult = (state.condensed && profile.supports_condensed) ? 1.5 : 1.0;
   const dpiH = profile.dpi_h * condensedMult;
   const dpiV = profile.dpi_v;
-  const gridW = Math.round(printableW / MM_PER_INCH * dpiH);
-  const gridH = Math.round(printableH / MM_PER_INCH * dpiV);
 
-  // Draw source into grid-sized grayscale
+  // Aspect ratio preservation FIX for 9-Pin (squashing logic)
+  const maxGridW = Math.round(printableW / MM_PER_INCH * dpiH);
+  const maxGridH = Math.round(printableH / MM_PER_INCH * dpiV);
+  const targetGridAspect = srcAspect * (dpiH / dpiV);
+
+  let gridW, gridH;
+  if ((maxGridW / maxGridH) > targetGridAspect) {
+    gridH = maxGridH;
+    gridW = Math.round(gridH * targetGridAspect);
+  } else {
+    gridW = maxGridW;
+    gridH = Math.round(gridW / targetGridAspect);
+  }
+
   const gridCanvas = document.createElement("canvas");
   gridCanvas.width = gridW;
   gridCanvas.height = gridH;
   const gctx = gridCanvas.getContext("2d");
   gctx.fillStyle = "#fff";
   gctx.fillRect(0, 0, gridW, gridH);
-  // Fit source into grid preserving aspect
-  const fitScale = Math.min(gridW / srcImage.width, gridH / srcImage.height);
-  const fw = Math.round(srcImage.width * fitScale);
-  const fh = Math.round(srcImage.height * fitScale);
-  const fx = Math.floor((gridW - fw) / 2);
-  const fy = Math.floor((gridH - fh) / 2);
-  gctx.drawImage(srcImage, fx, fy, fw, fh);
+  gctx.drawImage(srcImage, 0, 0, gridW, gridH);
   const gridData = gctx.getImageData(0, 0, gridW, gridH);
-  const gray = toGrayscale(gridData);
+  const gray = toGrayscale(gridData, state);
 
-  // Halftone
   let dots;
   if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, gridW, gridH);
   else if (state.dither === "ordered")    dots = orderedDither(gray, gridW, gridH);
   else                                    dots = thresholdDither(gray, gridW, gridH, state.threshold);
 
-  // Output canvas sized by DPI, then capped to maxSize
   let outW = Math.round(paperW / MM_PER_INCH * state.dpi);
   let outH = Math.round(paperH / MM_PER_INCH * state.dpi);
   const longEdge = Math.max(outW, outH);
@@ -710,31 +600,26 @@ async function render(srcImage) {
   }
   const effDpi = outW / (paperW / MM_PER_INCH);
 
-  // Accumulator buffer (0..1 ink)
   const ink = new Float32Array(outW * outH);
-
-  // Dot stamp in output px
   const dotPx = Math.max(2, Math.round(profile.dot_diameter_mm / MM_PER_INCH * effDpi));
-  const {data: stamp, size: stampSize} = makeDotStamp(
-    dotPx, profile.dot_softness, profile.ink_density
-  );
+  const {data: stamp, size: stampSize} = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density);
   const stampR = (stampSize - 1) / 2;
 
   const passes = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
 
-  // grid -> output mapping
-  const marginPx = Math.round(marginMm / MM_PER_INCH * effDpi);
-  const cellW = outW - 2 * marginPx;
-  const cellH = outH - 2 * marginPx;
-  const stepX = cellW / gridW;
-  const stepY = cellH / gridH;
+  // Center on paper
+  const printPxW = gridW / dpiH * effDpi;
+  const printPxH = gridH / dpiV * effDpi;
+  const offsetX = (outW - printPxW) / 2;
+  const offsetY = (outH - printPxH) / 2;
+  const stepX = effDpi / dpiH;
+  const stepY = effDpi / dpiV;
 
   const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
   const bandAmp = profile.banding * state.bandingScale;
   const rowBands = new Float32Array(gridH);
   for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
 
-  // Render — yield to UI every 20k dots so the page stays responsive on iOS
   const onCells = [];
   for (let y = 0; y < gridH; y++) {
     for (let x = 0; x < gridW; x++) {
@@ -749,8 +634,8 @@ async function render(srcImage) {
     const passJitter = jitterPx * (1 + 0.3 * p);
     for (let idx = 0; idx < onCells.length; idx++) {
       const [gx, gy] = onCells[idx];
-      let cx = marginPx + Math.round(gx * stepX + stepX / 2);
-      let cy = marginPx + Math.round(gy * stepY + stepY / 2);
+      let cx = offsetX + Math.round(gx * stepX + stepX / 2);
+      let cy = offsetY + Math.round(gy * stepY + stepY / 2);
       if (passJitter > 0) {
         cx += Math.round(gaussian(rng) * passJitter);
         cy += Math.round(gaussian(rng) * passJitter);
@@ -766,7 +651,6 @@ async function render(srcImage) {
     }
   }
 
-  // Composite onto paper
   const finalImg = new ImageData(outW, outH);
   const [pr, pg, pb] = state.paper;
   const [ir, ig, ib] = state.ink;
@@ -779,10 +663,7 @@ async function render(srcImage) {
     d[j+3] = 255;
   }
 
-  // Tiny blur for ink-bleed (1-pass 3x3 box) — done in output canvas via CSS filter would re-compose.
-  // We'll apply a cheap separable box blur with radius 1 for subtle softening.
   boxBlur3x3(d, outW, outH);
-
   return { imageData: finalImg, width: outW, height: outH };
 }
 
@@ -807,7 +688,6 @@ function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
 }
 
 function boxBlur3x3(data, w, h) {
-  // In-place 3x3 box blur on RGB channels. Used once — good enough for softening.
   const copy = new Uint8ClampedArray(data);
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
@@ -828,7 +708,6 @@ function yieldUI() { return new Promise(r => setTimeout(r, 0)); }
 // ==================== ASCII PREVIEW ====================
 function asciiPreview(srcImage, width = 60) {
   const aspect = srcImage.width / srcImage.height;
-  // Two rows per char (half-blocks), char ~2x tall as wide → aspect factor 2
   let h = Math.round(width / aspect / 2) * 2;
   h = Math.max(8, Math.min(60, h));
   const c = document.createElement("canvas");
@@ -837,7 +716,7 @@ function asciiPreview(srcImage, width = 60) {
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, width, h);
   ctx.drawImage(srcImage, 0, 0, width, h);
-  const gray = toGrayscale(ctx.getImageData(0, 0, width, h));
+  const gray = toGrayscale(ctx.getImageData(0, 0, width, h), state);
   let dots;
   if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, width, h);
   else if (state.dither === "ordered")    dots = orderedDither(gray, width, h);
@@ -881,7 +760,6 @@ function setStatus(text, working = false) {
 function updateProfileMeta() {
   const p = PROFILES[state.profile];
   profileMeta.textContent = `${p.label} · ${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · dot ⌀ ${p.dot_diameter_mm}mm`;
-  // Disable condensed for profiles that don't support it
   const condCheck = document.querySelector('[data-flag="condensed"]');
   if (!p.supports_condensed) {
     condCheck.dataset.disabled = "true";
@@ -892,28 +770,25 @@ function updateProfileMeta() {
   }
 }
 
-// Profile buttons
-document.getElementById("profileBtns").addEventListener("click", (e) => {
-  const btn = e.target.closest("button");
-  if (!btn) return;
-  document.querySelectorAll("#profileBtns button").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  state.profile = btn.dataset.profile;
-  updateProfileMeta();
-  refreshAscii();
-});
+// Button groups
+function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
+  document.getElementById(containerId).addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state[stateKey] = btn.dataset[attrKey];
+    if (onChange) onChange();
+    refreshAscii();
+  });
+}
 
-// Dither buttons
-const thresholdField = document.getElementById("thresholdField");
-document.getElementById("ditherBtns").addEventListener("click", (e) => {
-  const btn = e.target.closest("button");
-  if (!btn) return;
-  document.querySelectorAll("#ditherBtns button").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  state.dither = btn.dataset.dither;
-  thresholdField.style.display = state.dither === "threshold" ? "block" : "none";
-  refreshAscii();
+wireSegmented("profileBtns", "profile", "profile", updateProfileMeta);
+wireSegmented("ditherBtns", "dither", "dither", () => {
+  document.getElementById("thresholdField").style.display = state.dither === "threshold" ? "block" : "none";
 });
+wireSegmented("paperFormatBtns", "paperFormat", "format");
+wireSegmented("orientationBtns", "orientation", "orient");
 
 // Checkboxes
 document.querySelectorAll(".check").forEach(el => {
@@ -921,6 +796,7 @@ document.querySelectorAll(".check").forEach(el => {
     if (el.dataset.disabled === "true") return;
     el.classList.toggle("on");
     state[el.dataset.flag] = el.classList.contains("on");
+    refreshAscii();
   });
 });
 
@@ -939,27 +815,27 @@ wireSwatches("inkSwatches", "ink", "ink");
 wireSwatches("paperSwatches", "paper", "paper");
 
 // Sliders
-function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v) {
+function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, previewUpdate = false) {
   const s = document.getElementById(id);
   const v = document.getElementById(valId);
   const apply = () => {
     const raw = transform(s.value);
     state[stateKey] = raw;
     v.textContent = format(raw);
+    if(previewUpdate) refreshAscii();
   };
   s.addEventListener("input", apply);
   apply();
 }
-wireSlider("thresholdSlider", "thresholdVal", "threshold", v => +v, v => v);
+wireSlider("thresholdSlider", "thresholdVal", "threshold", v => +v, v => v, true);
+wireSlider("brightnessSlider", "brightnessVal", "brightness", v => +v, v => v, true);
+wireSlider("contrastSlider", "contrastVal", "contrast", v => +v, v => v, true);
+wireSlider("gammaSlider", "gammaVal", "gamma", v => +v, v => v.toFixed(1), true);
 wireSlider("dpiSlider", "dpiVal", "dpi", v => +v, v => v);
-wireSlider("jitterSlider", "jitterVal", "jitterScale",
-  v => +v / 10, v => v.toFixed(1));
-wireSlider("bandingSlider", "bandingVal", "bandingScale",
-  v => +v / 10, v => v.toFixed(1));
+wireSlider("jitterSlider", "jitterVal", "jitterScale", v => +v / 10, v => v.toFixed(1));
+wireSlider("bandingSlider", "bandingVal", "bandingScale", v => +v / 10, v => v.toFixed(1));
 wireSlider("maxSizeSlider", "maxSizeVal", "maxSize", v => +v, v => v);
 wireSlider("seedSlider", "seedVal", "seed", v => +v, v => v);
-document.getElementById("thresholdSlider").addEventListener("input", refreshAscii);
-document.getElementById("ditherBtns").addEventListener("click", refreshAscii);
 
 // File handling
 dropzone.addEventListener("click", () => fileInput.click());
@@ -974,8 +850,7 @@ dropzone.addEventListener("drop", (e) => {
 
 async function handleFile(file) {
   if (!file || !file.type.startsWith("image/")) {
-    setStatus("Not an image file.");
-    return;
+    setStatus("Not an image file."); return;
   }
   setStatus("Loading image...");
   const url = URL.createObjectURL(file);
@@ -986,7 +861,6 @@ async function handleFile(file) {
       <div class="big">${file.name}</div>
       <div class="small">${img.width} × ${img.height} · tap to change</div>`;
     outSection.style.display = "block";
-    // Show source preview on canvas
     const maxDisplay = 800;
     const scale = Math.min(1, maxDisplay / Math.max(img.width, img.height));
     outCanvas.width = Math.round(img.width * scale);
