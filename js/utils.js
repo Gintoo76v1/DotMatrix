@@ -1,5 +1,3 @@
-// js/utils.js
-
 export function mulberry32(seed) {
   let t = seed >>> 0;
   return function() {
