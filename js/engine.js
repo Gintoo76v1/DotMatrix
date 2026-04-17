@@ -48,44 +48,84 @@ export async function render(srcImage, onProgressUpdate) {
   const profile = PROFILES[state.profile];
   const seed = state.seed || Math.floor(Math.random() * 1e9);
   const rng = mulberry32(seed);
-
   const srcAspect = srcImage.width / srcImage.height;
-  let paperW, paperH;
-  let marginMm = 0;
-
-  if (state.paperFormat === "Original") {
-    paperW = (srcImage.width / state.dpi) * MM_PER_INCH;
-    paperH = (srcImage.height / state.dpi) * MM_PER_INCH;
-    marginMm = 0; 
-  } else if (state.paperFormat === "Fit") {
-    paperH = 297;
-    paperW = paperH * srcAspect;
-    marginMm = 10;
-  } else {
-    const size = PAPER_SIZES_MM[state.paperFormat];
-    if (state.orientation === "Landscape") { paperW = size[1]; paperH = size[0]; }
-    else { paperW = size[0]; paperH = size[1]; }
-    marginMm = 10;
-  }
-
-  const printableW = Math.max(1, paperW - 2 * marginMm);
-  const printableH = Math.max(1, paperH - 2 * marginMm);
-
+  
   const condensedMult = (state.condensed && profile.supports_condensed) ? 1.5 : 1.0;
   const dpiH = profile.dpi_h * condensedMult;
   const dpiV = profile.dpi_v;
 
-  const maxGridW = Math.round(printableW / MM_PER_INCH * dpiH);
-  const maxGridH = Math.round(printableH / MM_PER_INCH * dpiV);
-  const targetGridAspect = srcAspect * (dpiH / dpiV);
+  let outW, outH, gridW, gridH, printPxW, printPxH, offsetX, offsetY, stepX, stepY, effDpi;
 
-  let gridW, gridH;
-  if ((maxGridW / maxGridH) > targetGridAspect) {
-    gridH = maxGridH;
-    gridW = Math.round(gridH * targetGridAspect);
+  // FIX: Im Original Modus wird die Bild-Geometrie jetzt zu 100% erhalten. Keine Ränder, kein Stauchen.
+  if (state.paperFormat === "Original") {
+    outW = srcImage.width;
+    outH = srcImage.height;
+    
+    const longEdge = Math.max(outW, outH);
+    if (longEdge > state.maxSize) {
+      const scale = state.maxSize / longEdge;
+      outW = Math.round(outW * scale);
+      outH = Math.round(outH * scale);
+    }
+    
+    let physW_inch = outW / state.dpi;
+    let physH_inch = outH / state.dpi;
+    
+    gridW = Math.max(1, Math.round(physW_inch * dpiH));
+    gridH = Math.max(1, Math.round(physH_inch * dpiV));
+    
+    effDpi = state.dpi;
+    printPxW = outW;
+    printPxH = outH;
+    offsetX = 0;
+    offsetY = 0;
+    stepX = outW / gridW;
+    stepY = outH / gridH;
+    
   } else {
-    gridW = maxGridW;
-    gridH = Math.round(gridW / targetGridAspect);
+    let paperW, paperH;
+    if (state.paperFormat === "Fit") {
+      paperH = 297;
+      paperW = paperH * srcAspect;
+    } else {
+      const size = PAPER_SIZES_MM[state.paperFormat];
+      if (state.orientation === "Landscape") { paperW = size[1]; paperH = size[0]; }
+      else { paperW = size[0]; paperH = size[1]; }
+    }
+
+    const marginMm = 10;
+    const printableW = Math.max(1, paperW - 2 * marginMm);
+    const printableH = Math.max(1, paperH - 2 * marginMm);
+
+    const maxGridW = Math.round(printableW / MM_PER_INCH * dpiH);
+    const maxGridH = Math.round(printableH / MM_PER_INCH * dpiV);
+    const targetGridAspect = srcAspect * (dpiH / dpiV);
+
+    if ((maxGridW / maxGridH) > targetGridAspect) {
+      gridH = maxGridH;
+      gridW = Math.round(gridH * targetGridAspect);
+    } else {
+      gridW = maxGridW;
+      gridH = Math.round(gridW / targetGridAspect);
+    }
+
+    outW = Math.round(paperW / MM_PER_INCH * state.dpi);
+    outH = Math.round(paperH / MM_PER_INCH * state.dpi);
+    const longEdge = Math.max(outW, outH);
+    if (longEdge > state.maxSize) {
+      const scale = state.maxSize / longEdge;
+      outW = Math.round(outW * scale);
+      outH = Math.round(outH * scale);
+    }
+    
+    effDpi = outW / (paperW / MM_PER_INCH);
+    printPxW = gridW / dpiH * effDpi;
+    printPxH = gridH / dpiV * effDpi;
+    
+    offsetX = Math.round((outW - printPxW) / 2);
+    offsetY = Math.round((outH - printPxH) / 2);
+    stepX = effDpi / dpiH;
+    stepY = effDpi / dpiV;
   }
 
   const gridCanvas = document.createElement("canvas");
@@ -103,35 +143,14 @@ export async function render(srcImage, onProgressUpdate) {
   else if (state.dither === "ordered")    dots = orderedDither(gray, gridW, gridH);
   else                                    dots = thresholdDither(gray, gridW, gridH, state.threshold);
 
-  let outW = Math.round(paperW / MM_PER_INCH * state.dpi);
-  let outH = Math.round(paperH / MM_PER_INCH * state.dpi);
-  const longEdge = Math.max(outW, outH);
-  
-  if (longEdge > state.maxSize) {
-    const scale = state.maxSize / longEdge;
-    outW = Math.round(outW * scale);
-    outH = Math.round(outH * scale);
-  }
-  const effDpi = outW / (paperW / MM_PER_INCH);
-
   const ink = new Float32Array(outW * outH);
   const dotPx = Math.max(2, Math.round(profile.dot_diameter_mm / MM_PER_INCH * effDpi));
   const {data: stamp, size: stampSize} = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density);
   const stampR = (stampSize - 1) / 2;
 
   const passes = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
-
-  const printPxW = gridW / dpiH * effDpi;
-  const printPxH = gridH / dpiV * effDpi;
-  
-  const offsetX = Math.round((outW - printPxW) / 2);
-  const offsetY = Math.round((outH - printPxH) / 2);
-  const stepX = effDpi / dpiH;
-  const stepY = effDpi / dpiV;
-
   const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
   const bandAmp = profile.banding * state.bandingScale;
-  
   const wearStrength = state.wearStrength / 100;
 
   const rowBands = new Float32Array(gridH);
@@ -157,17 +176,36 @@ export async function render(srcImage, onProgressUpdate) {
       let cy = offsetY + Math.round(gy * stepY + stepY / 2);
       
       let wearFactor = 1.0;
+      let isGhosting = false;
 
       if (state.wearPattern === "cloudy") {
         let noise = Math.sin(gx * 0.05) * Math.sin(gy * 0.05) * 0.5 + 0.5;
         wearFactor = 1.0 - (noise * wearStrength * 0.6); 
       } 
+      // Hier ist der alte extreme Wolken-Effekt!
+      else if (state.wearPattern === "alt_cloudy") {
+        let noise = Math.sin(gx * 0.02) * Math.sin(gy * 0.03) * 0.5 + 0.5;
+        wearFactor = 1.0 - (noise * wearStrength); 
+      }
       else if (state.wearPattern === "pin_skip") {
         if (rng() < (wearStrength * 0.3)) continue; 
       } 
       else if (state.wearPattern === "misaligned") {
         let shiftOscillation = Math.sin(gy * 0.8) * 2.0; 
         cx += Math.round(shiftOscillation * wearStrength * (effDpi / 150)); 
+      }
+      else if (state.wearPattern === "ghosting") {
+        isGhosting = true;
+      }
+      else if (state.wearPattern === "ribbon_twist") {
+        let twist = Math.sin(gx * 0.005 + gy * 0.01);
+        if (twist > 0.5) wearFactor = 1.0 - (wearStrength * twist);
+      }
+      else if (state.wearPattern === "smudge") {
+        if (Math.sin(gy * 0.2) > 0.95 && Math.sin(gx * 0.05) > 0) {
+             cx += Math.round(rng() * 5 * wearStrength);
+             wearFactor *= 0.5;
+        }
       }
 
       if (passJitter > 0) {
@@ -177,6 +215,11 @@ export async function render(srcImage, onProgressUpdate) {
 
       const band = rowBands[gy] * wearFactor;
       stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
+
+      // Zusätzlicher Stempel für Ghosting
+      if (isGhosting) {
+        stampInto(ink, outW, outH, stamp, stampSize, cx - stampR + Math.round(6 * wearStrength), cy - stampR, band * 0.3 * wearStrength);
+      }
 
       processed++;
       if ((processed & 0x7FFF) === 0) {
