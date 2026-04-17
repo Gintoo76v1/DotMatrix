@@ -134,7 +134,7 @@ wireSegmented("ditherBtns", "dither", "dither", () => {
 });
 wireSegmented("paperFormatBtns", "paperFormat", "format");
 wireSegmented("orientationBtns", "orientation", "orient");
-wireSegmented("wearBtns", "wearPattern", "wear"); // Bound to the new pattern strings
+wireSegmented("wearBtns", "wearPattern", "wear");
 
 document.querySelectorAll(".check").forEach(el => {
   el.addEventListener("click", () => {
