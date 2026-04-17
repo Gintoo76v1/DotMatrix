@@ -132,7 +132,6 @@ export async function render(srcImage, onProgressUpdate) {
   const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
   const bandAmp = profile.banding * state.bandingScale;
   
-  // FIX: Hardware Error Variables
   const wearStrength = state.wearStrength / 100;
 
   const rowBands = new Float32Array(gridH);
@@ -159,24 +158,18 @@ export async function render(srcImage, onProgressUpdate) {
       
       let wearFactor = 1.0;
 
-      // --- HARDWARE ERRORS LOGIC FIX ---
       if (state.wearPattern === "cloudy") {
-        // Sanfter Wolken-Effekt: Reduziert Opacity, fällt aber NIE auf 0 (mind. 40% verbleiben bei Max-Settings)
         let noise = Math.sin(gx * 0.05) * Math.sin(gy * 0.05) * 0.5 + 0.5;
         wearFactor = 1.0 - (noise * wearStrength * 0.6); 
       } 
       else if (state.wearPattern === "pin_skip") {
-        // Einzelne Nadeln versagen komplett: Zufälliger Dot-Drop (Max. 30% Ausfallrate)
         if (rng() < (wearStrength * 0.3)) continue; 
       } 
       else if (state.wearPattern === "misaligned") {
-        // Wackelnder Druckkopf: Horizontale Verschiebung ganzer Zeilen
         let shiftOscillation = Math.sin(gy * 0.8) * 2.0; 
-        // Skaliert mit DPI, damit die Verschiebung proportional bleibt
         cx += Math.round(shiftOscillation * wearStrength * (effDpi / 150)); 
       }
 
-      // Natürliches Hardware-Jitter (immer aktiv)
       if (passJitter > 0) {
         cx += Math.round(gaussian(rng) * passJitter);
         cy += Math.round(gaussian(rng) * passJitter);
