@@ -1,6 +1,9 @@
 export const MM_PER_INCH = 25.4;
 export const PAPER_SIZES_MM = {
   A4:     [210.0, 297.0],
+  A5:     [148.0, 210.0],
+  A6:     [105.0, 148.0],
+  Rezept: [105.0, 148.0], // Kassenrezept Muster 16 (in Landscape nutzen!)
   Letter: [215.9, 279.4],
 };
 
