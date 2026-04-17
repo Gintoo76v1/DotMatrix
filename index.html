@@ -116,29 +116,27 @@
 
 <section>
   <div class="section-label">Paper & Format</div>
-  <div class="grid-2">
-    <div>
-      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Format</div>
-      <div class="segmented" id="paperFormatBtns" style="flex-direction: column;">
-        <button data-format="Original" class="active" style="border-right: 0; border-bottom: 1px solid var(--line);">1:1 Orig</button>
-        <button data-format="Fit" style="border-right: 0; border-bottom: 1px solid var(--line);">Auto/Fit</button>
-        <button data-format="A4" style="border-right: 0; border-bottom: 1px solid var(--line);">A4</button>
-        <button data-format="Letter" style="border-right: 0;">Letter</button>
-      </div>
-    </div>
-    <div>
-      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Orientation</div>
-      <div class="segmented" id="orientationBtns" style="flex-direction: column;">
-        <button data-orient="Portrait" class="active" style="border-right: 0; border-bottom: 1px solid var(--line);">Portrait</button>
-        <button data-orient="Landscape" style="border-right: 0;">Landscape</button>
-      </div>
-    </div>
+  <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Format</div>
+  <div class="segmented scrollable" id="paperFormatBtns" style="margin-bottom: 10px;">
+    <button data-format="Original" class="active">1:1 Orig</button>
+    <button data-format="Fit">Auto</button>
+    <button data-format="A4">A4</button>
+    <button data-format="A5">A5</button>
+    <button data-format="A6">A6</button>
+    <button data-format="Rezept">Rezept</button>
+    <button data-format="Letter">Letter</button>
+  </div>
+
+  <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Orientation</div>
+  <div class="segmented" id="orientationBtns">
+    <button data-orient="Portrait" class="active">Portrait</button>
+    <button data-orient="Landscape">Landscape</button>
   </div>
 </section>
 
 <section>
   <div class="section-label">Ribbon · Media</div>
-  <div class="grid-2">
+  <div class="grid-2" style="margin-bottom: 14px;">
     <div>
       <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Ink</div>
       <div class="swatches" id="inkSwatches">
@@ -161,24 +159,21 @@
     </div>
   </div>
   
-  <div class="grid-2" style="margin-top: 14px;">
-    <div>
-      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Hardware Errors</div>
-      <div class="segmented" id="wearBtns" style="flex-direction: column;">
-        <button data-wear="none" class="active" style="border-right: 0; border-bottom: 1px solid var(--line);">Fresh</button>
-        <button data-wear="cloudy" style="border-right: 0; border-bottom: 1px solid var(--line);">Cloudy</button>
-        <button data-wear="pin_skip" style="border-right: 0; border-bottom: 1px solid var(--line);">Pin Skip</button>
-        <button data-wear="misaligned" style="border-right: 0;">Misaligned</button>
-      </div>
-    </div>
-    <div>
-      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Error Strength</div>
-      <label class="field" style="margin-top: 0;">
-        <span class="name"><span>Intensity</span><b id="wearVal">50%</b></span>
-        <input type="range" id="wearSlider" min="0" max="100" value="50">
-      </label>
-    </div>
+  <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Hardware Errors</div>
+  <div class="segmented scrollable" id="wearBtns" style="margin-bottom: 10px;">
+    <button data-wear="none" class="active">Fresh</button>
+    <button data-wear="cloudy">Cloudy</button>
+    <button data-wear="alt_cloudy">Alt Cloud</button>
+    <button data-wear="ghosting">Ghost</button>
+    <button data-wear="misaligned">Wobble</button>
+    <button data-wear="pin_skip">Pin Skip</button>
+    <button data-wear="smudge">Smudge</button>
+    <button data-wear="ribbon_twist">Twist</button>
   </div>
+  <label class="field" style="margin-top: 0;">
+    <span class="name"><span>Error Intensity</span><b id="wearVal">50%</b></span>
+    <input type="range" id="wearSlider" min="0" max="100" value="50">
+  </label>
 </section>
 
 <section>
@@ -209,7 +204,7 @@
 
 <footer>
   <div class="dots">· · · · ·</div>
-  dotmatrix v1.3.0 · WebGL Stable
+  dotmatrix v1.4.0 · 1:1 Layout Fix
 </footer>
 
 <div class="actions">
