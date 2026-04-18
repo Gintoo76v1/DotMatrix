@@ -1,9 +1,8 @@
-import { state, PROFILES } from './config.js';
+import { state, PROFILES, PRESETS } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
 // ==================== SOURCE DPI DETECTION ====================
 
-// Read JFIF APP0 density from a JPEG header buffer (first ~64 bytes suffice).
 function readJfifDpi(buf) {
   const v = new DataView(buf);
   if (v.byteLength < 18 || v.getUint16(0) !== 0xFFD8) return null;
@@ -18,7 +17,6 @@ function readJfifDpi(buf) {
   return null;
 }
 
-// Read pHYs DPI from a PNG header buffer (first ~256 bytes cover IHDR + pHYs).
 function readPngDpi(buf) {
   const v = new DataView(buf);
   if (v.byteLength < 30 || v.getUint32(0) !== 0x89504E47) return null;
@@ -37,23 +35,19 @@ function readPngDpi(buf) {
   return null;
 }
 
-// Snap raw DPI to the dpiSlider's step grid (min 100, max 1200, step 50).
 function snapDpi(dpi) {
   return Math.max(100, Math.min(1200, Math.round(dpi / 50) * 50));
 }
 
-// Estimate a plausible render DPI when metadata is absent or a screen-only
-// value (≤ 96). Assumes the image is a scanned A4 document; falls back
-// reasonably for smaller formats because the resulting DPI is clamped.
 function estimateDpiFromImageSize(img) {
   const longPx    = Math.max(img.width, img.height);
-  const a4LongIn  = 297 / 25.4; // 11.69 in
+  const a4LongIn  = 297 / 25.4;
   return snapDpi(Math.round(longPx / a4LongIn));
 }
 
 // ==================== INTERACTIVE ANIMATIONS ====================
 document.addEventListener('click', (e) => {
-  if(e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+  if(e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   const ripple = document.createElement('div');
   ripple.className = 'click-shockwave';
   ripple.style.left = e.clientX + 'px';
@@ -63,7 +57,7 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
   if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) return;
 
   const keyEl = document.createElement('div');
@@ -130,8 +124,6 @@ function detectAndSetPaperColor(img) {
   }
 }
 
-// Analyse des Histogramms: setzt Helligkeit, Kontrast und Schwellwert
-// automatisch anhand des Tondynamikumfangs des Quellbildes.
 function analyzeAndAdaptImage(img) {
   try {
     const c = document.createElement("canvas");
@@ -146,7 +138,6 @@ function analyzeAndAdaptImage(img) {
       hist[luma]++;
     }
 
-    // Find 2nd and 98th percentile to stretch dynamic range
     const total = 160 * 160;
     let cumSum = 0, p2 = 0, p98 = 255;
     for (let i = 0; i < 256; i++) {
@@ -157,17 +148,10 @@ function analyzeAndAdaptImage(img) {
 
     const range = Math.max(p98 - p2, 20);
     const midpoint = (p2 + p98) / 2;
-
-    // Detect document/form images (receipts, prescriptions, forms):
-    // >45% of pixels are bright (luma > 180) → mostly paper, not photo.
     const brightPixels = hist.slice(180).reduce((a, b) => a + b, 0);
     const isDocument   = brightPixels / total > 0.45;
 
     if (isDocument) {
-      // Document mode: boost contrast sharply so text→0 and paper→255.
-      // Standard threshold=128 then cleanly separates ink from paper.
-      // Lowering contrast here (as the old formula did) caused mid-grey
-      // noise pixels to cross the threshold and print — creating blur.
       const newContrast = Math.min(65, Math.round((220 / range - 1) * 55));
       state.brightness = 0;
       state.contrast   = Math.max(20, newContrast);
@@ -185,7 +169,6 @@ function analyzeAndAdaptImage(img) {
       );
       document.getElementById("thresholdField").style.display = "block";
     } else {
-      // Photo mode: gently adjust brightness toward midpoint, soft contrast boost.
       const newBrightness = Math.round((128 - midpoint) * 0.35);
       const newContrast   = Math.min(40, Math.round((180 / range - 1) * 30));
       state.brightness = Math.max(-60, Math.min(60, newBrightness));
@@ -233,6 +216,98 @@ document.getElementById('themeSelector').addEventListener('click', (e) => {
   document.documentElement.setAttribute('data-theme', btn.dataset.settheme);
 });
 
+// --- PRESET SYSTEM ---
+const presetSelect = document.getElementById('presetSelect');
+function loadPresetsToUI() {
+  presetSelect.innerHTML = '<option value="">-- Select Preset --</option>';
+  Object.keys(PRESETS).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    presetSelect.appendChild(opt);
+  });
+}
+loadPresetsToUI();
+
+function applyPreset(presetName) {
+  if (!PRESETS[presetName]) return;
+  const p = PRESETS[presetName];
+  Object.assign(state, JSON.parse(JSON.stringify(p))); // Deep copy
+
+  document.querySelectorAll('#profileBtns button').forEach(b => b.classList.toggle('active', b.dataset.profile === state.profile));
+  updateProfileMeta();
+  
+  document.getElementById("thresholdSlider").value = state.threshold; document.getElementById("thresholdVal").textContent = state.threshold;
+  document.getElementById("brightnessSlider").value = state.brightness; document.getElementById("brightnessVal").textContent = state.brightness;
+  document.getElementById("contrastSlider").value = state.contrast; document.getElementById("contrastVal").textContent = state.contrast;
+  document.getElementById("gammaSlider").value = state.gamma; document.getElementById("gammaVal").textContent = state.gamma.toFixed(1);
+  document.getElementById("dpiSlider").value = state.dpi; document.getElementById("dpiVal").textContent = state.dpi;
+  document.getElementById("jitterSlider").value = state.jitterScale * 10; document.getElementById("jitterVal").textContent = state.jitterScale.toFixed(1);
+  document.getElementById("bandingSlider").value = state.bandingScale * 10; document.getElementById("bandingVal").textContent = state.bandingScale.toFixed(1);
+  document.getElementById("maxSizeSlider").value = state.maxSize; document.getElementById("maxSizeVal").textContent = state.maxSize;
+  
+  document.querySelectorAll('#errorList input[type="range"]').forEach(slider => {
+    const key = slider.dataset.error;
+    slider.value = state.wear[key] || 0;
+    document.getElementById(`wear_${key}_val`).textContent = `${slider.value}%`;
+  });
+
+  document.querySelectorAll("#ditherBtns button").forEach(b => b.classList.toggle("active", b.dataset.dither === state.dither));
+  document.getElementById("thresholdField").style.display = state.dither === "threshold" ? "block" : "none";
+  document.querySelectorAll("#paperFormatBtns button").forEach(b => b.classList.toggle("active", b.dataset.format === state.paperFormat));
+  document.querySelectorAll("#orientationBtns button").forEach(b => b.classList.toggle("active", b.dataset.orient === state.orientation));
+
+  const doubleStrikeCheck = document.querySelector('[data-flag="doubleStrike"]');
+  state.doubleStrike ? doubleStrikeCheck.classList.add("on") : doubleStrikeCheck.classList.remove("on");
+
+  const condensedCheck = document.querySelector('[data-flag="condensed"]');
+  state.condensed ? condensedCheck.classList.add("on") : condensedCheck.classList.remove("on");
+
+  const invertCheck = document.querySelector('[data-flag="invert"]');
+  state.invert ? invertCheck.classList.add("on") : invertCheck.classList.remove("on");
+
+  const softBlurCheck = document.querySelector('[data-flag="softBlur"]');
+  state.softBlur ? softBlurCheck.classList.add("on") : softBlurCheck.classList.remove("on");
+
+  document.querySelectorAll('#inkSwatches .swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.ink === state.ink.join(','));
+  });
+  document.querySelectorAll('#paperSwatches .swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.paper === state.paper.join(','));
+  });
+
+  refreshAscii();
+}
+
+presetSelect.addEventListener('change', (e) => applyPreset(e.target.value));
+
+document.getElementById('exportPresetBtn').addEventListener('click', () => {
+  const exportData = JSON.stringify(state, null, 2);
+  const blob = new Blob([exportData], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `dotmatrix_preset_${Date.now()}.json`;
+  a.click();
+});
+
+document.getElementById('importPresetBtn').addEventListener('click', () => document.getElementById('presetInput').click());
+document.getElementById('presetInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      const name = "Imported_" + file.name.split('.')[0];
+      PRESETS[name] = imported;
+      loadPresetsToUI();
+      presetSelect.value = name;
+      applyPreset(name);
+    } catch(err) { alert("Invalid JSON file"); }
+  };
+  reader.readAsText(file);
+});
+
+
 function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
   document.getElementById(containerId).addEventListener("click", (e) => {
     const btn = e.target.closest("button");
@@ -246,12 +321,12 @@ function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
 }
 
 wireSegmented("profileBtns", "profile", "profile", updateProfileMeta);
+
 wireSegmented("ditherBtns", "dither", "dither", () => {
   document.getElementById("thresholdField").style.display = state.dither === "threshold" ? "block" : "none";
 });
 wireSegmented("paperFormatBtns", "paperFormat", "format");
 wireSegmented("orientationBtns", "orientation", "orient");
-wireSegmented("wearBtns", "wearPattern", "wear");
 
 document.querySelectorAll(".check").forEach(el => {
   el.addEventListener("click", () => {
@@ -275,6 +350,18 @@ function wireSwatches(containerId, stateKey, attrKey) {
 wireSwatches("inkSwatches", "ink", "ink");
 wireSwatches("paperSwatches", "paper", "paper");
 
+// --- MODULAR ERRORS BINDING ---
+document.querySelectorAll('#errorList input[type="range"]').forEach(slider => {
+  const key = slider.dataset.error;
+  const valEl = document.getElementById(`wear_${key}_val`);
+  slider.addEventListener('input', (e) => {
+    state.wear[key] = parseInt(e.target.value);
+    valEl.textContent = `${e.target.value}%`;
+    refreshAscii();
+  });
+});
+
+
 function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, previewUpdate = false) {
   const s = document.getElementById(id);
   const v = document.getElementById(valId);
@@ -296,7 +383,6 @@ wireSlider("jitterSlider", "jitterVal", "jitterScale", v => +v / 10, v => v.toFi
 wireSlider("bandingSlider", "bandingVal", "bandingScale", v => +v / 10, v => v.toFixed(1));
 wireSlider("maxSizeSlider", "maxSizeVal", "maxSize", v => +v, v => v);
 wireSlider("seedSlider", "seedVal", "seed", v => +v, v => v);
-wireSlider("wearSlider", "wearVal", "wearStrength", v => +v, v => v + "%");
 
 // ==================== FILE HANDLING ====================
 dropzone.addEventListener("click", () => fileInput.click());
@@ -315,20 +401,16 @@ async function handleFile(file) {
   }
   setStatus("Loading image...");
 
-  // Try to read embedded DPI from the file header before the image is decoded.
-  // We only need the first 256 bytes — negligible overhead.
   let metaDpi = null;
   try {
     const headerBuf = await file.slice(0, 256).arrayBuffer();
     if (file.type === 'image/jpeg') metaDpi = readJfifDpi(headerBuf);
     else if (file.type === 'image/png') metaDpi = readPngDpi(headerBuf);
-  } catch { /* metadata read failure is non-fatal */ }
+  } catch { }
 
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
-    // Set render DPI: use embedded metadata if it's a real scan DPI (> 96),
-    // otherwise estimate from image dimensions assuming A4 document size.
     const sourceDpi = (metaDpi && metaDpi > 96) ? snapDpi(metaDpi) : estimateDpiFromImageSize(img);
     state.dpi = sourceDpi;
     document.getElementById("dpiSlider").value = sourceDpi;
