@@ -527,7 +527,7 @@ details[open] summary::before { content: "[−]"; }
 footer { text-align: center; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); padding: 20px 0 0; }
 footer .dots { color: var(--accent); letter-spacing: 0.4em; }
 
-/* --- Scroll Listen für Profile und Errors --- */
+/* --- Scroll Listen für Errors --- */
 .scroll-list {
   display: flex;
   flex-direction: column;
@@ -539,22 +539,6 @@ footer .dots { color: var(--accent); letter-spacing: 0.4em; }
 }
 .scroll-list::-webkit-scrollbar { width: 6px; }
 .scroll-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-
-.list-btn {
-  text-align: left;
-  border: none;
-  border-bottom: 1px solid var(--line);
-  padding: 10px 12px;
-  background: transparent;
-  color: var(--ink);
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  cursor: pointer;
-  text-transform: uppercase;
-}
-.list-btn:last-child { border-bottom: none; }
-.list-btn.active { background: var(--ink) !important; color: #000 !important; }
-:root[data-theme="spline"] .list-btn.active { background: var(--accent) !important; box-shadow: inset 0 0 10px var(--accent-soft); }
 
 .error-list { padding: 0 12px 12px 12px; }
 .error-list .field { margin-top: 12px; }
