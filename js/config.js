@@ -3,7 +3,7 @@ export const PAPER_SIZES_MM = {
   A4:     [210.0, 297.0],
   A5:     [148.0, 210.0],
   A6:     [105.0, 148.0],
-  Rezept: [105.0, 148.0], // Kassenrezept Muster 16 (in Landscape nutzen!)
+  Rezept: [105.0, 148.0],
   Letter: [215.9, 279.4],
 };
 
@@ -34,13 +34,42 @@ export const state = {
   contrast: 20,
   gamma: 1.0,
   invert: false,
-  dpi: 900,
+  dpi: 300,
   jitterScale: 1.0,
   bandingScale: 1.0,
-  maxSize: 6000,
-  wearPattern: "none",
-  wearStrength: 50,
+  maxSize: 8000,
+  wear: {
+    cloudy: 0,
+    ghosting: 0,
+    misaligned: 0,
+    pin_skip: 0,
+    smudge: 0,
+    ribbon_twist: 0,
+    ink_bleed: 0,
+    head_drag: 0
+  },
   seed: 0,
   softBlur: false,
   sourceImage: null,
+};
+
+export const PRESETS = {
+  "System Default": {
+    profile: "oki_microline", dither: "threshold", threshold: 128, ink: [25,25,30], paper: [255,255,255],
+    paperFormat: "Original", orientation: "Portrait", doubleStrike: false, condensed: false,
+    brightness: 0, contrast: 20, gamma: 1.0, invert: false, dpi: 300, jitterScale: 1.0, bandingScale: 1.0, maxSize: 8000,
+    wear: { cloudy: 0, ghosting: 0, misaligned: 0, pin_skip: 0, smudge: 0, ribbon_twist: 0, ink_bleed: 0, head_drag: 0 }, softBlur: false
+  },
+  "Rezept": {
+    profile: "oki_microline", dither: "ordered", threshold: 128, ink: [25,25,30], paper: [248,245,232], // Auto-Paper approx
+    paperFormat: "Rezept", orientation: "Landscape", doubleStrike: false, condensed: false,
+    brightness: 100, contrast: 100, gamma: 2.0, invert: false, dpi: 300, jitterScale: 0.0, bandingScale: 0.0, maxSize: 8000,
+    wear: { cloudy: 0, ghosting: 20, misaligned: 15, pin_skip: 0, smudge: 0, ribbon_twist: 0, ink_bleed: 0, head_drag: 0 }, softBlur: false
+  },
+  "Heavy Damage": {
+    profile: "commodore_mps", dither: "floyd_steinberg", threshold: 128, ink: [25,25,30], paper: [234,223,184],
+    paperFormat: "Original", orientation: "Portrait", doubleStrike: false, condensed: false,
+    brightness: 10, contrast: 30, gamma: 1.2, invert: false, dpi: 150, jitterScale: 2.0, bandingScale: 2.5, maxSize: 4000,
+    wear: { cloudy: 30, ghosting: 40, misaligned: 60, pin_skip: 15, smudge: 50, ribbon_twist: 40, ink_bleed: 20, head_drag: 30 }, softBlur: true
+  }
 };
