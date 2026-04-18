@@ -233,7 +233,10 @@ function applyPreset(presetName) {
   const p = PRESETS[presetName];
   Object.assign(state, JSON.parse(JSON.stringify(p))); // Deep copy
 
-  document.querySelectorAll('#profileBtns button').forEach(b => b.classList.toggle('active', b.dataset.profile === state.profile));
+  // Update Profile Buttons correctly
+  document.querySelectorAll('#profileBtns button').forEach(b => {
+    b.classList.toggle('active', b.dataset.profile === state.profile);
+  });
   updateProfileMeta();
   
   document.getElementById("thresholdSlider").value = state.threshold; document.getElementById("thresholdVal").textContent = state.threshold;
@@ -307,7 +310,6 @@ document.getElementById('presetInput').addEventListener('change', (e) => {
   reader.readAsText(file);
 });
 
-
 function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
   document.getElementById(containerId).addEventListener("click", (e) => {
     const btn = e.target.closest("button");
@@ -360,7 +362,6 @@ document.querySelectorAll('#errorList input[type="range"]').forEach(slider => {
     refreshAscii();
   });
 });
-
 
 function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, previewUpdate = false) {
   const s = document.getElementById(id);
