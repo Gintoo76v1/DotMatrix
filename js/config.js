@@ -61,7 +61,7 @@ export const PRESETS = {
     wear: { cloudy: 0, ghosting: 0, misaligned: 0, pin_skip: 0, smudge: 0, ribbon_twist: 0, ink_bleed: 0, head_drag: 0 }, softBlur: false
   },
   "Rezept": {
-    profile: "oki_microline", dither: "ordered", threshold: 128, ink: [25,25,30], paper: [248,245,232], // Auto-Paper approx
+    profile: "oki_microline", dither: "ordered", threshold: 128, ink: [25,25,30], paper: [248,245,232],
     paperFormat: "Rezept", orientation: "Landscape", doubleStrike: false, condensed: false,
     brightness: 100, contrast: 100, gamma: 2.0, invert: false, dpi: 300, jitterScale: 0.0, bandingScale: 0.0, maxSize: 8000,
     wear: { cloudy: 0, ghosting: 20, misaligned: 15, pin_skip: 0, smudge: 0, ribbon_twist: 0, ink_bleed: 0, head_drag: 0 }, softBlur: false
