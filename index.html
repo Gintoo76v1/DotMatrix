@@ -27,7 +27,10 @@
     <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px">UI Theme</div>
     <div class="theme-bar" id="themeSelector">
       <button class="theme-btn active" data-settheme="spline">Spline 3D ⭐</button>
-      <button class="theme-btn" data-settheme="classic">Classic Retro</button>
+      <button class="theme-btn" data-settheme="glass">Glass ✦</button>
+      <button class="theme-btn" data-settheme="toxic">Toxic ☢</button>
+      <button class="theme-btn" data-settheme="proto">Proto ⬡</button>
+      <button class="theme-btn" data-settheme="classic">Classic</button>
       <button class="theme-btn" data-settheme="amber">Amber</button>
       <button class="theme-btn" data-settheme="gameboy">Gameboy</button>
       <button class="theme-btn" data-settheme="crt-hacker">Hacker ⭐</button>
@@ -199,12 +202,17 @@
       <span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span>
       <input type="range" id="seedSlider" min="0" max="9999" value="0">
     </label>
+    <div class="checks" style="margin-top: 14px;">
+      <label class="check" data-flag="softBlur">
+        <span class="box"></span><span>Softening Blur</span>
+      </label>
+    </div>
   </details>
 </section>
 
 <footer>
   <div class="dots">· · · · ·</div>
-  dotmatrix v1.4.0 · 1:1 Layout Fix
+  dotmatrix v2.0.0 · deep themes · pin physics · auto-adapt
 </footer>
 
 <div class="actions">

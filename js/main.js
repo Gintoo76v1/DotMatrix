@@ -1,6 +1,56 @@
 import { state, PROFILES } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
+// ==================== SOURCE DPI DETECTION ====================
+
+// Read JFIF APP0 density from a JPEG header buffer (first ~64 bytes suffice).
+function readJfifDpi(buf) {
+  const v = new DataView(buf);
+  if (v.byteLength < 18 || v.getUint16(0) !== 0xFFD8) return null;
+  if (v.getUint16(2) !== 0xFFE0) return null;
+  const sig = String.fromCharCode(v.getUint8(6), v.getUint8(7), v.getUint8(8), v.getUint8(9), v.getUint8(10));
+  if (sig !== 'JFIF\0') return null;
+  const units = v.getUint8(11);
+  const xd   = v.getUint16(12);
+  if (!xd) return null;
+  if (units === 1) return xd;
+  if (units === 2) return Math.round(xd * 2.54);
+  return null;
+}
+
+// Read pHYs DPI from a PNG header buffer (first ~256 bytes cover IHDR + pHYs).
+function readPngDpi(buf) {
+  const v = new DataView(buf);
+  if (v.byteLength < 30 || v.getUint32(0) !== 0x89504E47) return null;
+  let pos = 8;
+  while (pos + 12 <= v.byteLength) {
+    const len  = v.getUint32(pos);
+    const type = String.fromCharCode(v.getUint8(pos+4), v.getUint8(pos+5), v.getUint8(pos+6), v.getUint8(pos+7));
+    if (type === 'pHYs' && len === 9 && pos + 21 <= v.byteLength) {
+      const ppuX = v.getUint32(pos + 8);
+      const unit = v.getUint8(pos + 16);
+      if (unit === 1 && ppuX > 0) return Math.round(ppuX / 39.3701);
+    }
+    if (type === 'IDAT') break;
+    pos += 12 + len;
+  }
+  return null;
+}
+
+// Snap raw DPI to the dpiSlider's step grid (min 100, max 1200, step 50).
+function snapDpi(dpi) {
+  return Math.max(100, Math.min(1200, Math.round(dpi / 50) * 50));
+}
+
+// Estimate a plausible render DPI when metadata is absent or a screen-only
+// value (≤ 96). Assumes the image is a scanned A4 document; falls back
+// reasonably for smaller formats because the resulting DPI is clamped.
+function estimateDpiFromImageSize(img) {
+  const longPx    = Math.max(img.width, img.height);
+  const a4LongIn  = 297 / 25.4; // 11.69 in
+  return snapDpi(Math.round(longPx / a4LongIn));
+}
+
 // ==================== INTERACTIVE ANIMATIONS ====================
 document.addEventListener('click', (e) => {
   if(e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
@@ -51,12 +101,12 @@ function detectAndSetPaperColor(img) {
     c.width = 64; c.height = 64;
     const ctx = c.getContext("2d");
     ctx.drawImage(img, 0, 0, 64, 64);
-    const data = ctx.getImageData(0,0,64,64).data;
-    
+    const data = ctx.getImageData(0, 0, 64, 64).data;
+
     let r = 0, g = 0, b = 0, count = 0;
-    for(let y = 0; y < 64; y++) {
-      for(let x = 0; x < 64; x++) {
-        if(x < 4 || x > 59 || y < 4 || y > 59) {
+    for (let y = 0; y < 64; y++) {
+      for (let x = 0; x < 64; x++) {
+        if (x < 4 || x > 59 || y < 4 || y > 59) {
           const idx = (y * 64 + x) * 4;
           r += data[idx]; g += data[idx+1]; b += data[idx+2]; count++;
         }
@@ -64,23 +114,90 @@ function detectAndSetPaperColor(img) {
     }
     r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
 
-    let bestSwatch = null;
-    let minDist = Infinity;
-    
-    const swatches = document.querySelectorAll('#paperSwatches .swatch');
-    swatches.forEach(swatch => {
-      const rgb = swatch.dataset.paper.split(",").map(Number);
-      const dist = Math.pow(r - rgb[0], 2) + Math.pow(g - rgb[1], 2) + Math.pow(b - rgb[2], 2);
-      if(dist < minDist) { minDist = dist; bestSwatch = swatch; }
+    let bestSwatch = null, minDist = Infinity;
+    document.querySelectorAll('#paperSwatches .swatch').forEach(sw => {
+      const rgb = sw.dataset.paper.split(",").map(Number);
+      const dist = (r-rgb[0])**2 + (g-rgb[1])**2 + (b-rgb[2])**2;
+      if (dist < minDist) { minDist = dist; bestSwatch = sw; }
     });
-
-    if(bestSwatch) {
-      swatches.forEach(s => s.classList.remove("active"));
+    if (bestSwatch) {
+      document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.remove("active"));
       bestSwatch.classList.add("active");
       state.paper = bestSwatch.dataset.paper.split(",").map(Number);
     }
   } catch (e) {
-    console.warn("Auto-detect failed", e);
+    console.warn("Paper auto-detect failed", e);
+  }
+}
+
+// Analyse des Histogramms: setzt Helligkeit, Kontrast und Schwellwert
+// automatisch anhand des Tondynamikumfangs des Quellbildes.
+function analyzeAndAdaptImage(img) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 160; c.height = 160;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, 160, 160);
+    const { data } = ctx.getImageData(0, 0, 160, 160);
+
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < data.length; i += 4) {
+      const luma = Math.round(0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]);
+      hist[luma]++;
+    }
+
+    // Find 2nd and 98th percentile to stretch dynamic range
+    const total = 160 * 160;
+    let cumSum = 0, p2 = 0, p98 = 255;
+    for (let i = 0; i < 256; i++) {
+      cumSum += hist[i];
+      if (cumSum / total < 0.02) p2 = i;
+      if (cumSum / total < 0.98) p98 = i;
+    }
+
+    const range = Math.max(p98 - p2, 20);
+    const midpoint = (p2 + p98) / 2;
+
+    // Detect document/form images (receipts, prescriptions, forms):
+    // >45% of pixels are bright (luma > 180) → mostly paper, not photo.
+    const brightPixels = hist.slice(180).reduce((a, b) => a + b, 0);
+    const isDocument   = brightPixels / total > 0.45;
+
+    if (isDocument) {
+      // Document mode: boost contrast sharply so text→0 and paper→255.
+      // Standard threshold=128 then cleanly separates ink from paper.
+      // Lowering contrast here (as the old formula did) caused mid-grey
+      // noise pixels to cross the threshold and print — creating blur.
+      const newContrast = Math.min(65, Math.round((220 / range - 1) * 55));
+      state.brightness = 0;
+      state.contrast   = Math.max(20, newContrast);
+      state.threshold  = 128;
+      state.dither     = "threshold";
+
+      document.getElementById("brightnessSlider").value = 0;
+      document.getElementById("brightnessVal").textContent = 0;
+      document.getElementById("contrastSlider").value = state.contrast;
+      document.getElementById("contrastVal").textContent = state.contrast;
+      document.getElementById("thresholdSlider").value = 128;
+      document.getElementById("thresholdVal").textContent = 128;
+      document.querySelectorAll("#ditherBtns button").forEach(b =>
+        b.classList.toggle("active", b.dataset.dither === "threshold")
+      );
+      document.getElementById("thresholdField").style.display = "block";
+    } else {
+      // Photo mode: gently adjust brightness toward midpoint, soft contrast boost.
+      const newBrightness = Math.round((128 - midpoint) * 0.35);
+      const newContrast   = Math.min(40, Math.round((180 / range - 1) * 30));
+      state.brightness = Math.max(-60, Math.min(60, newBrightness));
+      state.contrast   = Math.max(0,   Math.min(40, newContrast));
+
+      document.getElementById("brightnessSlider").value = state.brightness;
+      document.getElementById("brightnessVal").textContent = state.brightness;
+      document.getElementById("contrastSlider").value = state.contrast;
+      document.getElementById("contrastVal").textContent = state.contrast;
+    }
+  } catch (e) {
+    console.warn("Image analysis failed", e);
   }
 }
 
@@ -197,11 +314,29 @@ async function handleFile(file) {
     setStatus("Not an image file."); return;
   }
   setStatus("Loading image...");
+
+  // Try to read embedded DPI from the file header before the image is decoded.
+  // We only need the first 256 bytes — negligible overhead.
+  let metaDpi = null;
+  try {
+    const headerBuf = await file.slice(0, 256).arrayBuffer();
+    if (file.type === 'image/jpeg') metaDpi = readJfifDpi(headerBuf);
+    else if (file.type === 'image/png') metaDpi = readPngDpi(headerBuf);
+  } catch { /* metadata read failure is non-fatal */ }
+
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
+    // Set render DPI: use embedded metadata if it's a real scan DPI (> 96),
+    // otherwise estimate from image dimensions assuming A4 document size.
+    const sourceDpi = (metaDpi && metaDpi > 96) ? snapDpi(metaDpi) : estimateDpiFromImageSize(img);
+    state.dpi = sourceDpi;
+    document.getElementById("dpiSlider").value = sourceDpi;
+    document.getElementById("dpiVal").textContent = sourceDpi;
+
     state.sourceImage = img;
     detectAndSetPaperColor(img);
+    analyzeAndAdaptImage(img);
 
     document.getElementById("dzBig").textContent = file.name;
     document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · tap to change`;

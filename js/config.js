@@ -38,8 +38,9 @@ export const state = {
   jitterScale: 1.0,
   bandingScale: 1.0,
   maxSize: 6000,
-  wearPattern: "none", 
+  wearPattern: "none",
   wearStrength: 50,
   seed: 0,
+  softBlur: false,
   sourceImage: null,
 };
