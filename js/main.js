@@ -108,33 +108,43 @@ function analyzeAndAdaptImage(img) {
     const range = Math.max(p98 - p2, 20);
     const midpoint = (p2 + p98) / 2;
 
-    // Auto-brightness: shift midpoint toward 140 (slightly above center,
-    // so print output looks rich rather than grey)
-    const newBrightness = Math.round((140 - midpoint) * 0.45);
-    // Auto-contrast: stretch range to fill ~80% of dynamic range
-    const newContrast = Math.round((200 / range - 1) * 45);
-
-    state.brightness = Math.max(-80, Math.min(80, newBrightness));
-    state.contrast   = Math.max(-60, Math.min(80, newContrast));
-
-    document.getElementById("brightnessSlider").value = state.brightness;
-    document.getElementById("brightnessVal").textContent = state.brightness;
-    document.getElementById("contrastSlider").value = state.contrast;
-    document.getElementById("contrastVal").textContent = state.contrast;
-
-    // If mostly bright content (document / form), switch to threshold mode
-    // with a value tuned to the upper end of the histogram.
+    // Detect document/form images (receipts, prescriptions, forms):
+    // >45% of pixels are bright (luma > 180) → mostly paper, not photo.
     const brightPixels = hist.slice(180).reduce((a, b) => a + b, 0);
-    if (brightPixels / total > 0.45) {
-      const newThreshold = Math.min(220, Math.round(p2 + range * 0.58));
-      state.dither = "threshold";
-      state.threshold = newThreshold;
-      document.getElementById("thresholdSlider").value = newThreshold;
-      document.getElementById("thresholdVal").textContent = newThreshold;
-      document.querySelectorAll("#ditherBtns button").forEach(b => {
-        b.classList.toggle("active", b.dataset.dither === "threshold");
-      });
+    const isDocument   = brightPixels / total > 0.45;
+
+    if (isDocument) {
+      // Document mode: boost contrast sharply so text→0 and paper→255.
+      // Standard threshold=128 then cleanly separates ink from paper.
+      // Lowering contrast here (as the old formula did) caused mid-grey
+      // noise pixels to cross the threshold and print — creating blur.
+      const newContrast = Math.min(65, Math.round((220 / range - 1) * 55));
+      state.brightness = 0;
+      state.contrast   = Math.max(20, newContrast);
+      state.threshold  = 128;
+      state.dither     = "threshold";
+
+      document.getElementById("brightnessSlider").value = 0;
+      document.getElementById("brightnessVal").textContent = 0;
+      document.getElementById("contrastSlider").value = state.contrast;
+      document.getElementById("contrastVal").textContent = state.contrast;
+      document.getElementById("thresholdSlider").value = 128;
+      document.getElementById("thresholdVal").textContent = 128;
+      document.querySelectorAll("#ditherBtns button").forEach(b =>
+        b.classList.toggle("active", b.dataset.dither === "threshold")
+      );
       document.getElementById("thresholdField").style.display = "block";
+    } else {
+      // Photo mode: gently adjust brightness toward midpoint, soft contrast boost.
+      const newBrightness = Math.round((128 - midpoint) * 0.35);
+      const newContrast   = Math.min(40, Math.round((180 / range - 1) * 30));
+      state.brightness = Math.max(-60, Math.min(60, newBrightness));
+      state.contrast   = Math.max(0,   Math.min(40, newContrast));
+
+      document.getElementById("brightnessSlider").value = state.brightness;
+      document.getElementById("brightnessVal").textContent = state.brightness;
+      document.getElementById("contrastSlider").value = state.contrast;
+      document.getElementById("contrastVal").textContent = state.contrast;
     }
   } catch (e) {
     console.warn("Image analysis failed", e);

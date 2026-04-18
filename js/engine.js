@@ -156,8 +156,10 @@ export async function render(srcImage, onProgressUpdate) {
   const pinDensMod = new Float32Array(numPins);
   const pinHealth = new Float32Array(numPins).fill(1.0);
 
-  // Tolerance range: ~20% of dot diameter → visible but realistic non-parallelism
-  const pinTolPx = dotPx * 0.22;
+  // Physical pin tolerance: proportional to head jitter_mm spec.
+  // Using 0.5× jitter gives ±0.62 px for OKI@900 DPI — subtle, non-smearing.
+  // (Old formula dotPx×0.22 gave ±2.64 px which smeared thin text strokes.)
+  const pinTolPx = Math.max(0.5, profile.jitter_mm * 0.5 / MM_PER_INCH * effDpi);
   for (let p = 0; p < numPins; p++) {
     pinYOff[p] = (rng() - 0.5) * 2 * pinTolPx;
     pinXOff[p] = (rng() - 0.5) * pinTolPx * 0.35;
@@ -326,7 +328,9 @@ export async function render(srcImage, onProgressUpdate) {
     d[j+3] = 255;
   }
 
-  boxBlur3x3(d, outW, outH);
+  // Final softening only at low DPI — at high DPI the Gaussian stamp already
+  // provides sufficient softness and the blur smears fine text.
+  if (effDpi < 550) boxBlur3x3(d, outW, outH);
   return { imageData: finalImg, width: outW, height: outH };
 }
 
