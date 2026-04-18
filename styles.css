@@ -173,7 +173,6 @@ body {
 }
 :root[data-theme="spline"] .retro-bg { display: none; }
 
-/* Glass: aurora gradients replace the default pattern */
 :root[data-theme="glass"] .retro-bg {
   background-image:
     radial-gradient(ellipse at 22% 42%, rgba(99, 102, 241, 0.28) 0%, transparent 52%),
@@ -184,7 +183,6 @@ body {
   animation: auroraDrift 14s ease-in-out infinite;
 }
 
-/* Toxic: radiation grid */
 :root[data-theme="toxic"] .retro-bg {
   background-image:
     repeating-linear-gradient(0deg, transparent 0 19px, rgba(57, 255, 20, 0.05) 19px 20px),
@@ -193,7 +191,6 @@ body {
   opacity: 1;
 }
 
-/* Proto: PCB circuit trace grid */
 :root[data-theme="proto"] .retro-bg {
   background-image:
     repeating-linear-gradient(0deg, transparent 0 29px, rgba(255, 123, 58, 0.07) 29px 30px),
@@ -211,7 +208,6 @@ body {
   background: #000000; 
   opacity: 0; 
   transition: opacity 0.5s; 
-  /* Z-INDEX FIX: Zwingt den Spline-Background dazu, KEINE Klicks abzufangen! */
   pointer-events: none; 
 }
 :root[data-theme="spline"] .spline-bg { opacity: 1; }
@@ -313,7 +309,6 @@ body::after {
 
 /* ==================== THEME-SPECIFIC OVERRIDES ==================== */
 
-/* Glass: frosted panels with aurora refraction */
 :root[data-theme="glass"] header,
 :root[data-theme="glass"] section {
   background: linear-gradient(145deg, rgba(255,255,255,0.075) 0%, rgba(255,255,255,0.025) 60%, rgba(129,140,248,0.04) 100%);
@@ -335,7 +330,6 @@ body::after {
   color: #000 !important;
 }
 
-/* Toxic: radioactive glow on active states */
 :root[data-theme="toxic"] .check.on .box {
   animation: toxicCheckPulse 1.6s ease-in-out infinite;
 }
@@ -351,7 +345,6 @@ body::after {
   animation-delay: -1.75s;
 }
 
-/* Proto: PCB scan line sweep */
 :root[data-theme="proto"] body::after {
   opacity: 0.8;
   background: linear-gradient(to bottom, transparent 0%, rgba(255, 123, 58, 0.04) 50%, transparent 100%);
@@ -359,7 +352,6 @@ body::after {
   animation: protoScanLine 5s linear infinite;
 }
 
-/* Enhanced CRT-Hacker: phosphor glow depth */
 :root[data-theme="crt-hacker"] header,
 :root[data-theme="crt-hacker"] section {
   box-shadow: 0 0 2px rgba(51,255,0,0.6), 0 0 20px rgba(51,255,0,0.12), 4px 4px 0 #000;
@@ -368,7 +360,6 @@ body::after {
   box-shadow: 0 0 12px rgba(51, 255, 0, 0.8);
 }
 
-/* Enhanced Vaporwave: chromatic aberration on accents */
 :root[data-theme="vaporwave"] .dot,
 :root[data-theme="vaporwave"] .section-label::before {
   animation: vaporChromaticShift 4s ease-in-out infinite;
@@ -392,7 +383,6 @@ header, section {
   transition: background-color 0.4s, border-color 0.4s, box-shadow 0.4s;
   animation: var(--ui-float);
   border-radius: 4px;
-  /* Z-INDEX FIX: Zwingt UI immer nach vorne! */
   position: relative;
   z-index: 10;
 }
@@ -536,3 +526,50 @@ details summary::before { content: "[+]"; color: var(--accent); font-family: "VT
 details[open] summary::before { content: "[−]"; }
 footer { text-align: center; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); padding: 20px 0 0; }
 footer .dots { color: var(--accent); letter-spacing: 0.4em; }
+
+/* --- Scroll Listen für Profile und Errors --- */
+.scroll-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  background: var(--paper-dark);
+  border-radius: 4px;
+}
+.scroll-list::-webkit-scrollbar { width: 6px; }
+.scroll-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.list-btn {
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.list-btn:last-child { border-bottom: none; }
+.list-btn.active { background: var(--ink) !important; color: #000 !important; }
+:root[data-theme="spline"] .list-btn.active { background: var(--accent) !important; box-shadow: inset 0 0 10px var(--accent-soft); }
+
+.error-list { padding: 0 12px 12px 12px; }
+.error-list .field { margin-top: 12px; }
+
+/* Preset Dropdown */
+.preset-dropdown {
+  width: 100%;
+  padding: 10px;
+  background: var(--paper-dark);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.preset-dropdown:focus { outline: 1px solid var(--accent); }
