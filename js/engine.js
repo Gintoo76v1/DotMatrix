@@ -12,7 +12,6 @@ export function makeDotStamp(diameterPx, softness, density) {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const dx = x - cx, dy = y - cx;
-      // Slight horizontal elongation simulates pin contact while head moves
       const r = Math.sqrt(dx * dx * 0.88 + dy * dy);
       let v;
       if (r <= inner) v = 1;
@@ -45,7 +44,6 @@ export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
   }
 }
 
-// Bilinear-interpolated value noise for realistic cloudy effects
 function makeValueNoise(rng, noiseW, noiseH) {
   const grid = new Float32Array(noiseW * noiseH);
   for (let i = 0; i < grid.length; i++) grid[i] = rng();
@@ -146,7 +144,6 @@ export async function render(srcImage, onProgressUpdate) {
   const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
   const bandAmp = profile.banding * state.bandingScale;
 
-  // ── PER-PIN CHARACTERISTICS ──────────────────────────────────────────────
   const numPins = profile.pins;
   const pinYOff = new Float32Array(numPins);
   const pinXOff = new Float32Array(numPins);
@@ -161,9 +158,8 @@ export async function render(srcImage, onProgressUpdate) {
     pinDensMod[p] = 1.0 - 0.14 * norm * norm;
   }
 
-  // ── WEAR PATTERN PRE-COMPUTATION ─────────────────────────────────────────
+  // Pre-computations for Modular Errors
   const noise1 = makeValueNoise(rng, 16, 16);
-  
   const rowMisalign = new Float32Array(gridH);
   if (state.wear.misaligned > 0) {
     let acc = 0;
@@ -224,7 +220,6 @@ export async function render(srcImage, onProgressUpdate) {
       const [gx, gy] = onCells[idx];
       const pinIdx = gy % numPins;
 
-      // MODULAR ERROR SYSTEM
       const w_cloudy = state.wear.cloudy / 100;
       const w_misalign = state.wear.misaligned / 100;
       const w_ghosting = state.wear.ghosting / 100;
@@ -261,8 +256,8 @@ export async function render(srcImage, onProgressUpdate) {
 
       let bleedStampSize = stampSize;
       if (w_bleed > 0) {
-        dotBandMult += rng() * w_bleed * 0.5; // darker
-        if (rng() < w_bleed * 0.3) bleedStampSize = Math.floor(stampSize * 1.3); // bigger radius
+        dotBandMult += rng() * w_bleed * 0.5;
+        if (rng() < w_bleed * 0.3) bleedStampSize = Math.floor(stampSize * 1.3);
       }
 
       const ribbonFade = 1.0 - (gx / gridW) * 0.09;
