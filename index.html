@@ -48,6 +48,18 @@
   </div>
 </section>
 
+<section>
+  <div class="section-label">System & Custom Presets</div>
+  <div class="preset-controls">
+    <select id="presetSelect" class="preset-dropdown"></select>
+    <div style="display: flex; gap: 6px; margin-top: 8px;">
+      <button class="btn" style="min-height: 32px; padding: 4px; font-size:10px;" id="exportPresetBtn">Export JSON</button>
+      <button class="btn" style="min-height: 32px; padding: 4px; font-size:10px;" id="importPresetBtn">Import JSON</button>
+      <input type="file" id="presetInput" accept=".json" style="display:none">
+    </div>
+  </div>
+</section>
+
 <section id="outputSection" style="display:none">
   <div class="section-label">Output & Preview</div>
   <div class="canvas-wrap">
@@ -59,18 +71,7 @@
 
 <section>
   <div class="section-label">Printer profile</div>
-  <div class="segmented scrollable" id="profileBtns">
-    <button data-profile="epson_fx">FX<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
-    <button data-profile="epson_lq">LQ<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
-    <button data-profile="ibm_proprinter">IBM<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
-    <button data-profile="oki_microline" class="active">OKI<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
-    <button data-profile="star_nx1000">STAR<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
-    <button data-profile="panasonic_kx">PANA<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
-    <button data-profile="dec_la75">DEC<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
-    <button data-profile="nec_p6">NEC<br><span style="font-size:9px;opacity:.7">24-PIN</span></button>
-    <button data-profile="commodore_mps">C64<br><span style="font-size:9px;opacity:.7">7-PIN</span></button>
-    <button data-profile="apple_imagewriter">APPLE<br><span style="font-size:9px;opacity:.7">9-PIN</span></button>
-  </div>
+  <div class="scroll-list" id="profileList"></div>
   <div class="profile-meta" id="profileMeta"></div>
 
   <div class="checks">
@@ -161,30 +162,28 @@
       </div>
     </div>
   </div>
-  
-  <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Hardware Errors</div>
-  <div class="segmented scrollable" id="wearBtns" style="margin-bottom: 10px;">
-    <button data-wear="none" class="active">Fresh</button>
-    <button data-wear="cloudy">Cloudy</button>
-    <button data-wear="alt_cloudy">Alt Cloud</button>
-    <button data-wear="ghosting">Ghost</button>
-    <button data-wear="misaligned">Wobble</button>
-    <button data-wear="pin_skip">Pin Skip</button>
-    <button data-wear="smudge">Smudge</button>
-    <button data-wear="ribbon_twist">Twist</button>
+</section>
+
+<section>
+  <div class="section-label">Hardware Errors (Modular)</div>
+  <div class="scroll-list error-list" id="errorList">
+    <label class="field"><span class="name"><span>Wobble (Misalign)</span><b id="wear_misaligned_val">0%</b></span><input type="range" data-error="misaligned" min="0" max="100" value="0"></label>
+    <label class="field"><span class="name"><span>Ghosting</span><b id="wear_ghosting_val">0%</b></span><input type="range" data-error="ghosting" min="0" max="100" value="0"></label>
+    <label class="field"><span class="name"><span>Cloudy</span><b id="wear_cloudy_val">0%</b></span><input type="range" data-error="cloudy" min="0" max="100" value="0"></label>
+    <label class="field"><span class="name"><span>Pin Skip</span><b id="wear_pin_skip_val">0%</b></span><input type="range" data-error="pin_skip" min="0" max="100" value="0"></label>
+    <label class="field"><span class="name"><span>Smudge</span><b id="wear_smudge_val">0%</b></span><input type="range" data-error="smudge" min="0" max="100" value="0"></label>
+    <label class="field"><span class="name"><span>Ribbon Twist</span><b id="wear_ribbon_twist_val">0%</b></span><input type="range" data-error="ribbon_twist" min="0" max="100" value="0"></label>
+    <label class="field"><span class="name"><span>Ink Bleed</span><b id="wear_ink_bleed_val">0%</b></span><input type="range" data-error="ink_bleed" min="0" max="100" value="0"></label>
+    <label class="field"><span class="name"><span>Head Drag</span><b id="wear_head_drag_val">0%</b></span><input type="range" data-error="head_drag" min="0" max="100" value="0"></label>
   </div>
-  <label class="field" style="margin-top: 0;">
-    <span class="name"><span>Error Intensity</span><b id="wearVal">50%</b></span>
-    <input type="range" id="wearSlider" min="0" max="100" value="50">
-  </label>
 </section>
 
 <section>
   <details>
     <summary>Advanced Rendering</summary>
     <label class="field">
-      <span class="name"><span>Output DPI</span><b id="dpiVal">900</b></span>
-      <input type="range" id="dpiSlider" min="100" max="1200" step="50" value="900">
+      <span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span>
+      <input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300">
     </label>
     <label class="field">
       <span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span>
@@ -195,8 +194,8 @@
       <input type="range" id="bandingSlider" min="0" max="20" value="10">
     </label>
     <label class="field">
-      <span class="name"><span>Max output size (px)</span><b id="maxSizeVal">6000</b></span>
-      <input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="6000">
+      <span class="name"><span>Max output size (px)</span><b id="maxSizeVal">8000</b></span>
+      <input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="8000">
     </label>
     <label class="field">
       <span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span>
@@ -212,7 +211,7 @@
 
 <footer>
   <div class="dots">· · · · ·</div>
-  dotmatrix v2.0.0 · deep themes · pin physics · auto-adapt
+  dotmatrix v2.0.0 · deep themes · modular presets · auto-adapt
 </footer>
 
 <div class="actions">
