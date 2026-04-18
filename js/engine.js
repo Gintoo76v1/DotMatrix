@@ -12,6 +12,7 @@ export function makeDotStamp(diameterPx, softness, density) {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const dx = x - cx, dy = y - cx;
+      // Slight horizontal elongation simulates pin contact while head moves
       const r = Math.sqrt(dx * dx * 0.88 + dy * dy);
       let v;
       if (r <= inner) v = 1;
@@ -44,6 +45,7 @@ export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
   }
 }
 
+// Bilinear-interpolated value noise for realistic cloudy effects
 function makeValueNoise(rng, noiseW, noiseH) {
   const grid = new Float32Array(noiseW * noiseH);
   for (let i = 0; i < grid.length; i++) grid[i] = rng();
@@ -144,6 +146,7 @@ export async function render(srcImage, onProgressUpdate) {
   const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
   const bandAmp = profile.banding * state.bandingScale;
 
+  // ── PER-PIN CHARACTERISTICS ──────────────────────────────────────────────
   const numPins = profile.pins;
   const pinYOff = new Float32Array(numPins);
   const pinXOff = new Float32Array(numPins);
@@ -158,8 +161,9 @@ export async function render(srcImage, onProgressUpdate) {
     pinDensMod[p] = 1.0 - 0.14 * norm * norm;
   }
 
-  // Pre-computations for Modular Errors
+  // ── WEAR PATTERN PRE-COMPUTATION ─────────────────────────────────────────
   const noise1 = makeValueNoise(rng, 16, 16);
+  
   const rowMisalign = new Float32Array(gridH);
   if (state.wear.misaligned > 0) {
     let acc = 0;
@@ -234,26 +238,20 @@ export async function render(srcImage, onProgressUpdate) {
       let ghostDx = 0, ghostDy = 0, doGhost = false;
       let dotBandMult = 1.0;
 
-      // Pin Skip
       if (state.wear.pin_skip > 0) {
         if (pinHealth[pinIdx] <= 0) { processed++; continue; }
         wearFactor *= pinHealth[pinIdx];
       }
 
-      // Cloudy
       if (w_cloudy > 0) wearFactor *= (1.0 - noise1(gx, gy, gridW, gridH) * w_cloudy * 0.8);
-      // Ribbon Twist
       if (state.wear.ribbon_twist > 0) wearFactor *= ribbonCol[gx];
-      // Misaligned
       if (w_misalign > 0) cx += rowMisalign[gy] * w_misalign * (effDpi / 160);
       
-      // Smudge
       if (w_smudge > 0 && smudgeRows[gy]) {
         cx += (rng() - 0.25) * 9 * w_smudge;
         wearFactor *= (0.55 + rng() * 0.3);
       }
 
-      // Ghosting
       if (w_ghosting > 0) {
         doGhost = true;
         const dir = (Math.floor(gy / numPins) % 2 === 0) ? 1 : -1;
@@ -261,7 +259,6 @@ export async function render(srcImage, onProgressUpdate) {
         ghostDy = Math.round((rng() - 0.5) * 2);
       }
 
-      // Ink Bleed
       let bleedStampSize = stampSize;
       if (w_bleed > 0) {
         dotBandMult += rng() * w_bleed * 0.5; // darker
@@ -278,7 +275,6 @@ export async function render(srcImage, onProgressUpdate) {
       
       stampInto(ink, outW, outH, stamp, bleedStampSize, cx - stampR, cy - stampR, band);
 
-      // Head Drag (Smears horizontally)
       if (w_drag > 0 && rng() < w_drag * 0.1) {
         stampInto(ink, outW, outH, stamp, stampSize, cx - stampR - stepX, cy - stampR, band * 0.15);
       }
