@@ -1,6 +1,56 @@
 import { state, PROFILES } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
+// ==================== SOURCE DPI DETECTION ====================
+
+// Read JFIF APP0 density from a JPEG header buffer (first ~64 bytes suffice).
+function readJfifDpi(buf) {
+  const v = new DataView(buf);
+  if (v.byteLength < 18 || v.getUint16(0) !== 0xFFD8) return null;
+  if (v.getUint16(2) !== 0xFFE0) return null;
+  const sig = String.fromCharCode(v.getUint8(6), v.getUint8(7), v.getUint8(8), v.getUint8(9), v.getUint8(10));
+  if (sig !== 'JFIF\0') return null;
+  const units = v.getUint8(11);
+  const xd   = v.getUint16(12);
+  if (!xd) return null;
+  if (units === 1) return xd;
+  if (units === 2) return Math.round(xd * 2.54);
+  return null;
+}
+
+// Read pHYs DPI from a PNG header buffer (first ~256 bytes cover IHDR + pHYs).
+function readPngDpi(buf) {
+  const v = new DataView(buf);
+  if (v.byteLength < 30 || v.getUint32(0) !== 0x89504E47) return null;
+  let pos = 8;
+  while (pos + 12 <= v.byteLength) {
+    const len  = v.getUint32(pos);
+    const type = String.fromCharCode(v.getUint8(pos+4), v.getUint8(pos+5), v.getUint8(pos+6), v.getUint8(pos+7));
+    if (type === 'pHYs' && len === 9 && pos + 21 <= v.byteLength) {
+      const ppuX = v.getUint32(pos + 8);
+      const unit = v.getUint8(pos + 16);
+      if (unit === 1 && ppuX > 0) return Math.round(ppuX / 39.3701);
+    }
+    if (type === 'IDAT') break;
+    pos += 12 + len;
+  }
+  return null;
+}
+
+// Snap raw DPI to the dpiSlider's step grid (min 100, max 1200, step 50).
+function snapDpi(dpi) {
+  return Math.max(100, Math.min(1200, Math.round(dpi / 50) * 50));
+}
+
+// Estimate a plausible render DPI when metadata is absent or a screen-only
+// value (≤ 96). Assumes the image is a scanned A4 document; falls back
+// reasonably for smaller formats because the resulting DPI is clamped.
+function estimateDpiFromImageSize(img) {
+  const longPx    = Math.max(img.width, img.height);
+  const a4LongIn  = 297 / 25.4; // 11.69 in
+  return snapDpi(Math.round(longPx / a4LongIn));
+}
+
 // ==================== INTERACTIVE ANIMATIONS ====================
 document.addEventListener('click', (e) => {
   if(e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
@@ -264,9 +314,26 @@ async function handleFile(file) {
     setStatus("Not an image file."); return;
   }
   setStatus("Loading image...");
+
+  // Try to read embedded DPI from the file header before the image is decoded.
+  // We only need the first 256 bytes — negligible overhead.
+  let metaDpi = null;
+  try {
+    const headerBuf = await file.slice(0, 256).arrayBuffer();
+    if (file.type === 'image/jpeg') metaDpi = readJfifDpi(headerBuf);
+    else if (file.type === 'image/png') metaDpi = readPngDpi(headerBuf);
+  } catch { /* metadata read failure is non-fatal */ }
+
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
+    // Set render DPI: use embedded metadata if it's a real scan DPI (> 96),
+    // otherwise estimate from image dimensions assuming A4 document size.
+    const sourceDpi = (metaDpi && metaDpi > 96) ? snapDpi(metaDpi) : estimateDpiFromImageSize(img);
+    state.dpi = sourceDpi;
+    document.getElementById("dpiSlider").value = sourceDpi;
+    document.getElementById("dpiVal").textContent = sourceDpi;
+
     state.sourceImage = img;
     detectAndSetPaperColor(img);
     analyzeAndAdaptImage(img);

@@ -328,9 +328,7 @@ export async function render(srcImage, onProgressUpdate) {
     d[j+3] = 255;
   }
 
-  // Final softening only at low DPI — at high DPI the Gaussian stamp already
-  // provides sufficient softness and the blur smears fine text.
-  if (effDpi < 550) boxBlur3x3(d, outW, outH);
+  if (state.softBlur) boxBlur3x3(d, outW, outH);
   return { imageData: finalImg, width: outW, height: outH };
 }
 
