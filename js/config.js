@@ -66,10 +66,22 @@ export const PRESETS = {
     brightness: 100, contrast: 100, gamma: 2.0, invert: false, dpi: 300, jitterScale: 0.0, bandingScale: 0.0, maxSize: 8000,
     wear: { cloudy: 0, ghosting: 20, misaligned: 15, pin_skip: 0, smudge: 0, ribbon_twist: 0, ink_bleed: 0, head_drag: 0 }, softBlur: false
   },
+  "Faded Receipt": {
+    profile: "epson_fx", dither: "floyd_steinberg", threshold: 128, ink: [25,25,30], paper: [255,255,255],
+    paperFormat: "Fit", orientation: "Portrait", doubleStrike: false, condensed: true,
+    brightness: 30, contrast: 40, gamma: 1.0, invert: false, dpi: 300, jitterScale: 1.2, bandingScale: 1.5, maxSize: 8000,
+    wear: { cloudy: 45, ghosting: 0, misaligned: 5, pin_skip: 0, smudge: 10, ribbon_twist: 35, ink_bleed: 0, head_drag: 0 }, softBlur: false
+  },
   "Heavy Damage": {
     profile: "commodore_mps", dither: "floyd_steinberg", threshold: 128, ink: [25,25,30], paper: [234,223,184],
     paperFormat: "Original", orientation: "Portrait", doubleStrike: false, condensed: false,
-    brightness: 10, contrast: 30, gamma: 1.2, invert: false, dpi: 150, jitterScale: 2.0, bandingScale: 2.5, maxSize: 4000,
-    wear: { cloudy: 30, ghosting: 40, misaligned: 60, pin_skip: 15, smudge: 50, ribbon_twist: 40, ink_bleed: 20, head_drag: 30 }, softBlur: true
+    brightness: 10, contrast: 30, gamma: 1.2, invert: false, dpi: 150, jitterScale: 2.5, bandingScale: 2.0, maxSize: 4000,
+    wear: { cloudy: 30, ghosting: 40, misaligned: 60, pin_skip: 25, smudge: 50, ribbon_twist: 40, ink_bleed: 20, head_drag: 30 }, softBlur: true
+  },
+  "Crisp 24-Pin Document": {
+    profile: "epson_lq", dither: "threshold", threshold: 140, ink: [20,45,130], paper: [255,255,255],
+    paperFormat: "A4", orientation: "Portrait", doubleStrike: true, condensed: false,
+    brightness: 0, contrast: 50, gamma: 1.0, invert: false, dpi: 600, jitterScale: 0.2, bandingScale: 0.2, maxSize: 8000,
+    wear: { cloudy: 0, ghosting: 0, misaligned: 0, pin_skip: 0, smudge: 0, ribbon_twist: 0, ink_bleed: 5, head_drag: 0 }, softBlur: false
   }
 };
