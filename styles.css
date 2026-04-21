@@ -707,3 +707,50 @@ footer { text-align: center; font-size: 10px; letter-spacing: 0.2em; text-transf
 .text-input:focus, .yaml-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .yaml-area { font-size: 10px; line-height: 1.5; }
 footer .dots { color: var(--accent); letter-spacing: 0.4em; }
+
+/* ==================== CUSTOM INK PICKER ==================== */
+.custom-ink-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.color-picker {
+  width: 32px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-dark);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.hex-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 11px;
+  margin-top: 0;
+}
+.custom-swatch {
+  border: 2px dashed var(--line) !important;
+  position: relative;
+}
+.custom-swatch::after {
+  content: '+';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  pointer-events: none;
+}
+
+/* ==================== PRESET MODIFIED INDICATOR ==================== */
+.preset-pill.active.modified::after {
+  content: ' ✎';
+  opacity: 0.7;
+  font-size: 10px;
+}

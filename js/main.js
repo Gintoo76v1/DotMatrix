@@ -214,6 +214,7 @@ function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
     btn.classList.add("active");
     state[stateKey] = btn.dataset[attrKey];
     if (onChange) onChange();
+    markModified();
     refreshAscii();
   });
 }
@@ -234,6 +235,7 @@ document.getElementById('profileList').addEventListener('click', (e) => {
   item.classList.add('active');
   state.profile = item.dataset.profile;
   updateProfileMeta();
+  markModified();
   refreshAscii();
 });
 
@@ -251,12 +253,10 @@ function syncWearLayersFromUI() {
 }
 
 document.getElementById('errorList').addEventListener('click', (e) => {
-  // Toggle on/off only when clicking the header row (not the slider)
   const head = e.target.closest('.er-head');
   if (!head) return;
   const er = head.closest('.er');
   er.classList.toggle('on');
-  // If newly activated and slider is still at default 50, leave as-is
   const slider = er.querySelector('.er-slider');
   const valEl  = er.querySelector('.er-val');
   if (!er.classList.contains('on')) {
@@ -265,6 +265,7 @@ document.getElementById('errorList').addEventListener('click', (e) => {
     valEl.textContent = slider.value + '%';
   }
   syncWearLayersFromUI();
+  markModified();
 });
 
 document.getElementById('errorList').addEventListener('input', (e) => {
@@ -273,6 +274,7 @@ document.getElementById('errorList').addEventListener('input', (e) => {
   const valEl = er.querySelector('.er-val');
   valEl.textContent = e.target.value + '%';
   syncWearLayersFromUI();
+  markModified();
 });
 
 // ==================== CHECKBOXES ====================
@@ -282,6 +284,7 @@ document.querySelectorAll(".check").forEach(el => {
     if (el.dataset.disabled === "true") return;
     el.classList.toggle("on");
     state[el.dataset.flag] = el.classList.contains("on");
+    markModified();
     refreshAscii();
   });
 });
@@ -292,28 +295,83 @@ function wireSwatches(containerId, stateKey, attrKey) {
   const box = document.getElementById(containerId);
   box.addEventListener("click", (e) => {
     const sw = e.target.closest(".swatch");
-    if (!sw) return;
+    if (!sw || !sw.dataset[attrKey]) return;
     box.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
     sw.classList.add("active");
     state[stateKey] = sw.dataset[attrKey].split(",").map(Number);
+    markModified();
   });
 }
 wireSwatches("inkSwatches",   "ink",   "ink");
 wireSwatches("paperSwatches", "paper", "paper");
+
+// ==================== CUSTOM INK PICKER ====================
+
+function hexToRgb(hex) {
+  const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!m) return null;
+  return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(n => n.toString(16).padStart(2, '0')).join('');
+}
+
+function applyCustomInk(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return;
+  const swatch = document.getElementById('customInkSwatch');
+  swatch.dataset.ink = rgb.join(',');
+  swatch.style.background = hex;
+  document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active'));
+  swatch.classList.add('active');
+  state.ink = rgb;
+  markModified();
+}
+
+const inkColorPicker = document.getElementById('inkColorPicker');
+const inkHexInput    = document.getElementById('inkHexInput');
+
+inkColorPicker.addEventListener('input', () => {
+  const hex = inkColorPicker.value;
+  inkHexInput.value = hex;
+  applyCustomInk(hex);
+});
+
+inkHexInput.addEventListener('input', () => {
+  const raw = inkHexInput.value.trim();
+  const hex = raw.startsWith('#') ? raw : '#' + raw;
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    inkColorPicker.value = hex;
+    applyCustomInk(hex);
+  }
+});
+
+document.getElementById('applyInkBtn').addEventListener('click', () => {
+  const raw = inkHexInput.value.trim();
+  const hex = raw.startsWith('#') ? raw : '#' + raw;
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    inkColorPicker.value = hex;
+    applyCustomInk(hex);
+  } else {
+    alert('Enter a valid hex color, e.g. #3a2b1c');
+  }
+});
 
 // ==================== SLIDERS ====================
 
 function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, liveRefresh = false) {
   const s = document.getElementById(id);
   const v = document.getElementById(valId);
-  const apply = () => {
+  const apply = (fromUser) => {
     const raw = transform(s.value);
     state[stateKey] = raw;
     v.textContent = format(raw);
+    if (fromUser) markModified();
     if (liveRefresh) refreshAscii();
   };
-  s.addEventListener("input", apply);
-  apply();
+  s.addEventListener("input", () => apply(true));
+  apply(false);
 }
 wireSlider("thresholdSlider", "thresholdVal", "threshold", v => +v, v => v, true);
 wireSlider("brightnessSlider","brightnessVal","brightness", v => +v, v => v, true);
@@ -460,6 +518,7 @@ function captureCurrentPreset(name) {
 // Apply a preset object to the full UI + state
 function applyPreset(preset) {
   if (!preset) return;
+  clearModified();
 
   // Profile
   if (preset.profile && PROFILES[preset.profile]) {
@@ -517,9 +576,24 @@ function applyPreset(preset) {
   if (preset.ink) {
     state.ink = preset.ink;
     const inkStr = preset.ink.join(',');
-    document.querySelectorAll('#inkSwatches .swatch').forEach(s => {
-      s.classList.toggle('active', s.dataset.ink === inkStr);
+    let found = false;
+    document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach(s => {
+      const match = s.dataset.ink === inkStr;
+      s.classList.toggle('active', match);
+      if (match) found = true;
     });
+    // If no preset swatch matched, show in custom swatch
+    const customSwatch = document.getElementById('customInkSwatch');
+    if (!found && customSwatch) {
+      const hex = rgbToHex(...preset.ink);
+      customSwatch.dataset.ink    = inkStr;
+      customSwatch.style.background = hex;
+      customSwatch.classList.add('active');
+      document.getElementById('inkColorPicker').value = hex;
+      document.getElementById('inkHexInput').value    = hex;
+    } else if (customSwatch) {
+      customSwatch.classList.remove('active');
+    }
   }
 
   // Paper swatch (null = keep auto-detected)
@@ -576,6 +650,18 @@ function applyWearLayersToUI(layers) {
 // ==================== PRESET BAR ====================
 
 let activePresetId = null;
+let presetDirty    = false;
+
+function markModified() {
+  if (!presetDirty) {
+    presetDirty = true;
+    renderPresetBar();
+  }
+}
+
+function clearModified() {
+  presetDirty = false;
+}
 
 function renderPresetBar() {
   const bar         = document.getElementById('presetBar');
@@ -588,12 +674,18 @@ function renderPresetBar() {
   ];
 
   for (const preset of allPresets) {
+    const isActive = preset.id === activePresetId;
+    const isDirty  = isActive && presetDirty;
     const pill = document.createElement('button');
-    pill.className   = 'preset-pill' + (preset.system ? '' : ' user') + (preset.id === activePresetId ? ' active' : '');
+    pill.className   = 'preset-pill'
+      + (preset.system ? '' : ' user')
+      + (isActive ? ' active' : '')
+      + (isDirty  ? ' modified' : '');
     pill.textContent = preset.name;
     pill.dataset.id  = preset.id;
     pill.addEventListener('click', () => {
       activePresetId = preset.id;
+      clearModified();
       renderPresetBar();
       applyPreset(preset);
     });
@@ -608,7 +700,7 @@ function renderPresetBar() {
       del.addEventListener('click', (e) => {
         e.stopPropagation();
         if (confirm(`Delete preset "${preset.name}"?`)) {
-          if (activePresetId === preset.id) activePresetId = null;
+          if (activePresetId === preset.id) { activePresetId = null; clearModified(); }
           deleteUserPreset(preset.id);
         }
       });
@@ -629,7 +721,13 @@ function downloadText(text, filename) {
 }
 
 document.getElementById('exportPresetBtn').addEventListener('click', () => {
-  const name   = document.getElementById('presetNameInput').value.trim() || 'dotmatrix-preset';
+  let name = document.getElementById('presetNameInput').value.trim();
+  if (!name) {
+    name = prompt('Enter a name for this preset:', 'My Preset');
+    if (name === null) return;
+    name = name.trim() || 'dotmatrix-preset';
+    document.getElementById('presetNameInput').value = name;
+  }
   const preset = captureCurrentPreset(name);
   const yaml   = presetToYaml(preset);
   const slug   = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -644,7 +742,7 @@ document.getElementById('presetFileInput').addEventListener('change', async (e) 
   const file = e.target.files[0];
   if (!file) return;
   const text = await file.text();
-  importYamlText(text);
+  importFromText(text);
   e.target.value = '';
 });
 
@@ -668,23 +766,45 @@ document.getElementById('savePresetBtn').addEventListener('click', () => {
   presets.push(preset);
   saveUserPresets(presets);
   activePresetId = preset.id;
+  clearModified();
   renderPresetBar();
   setStatus(`Preset "${name}" saved.`);
 });
 
 document.getElementById('importYamlBtn').addEventListener('click', () => {
   const text = document.getElementById('presetYamlArea').value.trim();
-  if (!text) { alert('Paste YAML into the text area first.'); return; }
-  importYamlText(text);
+  if (!text) { alert('Paste YAML or JSON into the text area first.'); return; }
+  importFromText(text);
 });
 
-function importYamlText(text) {
+// Convert legacy JSON wear object {pattern: strength, ...} to wearLayers array
+function normalizePreset(raw) {
+  if (raw.wear && !raw.wearLayers) {
+    const known = new Set(Object.keys(
+      { cloudy:1, ghosting:1, misaligned:1, pin_skip:1, smudge:1, ribbon_twist:1,
+        head_gap:1, ink_starved:1, paper_slip:1, static_noise:1, double_feed:1, mechanical_resonance:1 }
+    ));
+    raw.wearLayers = Object.entries(raw.wear)
+      .filter(([k, v]) => known.has(k) && v > 0)
+      .map(([pattern, strength]) => ({ pattern, strength }));
+    delete raw.wear;
+  }
+  return raw;
+}
+
+function importFromText(text) {
   try {
-    const preset = yamlToPreset(text);
+    let preset;
+    const stripped = text.trim();
+    if (stripped.startsWith('{')) {
+      preset = normalizePreset(JSON.parse(stripped));
+    } else {
+      preset = yamlToPreset(stripped);
+    }
     if (!preset.name) preset.name = 'Imported';
     applyPreset(preset);
+    clearModified();
     setStatus(`Preset "${preset.name}" imported.`);
-    // Optionally save as user preset
     if (preset.name && preset.name !== 'Imported') {
       preset.id = 'user_' + Date.now();
       preset.system = false;
@@ -695,7 +815,7 @@ function importYamlText(text) {
       renderPresetBar();
     }
   } catch (err) {
-    alert('YAML parse failed: ' + err.message);
+    alert('Import failed: ' + err.message);
   }
 }
 

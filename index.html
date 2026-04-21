@@ -41,7 +41,7 @@
   <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
     <button class="btn-sm" id="exportPresetBtn">&#8595; Export YAML</button>
     <button class="btn-sm" id="importPresetBtn">&#8593; Import YAML</button>
-    <input type="file" id="presetFileInput" accept=".yaml,.yml" style="display:none">
+    <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
   </div>
 </section>
 <section>
@@ -139,7 +139,6 @@
     <button data-format="A4">A4</button>
     <button data-format="A5">A5</button>
     <button data-format="A6">A6</button>
-    <button data-format="Rezept">Rezept</button>
     <button data-format="Letter">Letter</button>
   </div>
   <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Orientation</div>
@@ -159,6 +158,12 @@
         <div class="swatch" style="background:#a01e23" data-ink="160,30,35" title="red"></div>
         <div class="swatch" style="background:#5a286e" data-ink="90,40,110" title="purple"></div>
         <div class="swatch" style="background:#2e5f36" data-ink="46,95,54" title="green"></div>
+        <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e" title="custom"></div>
+      </div>
+      <div class="custom-ink-row">
+        <input type="color" id="inkColorPicker" class="color-picker" value="#19191e" title="Pick custom ink color">
+        <input type="text" id="inkHexInput" class="hex-input text-input" placeholder="#rrggbb" value="#19191e" maxlength="7" spellcheck="false">
+        <button class="btn-sm" id="applyInkBtn">Apply</button>
       </div>
     </div>
     <div>
