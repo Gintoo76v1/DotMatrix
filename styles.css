@@ -525,35 +525,222 @@ details summary::-webkit-details-marker { display: none; }
 details summary::before { content: "[+]"; color: var(--accent); font-family: "VT323", monospace; font-size: 14px; text-shadow: var(--text-glow); }
 details[open] summary::before { content: "[−]"; }
 footer { text-align: center; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); padding: 20px 0 0; }
-footer .dots { color: var(--accent); letter-spacing: 0.4em; }
 
-/* --- Scroll Listen für Errors --- */
+/* ==================== SCROLL LIST ==================== */
 .scroll-list {
-  display: flex;
-  flex-direction: column;
-  max-height: 180px;
-  overflow-y: auto;
   border: 1px solid var(--line);
-  background: var(--paper-dark);
   border-radius: 4px;
+  overflow-y: auto;
+  max-height: 260px;
+  background: var(--paper-dark);
 }
-.scroll-list::-webkit-scrollbar { width: 6px; }
-.scroll-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.sli {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+.sli:last-child { border-bottom: 0; }
+.sli:hover { background: var(--accent-soft); }
+.sli.active {
+  background: var(--ink) !important;
+  color: #000 !important;
+  text-shadow: none;
+}
+:root[data-theme="spline"] .sli.active { background: var(--accent) !important; color: #000 !important; }
+:root[data-theme="classic"] .sli.active { color: var(--paper) !important; }
+.sli-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sli-name { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.sli-badge {
+  font-size: 9px; letter-spacing: 0.12em; font-weight: 600;
+  padding: 2px 5px; border-radius: 2px; border: 1px solid currentColor;
+  opacity: 0.6; flex-shrink: 0;
+}
+.sli-meta { font-size: 10px; letter-spacing: 0.08em; color: var(--ink-soft); margin-top: 2px; }
+.sli.active .sli-meta { color: rgba(0,0,0,0.6); }
+:root[data-theme="classic"] .sli.active .sli-meta { color: rgba(0,0,0,0.55); }
 
-.error-list { padding: 0 12px 12px 12px; }
-.error-list .field { margin-top: 12px; }
+/* ==================== ERROR LIST ==================== */
+.er {
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-dark);
+  overflow: hidden;
+}
+.er:last-child { border-bottom: 0; }
+.er-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 48px;
+  transition: background 0.15s;
+}
+.er-head:hover { background: var(--accent-soft); }
+.er-check {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border: 1px solid var(--line); border-radius: 2px;
+  background: transparent;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.er.on .er-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent-soft);
+}
+.er.on .er-check::after {
+  content: "x"; color: #000; font-size: 14px; line-height: 1;
+  font-family: "VT323", monospace; margin-top: -1px; text-shadow: none;
+}
+.er-name {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; flex-shrink: 0; min-width: 80px;
+}
+.er-desc {
+  font-size: 10px; color: var(--ink-soft); letter-spacing: 0.04em;
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.er-val {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  flex-shrink: 0; font-variant-numeric: tabular-nums;
+  color: var(--ink-soft); min-width: 32px; text-align: right;
+}
+.er.on .er-val { color: var(--accent); text-shadow: var(--text-glow); }
+.er-body {
+  display: none;
+  padding: 4px 12px 10px;
+  background: var(--paper-dark);
+  border-top: 1px solid var(--line);
+}
+.er.on .er-body { display: block; }
+.er-slider { width: 100%; }
 
-/* Preset Dropdown */
-.preset-dropdown {
-  width: 100%;
-  padding: 10px;
+/* ==================== PRESET BAR ==================== */
+.preset-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.preset-pill {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
   background: var(--paper-dark);
   color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.15s;
+}
+.preset-pill:hover { background: var(--accent-soft); }
+.preset-pill.active {
+  background: var(--ink) !important;
+  color: #000 !important;
+  text-shadow: none;
+  box-shadow: 0 0 10px var(--accent-soft);
+}
+:root[data-theme="spline"] .preset-pill.active { background: var(--accent) !important; color: #000 !important; }
+:root[data-theme="classic"] .preset-pill.active { color: var(--paper) !important; }
+.preset-pill.user { border-style: dashed; }
+.preset-pill.user.active { border-style: solid; }
+.preset-pill.delete-btn {
+  padding: 6px 8px;
+  font-size: 14px;
+  opacity: 0.5;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+}
+.preset-pill.delete-btn:hover { opacity: 1; color: #f33; background: rgba(255,0,0,0.1); }
+
+/* ==================== SMALL BUTTON ==================== */
+.btn-sm {
+  padding: 7px 12px;
   border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-dark);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+}
+.btn-sm:hover { background: var(--accent-soft); border-color: var(--accent); }
+.btn-sm:active { transform: translateY(1px); }
+
+/* ==================== TEXT INPUT / TEXTAREA ==================== */
+.text-input, .yaml-area {
+  width: 100%;
+  background: var(--paper-dark);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-transform: uppercase;
+  padding: 8px 10px;
+  margin-top: 4px;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
 }
-.preset-dropdown:focus { outline: 1px solid var(--accent); }
+.text-input:focus, .yaml-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.yaml-area { font-size: 10px; line-height: 1.5; }
+footer .dots { color: var(--accent); letter-spacing: 0.4em; }
+
+/* ==================== CUSTOM INK PICKER ==================== */
+.custom-ink-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.color-picker {
+  width: 32px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-dark);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.hex-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 11px;
+  margin-top: 0;
+}
+.custom-swatch {
+  border: 2px dashed var(--line) !important;
+  position: relative;
+}
+.custom-swatch::after {
+  content: '+';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  pointer-events: none;
+}
+
+/* ==================== PRESET MODIFIED INDICATOR ==================== */
+.preset-pill.active.modified::after {
+  content: ' ✎';
+  opacity: 0.7;
+  font-size: 10px;
+}
