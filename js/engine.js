@@ -61,6 +61,100 @@ function makeValueNoise(rng, noiseW, noiseH) {
   };
 }
 
+// ── Pre-compute all data for one wear layer ──────────────────────────────────
+function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
+  const str = (layer.strength ?? 50) / 100;
+  const ld = { pattern: layer.pattern, strength: str };
+
+  switch (layer.pattern) {
+    case 'cloudy': {
+      ld.noise = makeValueNoise(rng, 16, 16);
+      break;
+    }
+    case 'misaligned': {
+      ld.rowOff = new Float32Array(gridH);
+      let acc = 0;
+      for (let y = 0; y < gridH; y++) {
+        acc += (rng() - 0.5) * 1.4;
+        acc *= 0.91; // damping keeps drift bounded
+        ld.rowOff[y] = acc;
+      }
+      break;
+    }
+    case 'pin_skip': {
+      ld.health = new Float32Array(numPins).fill(1.0);
+      for (let p = 0; p < numPins; p++) {
+        const roll = rng();
+        if (roll < str * 0.22) {
+          ld.health[p] = 0; // completely dead pin
+        } else if (roll < str * 0.55) {
+          ld.health[p] = Math.max(0.08, 1.0 - str * (0.3 + rng() * 0.5));
+        }
+      }
+      break;
+    }
+    case 'smudge': {
+      ld.rows = new Uint8Array(gridH);
+      let inSmudge = false;
+      for (let y = 0; y < gridH; y++) {
+        if (!inSmudge && rng() < 0.04 * str) inSmudge = true;
+        else if (inSmudge && rng() < 0.22) inSmudge = false;
+        ld.rows[y] = inSmudge ? 1 : 0;
+      }
+      break;
+    }
+    case 'ribbon_twist': {
+      ld.col = new Float32Array(gridW).fill(1.0);
+      let val = 0.85 + rng() * 0.15;
+      for (let x = 0; x < gridW; x++) {
+        val += (rng() - 0.5) * 0.06;
+        val = Math.max(0.25, Math.min(1.0, val));
+        ld.col[x] = 1.0 - (1.0 - val) * str;
+      }
+      break;
+    }
+    case 'ink_starved': {
+      // Depletion accumulates as ribbon unspools through the job
+      ld.rowDep = new Float32Array(gridH);
+      let dep = 0;
+      for (let y = 0; y < gridH; y++) {
+        dep = Math.min(1.0, dep + rng() * 0.003 * str);
+        ld.rowDep[y] = dep;
+      }
+      break;
+    }
+    case 'paper_slip': {
+      // Random-walk vertical slip (feed roller inconsistency)
+      ld.rowShift = new Float32Array(gridH);
+      let slip = 0;
+      for (let y = 0; y < gridH; y++) {
+        if (rng() < 0.04 * str) slip += (rng() - 0.5) * stepY * str * 4;
+        slip *= 0.85;
+        ld.rowShift[y] = slip;
+      }
+      break;
+    }
+    case 'mechanical_resonance': {
+      // Sinusoidal X drift from print head resonance at certain carriage speeds
+      ld.freq = 0.08 + rng() * 0.06;
+      ld.amp  = 1.0;  // scaled per-cell by stepX * str
+      break;
+    }
+    case 'double_feed': {
+      // Offset of second sheet (faint background copy)
+      ld.offX = Math.round((3 + rng() * 5) * (rng() < 0.5 ? 1 : -1));
+      ld.offY = Math.round(2 + rng() * 4);
+      break;
+    }
+    case 'ghosting':
+    case 'head_gap':
+    case 'static_noise':
+      break; // computed per-cell only
+  }
+
+  return ld;
+}
+
 export async function render(srcImage, onProgressUpdate) {
   const profile = PROFILES[state.profile];
   const seed = state.seed || Math.floor(Math.random() * 1e9);
@@ -142,83 +236,32 @@ export async function render(srcImage, onProgressUpdate) {
   const { data: stamp, size: stampSize } = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density);
   const stampR = (stampSize - 1) / 2;
 
-  const passes = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
-  const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
-  const bandAmp = profile.banding * state.bandingScale;
-  const wearStrength = state.wearStrength / 100;
+  const passes    = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
+  const jitterPx  = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
+  const bandAmp   = profile.banding * state.bandingScale;
 
   // ── PER-PIN CHARACTERISTICS ──────────────────────────────────────────────
-  // Each physical pin has fixed tolerances: slightly different Y position,
-  // small X bias, and varying ink density (center pins get more ribbon ink).
-  const numPins = profile.pins;
-  const pinYOff = new Float32Array(numPins);
-  const pinXOff = new Float32Array(numPins);
-  const pinDensMod = new Float32Array(numPins);
-  const pinHealth = new Float32Array(numPins).fill(1.0);
+  const numPins     = profile.pins;
+  const pinYOff     = new Float32Array(numPins);
+  const pinXOff     = new Float32Array(numPins);
+  const pinDensMod  = new Float32Array(numPins);
+  const pinHealth   = new Float32Array(numPins).fill(1.0);
 
-  // Physical pin tolerance: proportional to head jitter_mm spec.
-  // Using 0.5× jitter gives ±0.62 px for OKI@900 DPI — subtle, non-smearing.
-  // (Old formula dotPx×0.22 gave ±2.64 px which smeared thin text strokes.)
   const pinTolPx = Math.max(0.5, profile.jitter_mm * 0.5 / MM_PER_INCH * effDpi);
   for (let p = 0; p < numPins; p++) {
     pinYOff[p] = (rng() - 0.5) * 2 * pinTolPx;
     pinXOff[p] = (rng() - 0.5) * pinTolPx * 0.35;
-    // Bell-curve density: center pins (middle of ribbon) print darker
     const norm = (p - (numPins - 1) / 2) / Math.max(1, (numPins - 1) / 2);
     pinDensMod[p] = 1.0 - 0.14 * norm * norm;
   }
 
-  // ── WEAR PATTERN PRE-COMPUTATION ─────────────────────────────────────────
-  // Pre-compute noise and wear data once so patterns are spatially coherent
-  const noise1 = makeValueNoise(rng, 16, 16);  // coarse blobs
-  const noise2 = makeValueNoise(rng, 52, 52);  // fine texture
+  // ── BUILD MODULAR WEAR LAYER DATA ─────────────────────────────────────────
+  const wearLayers = Array.isArray(state.wearLayers) ? state.wearLayers : [];
+  const layerData  = wearLayers
+    .filter(l => l && l.pattern && l.pattern !== 'none' && (l.strength ?? 0) > 0)
+    .map(l => buildLayerData(l, rng, gridW, gridH, numPins, stepY));
 
-  // Misaligned: correlated random walk (adjacent rows have similar offsets)
-  const rowMisalign = new Float32Array(gridH);
-  if (state.wearPattern === "misaligned") {
-    let acc = 0;
-    for (let y = 0; y < gridH; y++) {
-      acc += (rng() - 0.5) * 1.4;
-      acc *= 0.91; // damping keeps drift bounded
-      rowMisalign[y] = acc;
-    }
-  }
-
-  // Pin-skip: degrade specific pins — broken pin = every Nth row always missing
-  if (state.wearPattern === "pin_skip") {
-    for (let p = 0; p < numPins; p++) {
-      const roll = rng();
-      if (roll < wearStrength * 0.22) {
-        pinHealth[p] = 0;             // completely dead
-      } else if (roll < wearStrength * 0.55) {
-        pinHealth[p] = Math.max(0.08, 1.0 - wearStrength * (0.3 + rng() * 0.5));
-      }
-    }
-  }
-
-  // Smudge: pre-compute which row bands are affected (paper wrinkle zones)
-  const smudgeRows = new Uint8Array(gridH);
-  if (state.wearPattern === "smudge") {
-    let inSmudge = false;
-    for (let y = 0; y < gridH; y++) {
-      if (!inSmudge && rng() < 0.04 * wearStrength) inSmudge = true;
-      else if (inSmudge && rng() < 0.22) inSmudge = false;
-      smudgeRows[y] = inSmudge ? 1 : 0;
-    }
-  }
-
-  // Ribbon twist: pre-compute per-column ink availability (random walk)
-  const ribbonCol = new Float32Array(gridW).fill(1.0);
-  if (state.wearPattern === "ribbon_twist") {
-    let val = 0.85 + rng() * 0.15;
-    for (let x = 0; x < gridW; x++) {
-      val += (rng() - 0.5) * 0.06;
-      val = Math.max(0.25, Math.min(1.0, val));
-      ribbonCol[x] = 1.0 - (1.0 - val) * wearStrength;
-    }
-  }
-
-  // Row banding: slight row-to-row density variation (paper/head oscillation)
+  // Row banding: slight row-to-row density variation from paper/head oscillation
   const rowBands = new Float32Array(gridH);
   for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
 
@@ -238,62 +281,108 @@ export async function render(srcImage, onProgressUpdate) {
       const [gx, gy] = onCells[idx];
       const pinIdx = gy % numPins;
 
-      // Base pixel position + per-pin fixed physical offset
       let cx = offsetX + gx * stepX + stepX / 2 + pinXOff[pinIdx];
       let cy = offsetY + gy * stepY + stepY / 2 + pinYOff[pinIdx];
 
       let wearFactor = 1.0;
-      let ghostDx = 0, ghostDy = 0, doGhost = false;
+      let dxTotal = 0, dyTotal = 0;
+      const ghosts = [];
+      let skipCell = false;
 
-      switch (state.wearPattern) {
-        case "cloudy": {
-          const n = noise1(gx, gy, gridW, gridH);
-          wearFactor = 1.0 - n * wearStrength * 0.72;
-          break;
-        }
-        case "alt_cloudy": {
-          // Two octaves: coarse blobs + fine texture
-          const n = noise1(gx, gy, gridW, gridH) * 0.6
-                  + noise2(gx, gy, gridW, gridH) * 0.4;
-          wearFactor = 1.0 - n * wearStrength;
-          break;
-        }
-        case "pin_skip": {
-          const h = pinHealth[pinIdx];
-          if (h <= 0) { processed++; continue; }
-          wearFactor = h;
-          break;
-        }
-        case "misaligned": {
-          cx += rowMisalign[gy] * wearStrength * (effDpi / 160);
-          break;
-        }
-        case "ghosting": {
-          // Bi-directional printing: ghost shifts opposite direction per pass row
-          doGhost = true;
-          const dir = (Math.floor(gy / numPins) % 2 === 0) ? 1 : -1;
-          ghostDx = dir * Math.round(7 * wearStrength * (effDpi / 300));
-          ghostDy = Math.round((rng() - 0.5) * 2);
-          break;
-        }
-        case "smudge": {
-          if (smudgeRows[gy]) {
-            cx += (rng() - 0.25) * 9 * wearStrength;
-            wearFactor = 0.55 + rng() * 0.3;
+      // ── Apply each active wear layer ─────────────────────────────────────
+      for (const ld of layerData) {
+        if (skipCell) break;
+        const { pattern: pat, strength: str } = ld;
+
+        switch (pat) {
+          case 'cloudy': {
+            wearFactor *= 1.0 - ld.noise(gx, gy, gridW, gridH) * str * 0.75;
+            break;
           }
-          break;
-        }
-        case "ribbon_twist": {
-          wearFactor = ribbonCol[gx];
-          break;
+          case 'ghosting': {
+            // Bi-directional printing leaves ghost on opposite sweep direction
+            const dir = (Math.floor(gy / numPins) % 2 === 0) ? 1 : -1;
+            const gdx = dir * 7 * str * (effDpi / 300);
+            const gdy = (rng() - 0.5) * 2;
+            ghosts.push({ dx: gdx, dy: gdy, alphaMod: 0.25 * str });
+            break;
+          }
+          case 'pin_skip': {
+            const h = ld.health[pinIdx];
+            if (h <= 0) { skipCell = true; break; }
+            wearFactor *= h;
+            break;
+          }
+          case 'misaligned': {
+            dxTotal += ld.rowOff[gy] * str * (effDpi / 160);
+            break;
+          }
+          case 'smudge': {
+            if (ld.rows[gy]) {
+              dxTotal += (rng() - 0.25) * 9 * str;
+              wearFactor *= 0.55 + rng() * 0.3;
+            }
+            break;
+          }
+          case 'ribbon_twist': {
+            wearFactor *= ld.col[gx];
+            break;
+          }
+          case 'head_gap': {
+            // Wide platen gap: less ink transferred, smaller effective dot
+            wearFactor *= Math.max(0.05, 1.0 - str * 0.70);
+            break;
+          }
+          case 'ink_starved': {
+            // Ribbon dries out progressively; also fades toward end of each line
+            const rowFade  = ld.rowDep[gy];
+            const lineFade = (gx / Math.max(1, gridW - 1)) * str * 0.40;
+            wearFactor *= Math.max(0.04, 1.0 - rowFade * str * 0.60 - lineFade);
+            break;
+          }
+          case 'paper_slip': {
+            dyTotal += ld.rowShift[gy];
+            break;
+          }
+          case 'static_noise': {
+            // Low-probability burst of stray dots (electrostatic spike)
+            if (rng() < 0.002 * str * 5) {
+              const burst = 1 + Math.floor(rng() * 3);
+              for (let k = 0; k < burst; k++) {
+                ghosts.push({
+                  dx: (rng() - 0.5) * stepX * 8 * str,
+                  dy: (rng() - 0.5) * stepY * 2,
+                  alphaMod: rng() * 0.45 * str,
+                });
+              }
+            }
+            break;
+          }
+          case 'double_feed': {
+            // Two sheets produce a faint offset background impression
+            ghosts.push({
+              dx: ld.offX * stepX,
+              dy: ld.offY * stepY,
+              alphaMod: 0.12 * str,
+            });
+            break;
+          }
+          case 'mechanical_resonance': {
+            // Sinusoidal X drift from carriage resonance at certain speeds
+            dxTotal += Math.sin(gy * ld.freq * Math.PI * 2) * stepX * str * 1.2;
+            break;
+          }
         }
       }
 
+      if (skipCell) { processed++; continue; }
+
+      cx += dxTotal;
+      cy += dyTotal;
+
       // Global ribbon depletion: subtle left-to-right density fade (≤9%)
-      // Simulates ribbon feed direction as head traverses the line
       const ribbonFade = 1.0 - (gx / gridW) * 0.09;
 
-      // Per-pass mechanical jitter (increases slightly each pass)
       if (passJitter > 0) {
         cx += gaussian(rng) * passJitter;
         cy += gaussian(rng) * passJitter;
@@ -302,10 +391,10 @@ export async function render(srcImage, onProgressUpdate) {
       const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade;
       stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
 
-      if (doGhost) {
+      for (const g of ghosts) {
         stampInto(ink, outW, outH, stamp, stampSize,
-          cx - stampR + ghostDx, cy - stampR + ghostDy,
-          band * 0.26 * wearStrength);
+          cx - stampR + g.dx, cy - stampR + g.dy,
+          band * g.alphaMod);
       }
 
       processed++;
