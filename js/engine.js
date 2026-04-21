@@ -12,7 +12,6 @@ export function makeDotStamp(diameterPx, softness, density) {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const dx = x - cx, dy = y - cx;
-      // Slight horizontal elongation simulates pin contact while head moves
       const r = Math.sqrt(dx * dx * 0.88 + dy * dy);
       let v;
       if (r <= inner) v = 1;
@@ -45,7 +44,6 @@ export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
   }
 }
 
-// Bilinear-interpolated value noise for realistic cloudy effects
 function makeValueNoise(rng, noiseW, noiseH) {
   const grid = new Float32Array(noiseW * noiseH);
   for (let i = 0; i < grid.length; i++) grid[i] = rng();
@@ -283,7 +281,6 @@ export async function render(srcImage, onProgressUpdate) {
 
       let cx = offsetX + gx * stepX + stepX / 2 + pinXOff[pinIdx];
       let cy = offsetY + gy * stepY + stepY / 2 + pinYOff[pinIdx];
-
       let wearFactor = 1.0;
       let dxTotal = 0, dyTotal = 0;
       const ghosts = [];
@@ -388,8 +385,13 @@ export async function render(srcImage, onProgressUpdate) {
         cy += gaussian(rng) * passJitter;
       }
 
-      const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade;
-      stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
+      const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade * dotBandMult;
+      
+      stampInto(ink, outW, outH, stamp, bleedStampSize, cx - stampR, cy - stampR, band);
+
+      if (w_drag > 0 && rng() < w_drag * 0.1) {
+        stampInto(ink, outW, outH, stamp, stampSize, cx - stampR - stepX, cy - stampR, band * 0.15);
+      }
 
       for (const g of ghosts) {
         stampInto(ink, outW, outH, stamp, stampSize,
