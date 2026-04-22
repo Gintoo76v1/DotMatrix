@@ -1,7 +1,7 @@
 import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render } from './engine.js';
 
-// ==================== GLOBAL ERROR CATCHER (FANCY POPUP) ====================
+// ==================== GLOBAL ERROR CATCHER ====================
 function showError(msg) {
   const pop = document.getElementById('errorPopup');
   const txt = document.getElementById('errorText');
@@ -10,29 +10,21 @@ function showError(msg) {
     pop.classList.add('show');
     setTimeout(() => pop.classList.remove('show'), 7000); 
   } else {
-    console.error(msg); // Fallback falls UI fehlt
+    console.error(msg); 
   }
 }
 
 const errorCloseBtn = document.getElementById('errorCloseBtn');
 if (errorCloseBtn) {
-  errorCloseBtn.onclick = () => {
-    document.getElementById('errorPopup').classList.remove('show');
-  };
+  errorCloseBtn.onclick = () => { document.getElementById('errorPopup').classList.remove('show'); };
 }
 
 window.onerror = function(message, source, lineno, colno, error) {
-  showError(`[JS Fehler]: ${message} (Zeile ${lineno})`);
-  return false; 
+  showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; 
 };
 window.addEventListener('unhandledrejection', function(event) {
   showError(`[Promise Fehler]: ${event.reason}`);
 });
-
-// ==================== IOS SAFARI ANTI-ZOOM FIX ====================
-document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
-document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
-document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
 // ==================== LANGUAGE ====================
 const translations = {
