@@ -1,19 +1,8 @@
 import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
-// ==================== UTILITIES & DEBOUNCE (Schützt vor Freezes) ====================
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => { clearTimeout(timeout); func(...args); };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-const debouncedRefreshAscii = debounce(refreshAscii, 150);
-
 // ==================== JFIF / PNG DPI DETECTION ====================
+
 function readJfifDpi(buf) {
   const v = new DataView(buf);
   if (v.byteLength < 18 || v.getUint16(0) !== 0xFFD8) return null;
@@ -46,18 +35,46 @@ function readPngDpi(buf) {
   return null;
 }
 
-function snapDpi(dpi) { return Math.max(100, Math.min(1200, Math.round(dpi / 50) * 50)); }
+function snapDpi(dpi) {
+  return Math.max(100, Math.min(1200, Math.round(dpi / 50) * 50));
+}
+
 function estimateDpiFromImageSize(img) {
   const longPx   = Math.max(img.width, img.height);
   const a4LongIn = 297 / 25.4;
   return snapDpi(Math.round(longPx / a4LongIn));
 }
 
-// ==================== DOM ELEMENTS (Mit Sicherheits-Checks) ====================
+// ==================== INTERACTIVE ANIMATIONS ====================
+
+document.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+  const r = document.createElement('div');
+  r.className = 'click-shockwave';
+  r.style.left = e.clientX + 'px';
+  r.style.top  = e.clientY + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
+  if (['Shift','Control','Alt','Meta','CapsLock','Tab'].includes(e.key)) return;
+  const k = document.createElement('div');
+  k.className = 'key-echo';
+  k.textContent = e.key.length === 1 ? e.key.toUpperCase() : `[${e.key.toUpperCase()}]`;
+  k.style.left   = (Math.random() * 80 + 10) + 'vw';
+  k.style.bottom = '15vh';
+  document.body.appendChild(k);
+  setTimeout(() => k.remove(), 1200);
+});
+
+// ==================== DOM ELEMENTS ====================
+
 const dropzone    = document.getElementById("dropzone");
 const fileInput   = document.getElementById("fileInput");
 const outCanvas   = document.getElementById("outCanvas");
-const outCtx      = outCanvas ? outCanvas.getContext("2d") : null;
+const outCtx      = outCanvas.getContext("2d");
 const outSection  = document.getElementById("outputSection");
 const asciiEl     = document.getElementById("ascii");
 const statusEl    = document.getElementById("status");
@@ -68,8 +85,8 @@ const profileMeta = document.getElementById("profileMeta");
 let lastRenderedBlob = null;
 
 // ==================== HELPERS ====================
+
 function setStatus(text, working = false) {
-  if(!statusEl) return;
   statusEl.textContent = text;
   statusEl.className = "status" + (working ? " working" : "");
 }
@@ -127,149 +144,155 @@ function analyzeAndAdaptImage(img) {
     const brightPx  = hist.slice(180).reduce((a, b) => a + b, 0);
     const isDoc     = brightPx / total > 0.45;
 
-    const setSliderSafely = (id, valId, val) => {
-      const s = document.getElementById(id), v = document.getElementById(valId);
-      if(s) s.value = val;
-      if(v) v.textContent = val;
-    };
-
     if (isDoc) {
       const newContrast = Math.min(65, Math.round((220 / range - 1) * 55));
       state.brightness  = 0;
       state.contrast    = Math.max(20, newContrast);
       state.threshold   = 128;
       state.dither      = "threshold";
-      setSliderSafely("brightnessSlider", "brightnessVal", 0);
-      setSliderSafely("contrastSlider", "contrastVal", state.contrast);
-      setSliderSafely("thresholdSlider", "thresholdVal", 128);
-      document.querySelectorAll("#ditherBtns button").forEach(b => b.classList.toggle("active", b.dataset.dither === "threshold"));
-      if(document.getElementById("thresholdField")) document.getElementById("thresholdField").style.display = "block";
+      document.getElementById("brightnessSlider").value    = 0;
+      document.getElementById("brightnessVal").textContent = 0;
+      document.getElementById("contrastSlider").value      = state.contrast;
+      document.getElementById("contrastVal").textContent   = state.contrast;
+      document.getElementById("thresholdSlider").value     = 128;
+      document.getElementById("thresholdVal").textContent  = 128;
+      document.querySelectorAll("#ditherBtns button").forEach(b =>
+        b.classList.toggle("active", b.dataset.dither === "threshold")
+      );
+      document.getElementById("thresholdField").style.display = "block";
     } else {
       const newBrightness = Math.round(((p2 + p98) / 2 - 128) * -0.35);
       const newContrast   = Math.min(40, Math.round((180 / range - 1) * 30));
       state.brightness = Math.max(-60, Math.min(60, newBrightness));
       state.contrast   = Math.max(0,   Math.min(40, newContrast));
-      setSliderSafely("brightnessSlider", "brightnessVal", state.brightness);
-      setSliderSafely("contrastSlider", "contrastVal", state.contrast);
+      document.getElementById("brightnessSlider").value    = state.brightness;
+      document.getElementById("brightnessVal").textContent = state.brightness;
+      document.getElementById("contrastSlider").value      = state.contrast;
+      document.getElementById("contrastVal").textContent   = state.contrast;
     }
   } catch (e) { console.warn("Image analysis failed", e); }
 }
 
 function refreshAscii() {
-  if (!state.sourceImage || !asciiEl) return;
+  if (!state.sourceImage) return;
   try {
     asciiEl.classList.remove("empty");
-    asciiEl.textContent = asciiPreview(state.sourceImage, 60);
+    asciiEl.textContent = asciiPreview(state.sourceImage, 56);
   } catch (e) { console.warn(e); }
 }
 
 function updateProfileMeta() {
-  if(!profileMeta) return;
   const p = PROFILES[state.profile];
-  if(!p) return;
-  profileMeta.textContent = `${p.label} · ${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · ⌀ ${p.dot_diameter_mm}mm`;
+  profileMeta.textContent = `${p.label} · ${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · dot ⌀ ${p.dot_diameter_mm}mm`;
   const condCheck = document.querySelector('[data-flag="condensed"]');
-  if(condCheck) {
-    if (!p.supports_condensed) {
-      condCheck.dataset.disabled = "true";
-      condCheck.classList.remove("on");
-      state.condensed = false;
-    } else {
-      condCheck.dataset.disabled = "false";
-    }
+  if (!p.supports_condensed) {
+    condCheck.dataset.disabled = "true";
+    condCheck.classList.remove("on");
+    state.condensed = false;
+  } else {
+    condCheck.dataset.disabled = "false";
   }
 }
 
+// ==================== THEME ====================
+
+document.getElementById('themeSelector').addEventListener('click', (e) => {
+  const btn = e.target.closest('.theme-btn');
+  if (!btn) return;
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.documentElement.setAttribute('data-theme', btn.dataset.settheme);
+});
+
 // ==================== SEGMENTED BUTTONS ====================
+
 function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
-  const container = document.getElementById(containerId);
-  if(!container) return;
-  container.addEventListener("click", (e) => {
+  document.getElementById(containerId).addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
-    container.querySelectorAll(`button`).forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state[stateKey] = btn.dataset[attrKey];
     if (onChange) onChange();
     markModified();
-    debouncedRefreshAscii();
+    refreshAscii();
   });
 }
 
 wireSegmented("ditherBtns", "dither", "dither", () => {
-  const tField = document.getElementById("thresholdField");
-  if(tField) tField.style.display = state.dither === "threshold" ? "block" : "none";
+  document.getElementById("thresholdField").style.display =
+    state.dither === "threshold" ? "block" : "none";
 });
 wireSegmented("paperFormatBtns", "paperFormat", "format");
 wireSegmented("orientationBtns",  "orientation", "orient");
 
 // ==================== PROFILE SCROLL LIST ====================
-const profileList = document.getElementById('profileList');
-if(profileList) {
-  profileList.addEventListener('click', (e) => {
-    const item = e.target.closest('.sli');
-    if (!item) return;
-    profileList.querySelectorAll('.sli').forEach(s => s.classList.remove('active'));
-    item.classList.add('active');
-    state.profile = item.dataset.profile;
-    updateProfileMeta();
-    markModified();
-    debouncedRefreshAscii();
-  });
-}
 
-// ==================== ERROR SCROLL LIST ====================
+document.getElementById('profileList').addEventListener('click', (e) => {
+  const item = e.target.closest('.sli');
+  if (!item) return;
+  document.querySelectorAll('#profileList .sli').forEach(s => s.classList.remove('active'));
+  item.classList.add('active');
+  state.profile = item.dataset.profile;
+  updateProfileMeta();
+  markModified();
+  refreshAscii();
+});
+
+// ==================== ERROR SCROLL LIST (multi-select + per-error slider) ====================
+
 function syncWearLayersFromUI() {
   state.wearLayers = [];
   document.querySelectorAll('#errorList .er.on').forEach(el => {
     const slider = el.querySelector('.er-slider');
-    if(slider) {
-      state.wearLayers.push({ pattern: el.dataset.pattern, strength: +slider.value });
-    }
+    state.wearLayers.push({
+      pattern:  el.dataset.pattern,
+      strength: +slider.value,
+    });
   });
 }
 
-const errorList = document.getElementById('errorList');
-if(errorList) {
-  errorList.addEventListener('click', (e) => {
-    const head = e.target.closest('.er-head');
-    if (!head) return;
-    const er = head.closest('.er');
-    er.classList.toggle('on');
-    const slider = er.querySelector('.er-slider');
-    const valEl  = er.querySelector('.er-val');
-    if(valEl && slider) {
-      valEl.textContent = er.classList.contains('on') ? slider.value + '%' : '0%';
-    }
-    syncWearLayersFromUI();
-    markModified();
-  });
+document.getElementById('errorList').addEventListener('click', (e) => {
+  const head = e.target.closest('.er-head');
+  if (!head) return;
+  const er = head.closest('.er');
+  er.classList.toggle('on');
+  const slider = er.querySelector('.er-slider');
+  const valEl  = er.querySelector('.er-val');
+  if (!er.classList.contains('on')) {
+    valEl.textContent = '0%';
+  } else {
+    valEl.textContent = slider.value + '%';
+  }
+  syncWearLayersFromUI();
+  markModified();
+});
 
-  errorList.addEventListener('input', (e) => {
-    if (!e.target.classList.contains('er-slider')) return;
-    const er = e.target.closest('.er');
-    const valEl = er.querySelector('.er-val');
-    if(valEl) valEl.textContent = e.target.value + '%';
-    syncWearLayersFromUI();
-    markModified();
-  });
-}
+document.getElementById('errorList').addEventListener('input', (e) => {
+  if (!e.target.classList.contains('er-slider')) return;
+  const er    = e.target.closest('.er');
+  const valEl = er.querySelector('.er-val');
+  valEl.textContent = e.target.value + '%';
+  syncWearLayersFromUI();
+  markModified();
+});
 
 // ==================== CHECKBOXES ====================
+
 document.querySelectorAll(".check").forEach(el => {
   el.addEventListener("click", () => {
     if (el.dataset.disabled === "true") return;
     el.classList.toggle("on");
     state[el.dataset.flag] = el.classList.contains("on");
     markModified();
-    debouncedRefreshAscii();
+    refreshAscii();
   });
 });
 
 // ==================== SWATCHES ====================
+
 function wireSwatches(containerId, stateKey, attrKey) {
   const box = document.getElementById(containerId);
-  if(!box) return;
   box.addEventListener("click", (e) => {
     const sw = e.target.closest(".swatch");
     if (!sw || !sw.dataset[attrKey]) return;
@@ -282,53 +305,74 @@ function wireSwatches(containerId, stateKey, attrKey) {
 wireSwatches("inkSwatches",   "ink",   "ink");
 wireSwatches("paperSwatches", "paper", "paper");
 
-// ==================== CUSTOM INK PICKER (Übersichtlich & Logisch) ====================
+// ==================== CUSTOM INK PICKER ====================
+
 function hexToRgb(hex) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+  if (!m) return null;
+  return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
 }
 
 function rgbToHex(r, g, b) {
   return '#' + [r, g, b].map(n => n.toString(16).padStart(2, '0')).join('');
 }
 
-const inkColorPicker = document.getElementById('inkColorPicker');
-const applyCustomInkBtn = document.getElementById('applyCustomInkBtn');
-
-if(inkColorPicker && applyCustomInkBtn) {
-  applyCustomInkBtn.addEventListener('click', () => {
-    const hex = inkColorPicker.value;
-    const rgb = hexToRgb(hex);
-    if (!rgb) return;
-    
-    const swatch = document.getElementById('customInkSwatch');
-    if(swatch) {
-      swatch.dataset.ink = rgb.join(',');
-      swatch.style.background = hex;
-      document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active'));
-      swatch.classList.add('active');
-    }
-    state.ink = rgb;
-    markModified();
-  });
+function applyCustomInk(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return;
+  const swatch = document.getElementById('customInkSwatch');
+  swatch.dataset.ink = rgb.join(',');
+  swatch.style.background = hex;
+  document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active'));
+  swatch.classList.add('active');
+  state.ink = rgb;
+  markModified();
 }
 
-// ==================== SLIDERS (with Safeties & Debounce) ====================
+const inkColorPicker = document.getElementById('inkColorPicker');
+const inkHexInput    = document.getElementById('inkHexInput');
+
+inkColorPicker.addEventListener('input', () => {
+  const hex = inkColorPicker.value;
+  inkHexInput.value = hex;
+  applyCustomInk(hex);
+});
+
+inkHexInput.addEventListener('input', () => {
+  const raw = inkHexInput.value.trim();
+  const hex = raw.startsWith('#') ? raw : '#' + raw;
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    inkColorPicker.value = hex;
+    applyCustomInk(hex);
+  }
+});
+
+document.getElementById('applyInkBtn').addEventListener('click', () => {
+  const raw = inkHexInput.value.trim();
+  const hex = raw.startsWith('#') ? raw : '#' + raw;
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    inkColorPicker.value = hex;
+    applyCustomInk(hex);
+  } else {
+    alert('Enter a valid hex color, e.g. #3a2b1c');
+  }
+});
+
+// ==================== SLIDERS ====================
+
 function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, liveRefresh = false) {
   const s = document.getElementById(id);
   const v = document.getElementById(valId);
-  if (!s || !v) return;
   const apply = (fromUser) => {
     const raw = transform(s.value);
     state[stateKey] = raw;
     v.textContent = format(raw);
     if (fromUser) markModified();
-    if (liveRefresh) debouncedRefreshAscii();
+    if (liveRefresh) refreshAscii();
   };
   s.addEventListener("input", () => apply(true));
-  apply(false); // Init
+  apply(false);
 }
-
 wireSlider("thresholdSlider", "thresholdVal", "threshold", v => +v, v => v, true);
 wireSlider("brightnessSlider","brightnessVal","brightness", v => +v, v => v, true);
 wireSlider("contrastSlider",  "contrastVal",  "contrast",  v => +v, v => v, true);
@@ -340,24 +384,32 @@ wireSlider("maxSizeSlider",   "maxSizeVal",   "maxSize",   v => +v, v => v);
 wireSlider("seedSlider",      "seedVal",      "seed",      v => +v, v => v);
 
 // ==================== PRESET YAML SERIALIZER / PARSER ====================
+
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']);
   const lines = [];
   for (const [k, v] of Object.entries(preset)) {
     if (SKIP.has(k)) continue;
     if (Array.isArray(v)) {
-      if (v.length === 0) lines.push(`${k}: []`);
-      else if (typeof v[0] === 'number') lines.push(`${k}: [${v.join(', ')}]`);
-      else {
+      if (v.length === 0) {
+        lines.push(`${k}: []`);
+      } else if (typeof v[0] === 'number') {
+        lines.push(`${k}: [${v.join(', ')}]`);
+      } else {
         lines.push(`${k}:`);
         for (const obj of v) {
           const entries = Object.entries(obj);
           lines.push(`  - ${entries[0][0]}: ${entries[0][1]}`);
-          for (let i = 1; i < entries.length; i++) lines.push(`    ${entries[i][0]}: ${entries[i][1]}`);
+          for (let i = 1; i < entries.length; i++) {
+            lines.push(`    ${entries[i][0]}: ${entries[i][1]}`);
+          }
         }
       }
-    } else if (v === null) lines.push(`${k}: null`);
-    else lines.push(`${k}: ${v}`);
+    } else if (v === null) {
+      lines.push(`${k}: null`);
+    } else {
+      lines.push(`${k}: ${v}`);
+    }
   }
   return lines.join('\n');
 }
@@ -416,23 +468,29 @@ function yamlToPreset(yaml) {
 }
 
 // ==================== PRESET SYSTEM ====================
+
 const STORAGE_KEY = 'dotmatrix_user_presets';
 
 function loadUserPresets() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch { return []; }
 }
+
 function saveUserPresets(presets) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch {}
 }
+
 function deleteUserPreset(id) {
   const presets = loadUserPresets().filter(p => p.id !== id);
   saveUserPresets(presets);
   renderPresetBar();
 }
 
+// Capture the full current UI state into a plain preset object
 function captureCurrentPreset(name) {
   return {
-    name:         name || 'Neu',
+    name:         name || 'Unnamed',
     system:       false,
     profile:      state.profile,
     brightness:   state.brightness,
@@ -457,10 +515,12 @@ function captureCurrentPreset(name) {
   };
 }
 
+// Apply a preset object to the full UI + state
 function applyPreset(preset) {
   if (!preset) return;
   clearModified();
 
+  // Profile
   if (preset.profile && PROFILES[preset.profile]) {
     state.profile = preset.profile;
     document.querySelectorAll('#profileList .sli').forEach(s => {
@@ -469,9 +529,14 @@ function applyPreset(preset) {
     updateProfileMeta();
   }
 
+  // Image adjustments
   const setSlider = (id, valId, val, fmt = v => v) => {
-    const el = document.getElementById(id), ve = document.getElementById(valId);
-    if (el && val !== undefined && val !== null) { el.value = val; if (ve) ve.textContent = fmt(val); }
+    const el = document.getElementById(id);
+    const ve = document.getElementById(valId);
+    if (el && val !== undefined && val !== null) {
+      el.value = val;
+      if (ve) ve.textContent = fmt(val);
+    }
   };
   if (preset.brightness !== undefined) { state.brightness = preset.brightness; setSlider('brightnessSlider','brightnessVal', preset.brightness); }
   if (preset.contrast   !== undefined) { state.contrast   = preset.contrast;   setSlider('contrastSlider',  'contrastVal',   preset.contrast); }
@@ -483,22 +548,31 @@ function applyPreset(preset) {
   if (preset.maxSize    !== undefined) { state.maxSize    = preset.maxSize;    setSlider('maxSizeSlider',   'maxSizeVal',    preset.maxSize); }
   if (preset.seed       !== undefined) { state.seed       = preset.seed;       setSlider('seedSlider',      'seedVal',       preset.seed); }
 
+  // Dither
   if (preset.dither) {
     state.dither = preset.dither;
-    document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === preset.dither));
-    const tf = document.getElementById('thresholdField');
-    if(tf) tf.style.display = preset.dither === 'threshold' ? 'block' : 'none';
+    document.querySelectorAll('#ditherBtns button').forEach(b =>
+      b.classList.toggle('active', b.dataset.dither === preset.dither)
+    );
+    document.getElementById('thresholdField').style.display =
+      preset.dither === 'threshold' ? 'block' : 'none';
   }
 
+  // Paper format / orientation
   if (preset.paperFormat) {
     state.paperFormat = preset.paperFormat;
-    document.querySelectorAll('#paperFormatBtns button').forEach(b => b.classList.toggle('active', b.dataset.format === preset.paperFormat));
+    document.querySelectorAll('#paperFormatBtns button').forEach(b =>
+      b.classList.toggle('active', b.dataset.format === preset.paperFormat)
+    );
   }
   if (preset.orientation) {
     state.orientation = preset.orientation;
-    document.querySelectorAll('#orientationBtns button').forEach(b => b.classList.toggle('active', b.dataset.orient === preset.orientation));
+    document.querySelectorAll('#orientationBtns button').forEach(b =>
+      b.classList.toggle('active', b.dataset.orient === preset.orientation)
+    );
   }
 
+  // Ink swatch
   if (preset.ink) {
     state.ink = preset.ink;
     const inkStr = preset.ink.join(',');
@@ -508,18 +582,21 @@ function applyPreset(preset) {
       s.classList.toggle('active', match);
       if (match) found = true;
     });
+    // If no preset swatch matched, show in custom swatch
     const customSwatch = document.getElementById('customInkSwatch');
     if (!found && customSwatch) {
       const hex = rgbToHex(...preset.ink);
-      customSwatch.dataset.ink = inkStr;
+      customSwatch.dataset.ink    = inkStr;
       customSwatch.style.background = hex;
       customSwatch.classList.add('active');
-      if(document.getElementById('inkColorPicker')) document.getElementById('inkColorPicker').value = hex;
+      document.getElementById('inkColorPicker').value = hex;
+      document.getElementById('inkHexInput').value    = hex;
     } else if (customSwatch) {
       customSwatch.classList.remove('active');
     }
   }
 
+  // Paper swatch (null = keep auto-detected)
   if (preset.paper) {
     state.paper = preset.paper;
     const paperStr = preset.paper.join(',');
@@ -528,6 +605,7 @@ function applyPreset(preset) {
     });
   }
 
+  // Checkboxes (doubleStrike, condensed, softBlur, invert)
   const setBool = (flag, val) => {
     if (val === undefined) return;
     state[flag] = val;
@@ -538,23 +616,26 @@ function applyPreset(preset) {
   setBool('condensed',    preset.condensed);
   setBool('softBlur',     preset.softBlur);
   setBool('invert',       preset.invert);
-  updateProfileMeta();
+  updateProfileMeta(); // re-check condensed support
 
+  // Wear layers
   if (preset.wearLayers !== undefined) {
     state.wearLayers = preset.wearLayers.map(l => ({ ...l }));
     applyWearLayersToUI(state.wearLayers);
   }
 
-  debouncedRefreshAscii();
+  refreshAscii();
 }
 
+// Update the error list UI to match a given wearLayers array
 function applyWearLayersToUI(layers) {
+  // First clear all
   document.querySelectorAll('#errorList .er').forEach(el => {
     el.classList.remove('on');
     const valEl = el.querySelector('.er-val');
     if (valEl) valEl.textContent = '0%';
   });
-  if(!layers || !Array.isArray(layers)) return;
+  // Then activate the relevant ones
   for (const layer of layers) {
     const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
     if (!el) continue;
@@ -566,54 +647,70 @@ function applyWearLayersToUI(layers) {
   }
 }
 
+// ==================== PRESET BAR ====================
+
 let activePresetId = null;
 let presetDirty    = false;
 
-function markModified() { if (!presetDirty) { presetDirty = true; renderPresetBar(); } }
-function clearModified() { presetDirty = false; }
+function markModified() {
+  if (!presetDirty) {
+    presetDirty = true;
+    renderPresetBar();
+  }
+}
+
+function clearModified() {
+  presetDirty = false;
+}
 
 function renderPresetBar() {
-  const list = document.getElementById('presetList');
-  if(!list) return;
+  const bar         = document.getElementById('presetBar');
   const userPresets = loadUserPresets();
-  list.innerHTML = '';
+  bar.innerHTML     = '';
 
-  const allPresets = [...SYSTEM_PRESETS, ...userPresets];
+  const allPresets = [
+    ...SYSTEM_PRESETS,
+    ...userPresets,
+  ];
 
   for (const preset of allPresets) {
     const isActive = preset.id === activePresetId;
     const isDirty  = isActive && presetDirty;
-    
-    const div = document.createElement('div');
-    div.className = 'sli' + (isActive ? ' active' : '') + (isDirty ? ' modified' : '');
-    div.dataset.id = preset.id;
-    
-    let innerHTML = `<div class="sli-row">
-                       <span class="sli-name" style="font-size: 13px;">${preset.name}</span>
-                       ${preset.system ? '<span class="sli-badge" style="border:none; opacity:0.5;">SYS</span>' : '<button class="delete-btn" title="Löschen">×</button>'}
-                     </div>`;
-    div.innerHTML = innerHTML;
-
-    div.addEventListener('click', (e) => {
-      if (e.target.classList.contains('delete-btn')) {
-        e.stopPropagation();
-        if (confirm(`Preset "${preset.name}" wirklich löschen?`)) {
-          if (activePresetId === preset.id) { activePresetId = null; clearModified(); }
-          deleteUserPreset(preset.id);
-        }
-        return;
-      }
+    const pill = document.createElement('button');
+    pill.className   = 'preset-pill'
+      + (preset.system ? '' : ' user')
+      + (isActive ? ' active' : '')
+      + (isDirty  ? ' modified' : '');
+    pill.textContent = preset.name;
+    pill.dataset.id  = preset.id;
+    pill.addEventListener('click', () => {
       activePresetId = preset.id;
       clearModified();
       renderPresetBar();
       applyPreset(preset);
     });
+    bar.appendChild(pill);
 
-    list.appendChild(div);
+    // Delete button for user presets
+    if (!preset.system) {
+      const del = document.createElement('button');
+      del.className   = 'preset-pill delete-btn';
+      del.textContent = '×';
+      del.title       = 'Delete preset';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete preset "${preset.name}"?`)) {
+          if (activePresetId === preset.id) { activePresetId = null; clearModified(); }
+          deleteUserPreset(preset.id);
+        }
+      });
+      bar.appendChild(del);
+    }
   }
 }
 
 // ==================== EXPORT / IMPORT ====================
+
 function downloadText(text, filename) {
   const a = document.createElement('a');
   a.href     = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
@@ -623,50 +720,70 @@ function downloadText(text, filename) {
   a.remove();
 }
 
-const exportBtn = document.getElementById('exportCurrentBtn');
-if(exportBtn) {
-  exportBtn.addEventListener('click', () => {
-    const name   = prompt('Name für Export?', 'Mein Preset') || 'Mein Preset';
-    const preset = captureCurrentPreset(name);
-    const yaml   = presetToYaml(preset);
-    const slug   = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    downloadText(yaml, `${slug}.yaml`);
-  });
-}
+document.getElementById('exportPresetBtn').addEventListener('click', () => {
+  let name = document.getElementById('presetNameInput').value.trim();
+  if (!name) {
+    name = prompt('Enter a name for this preset:', 'My Preset');
+    if (name === null) return;
+    name = name.trim() || 'dotmatrix-preset';
+    document.getElementById('presetNameInput').value = name;
+  }
+  const preset = captureCurrentPreset(name);
+  const yaml   = presetToYaml(preset);
+  const slug   = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  downloadText(yaml, `${slug}.yaml`);
+});
 
-const importBtn = document.getElementById('importPresetBtn');
-const fileInp = document.getElementById('presetFileInput');
-if(importBtn && fileInp) {
-  importBtn.addEventListener('click', () => fileInp.click());
-  fileInp.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const text = await file.text();
-    importFromText(text);
-    e.target.value = '';
-  });
-}
+document.getElementById('importPresetBtn').addEventListener('click', () => {
+  document.getElementById('presetFileInput').click();
+});
 
-const saveBtn = document.getElementById('savePresetBtn');
-if(saveBtn) {
-  saveBtn.addEventListener('click', () => {
-    const name = prompt('Name für neues Preset:', 'Mein Preset');
-    if (!name) return;
-    const preset = captureCurrentPreset(name.trim());
-    preset.id    = 'user_' + Date.now();
-    const presets = loadUserPresets();
-    presets.push(preset);
-    saveUserPresets(presets);
-    activePresetId = preset.id;
-    clearModified();
-    renderPresetBar();
-    setStatus(`Preset "${preset.name}" gespeichert.`);
-  });
-}
+document.getElementById('presetFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  importFromText(text);
+  e.target.value = '';
+});
 
+// Preset Creator buttons
+document.getElementById('exportCurrentBtn').addEventListener('click', () => {
+  const name   = document.getElementById('presetNameInput').value.trim() || 'my-preset';
+  const preset = captureCurrentPreset(name);
+  const yaml   = presetToYaml(preset);
+  // Also fill the textarea so user can copy
+  document.getElementById('presetYamlArea').value = yaml;
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  downloadText(yaml, `${slug}.yaml`);
+});
+
+document.getElementById('savePresetBtn').addEventListener('click', () => {
+  const name = document.getElementById('presetNameInput').value.trim();
+  if (!name) { alert('Enter a preset name first.'); return; }
+  const preset = captureCurrentPreset(name);
+  preset.id    = 'user_' + Date.now();
+  const presets = loadUserPresets();
+  presets.push(preset);
+  saveUserPresets(presets);
+  activePresetId = preset.id;
+  clearModified();
+  renderPresetBar();
+  setStatus(`Preset "${name}" saved.`);
+});
+
+document.getElementById('importYamlBtn').addEventListener('click', () => {
+  const text = document.getElementById('presetYamlArea').value.trim();
+  if (!text) { alert('Paste YAML or JSON into the text area first.'); return; }
+  importFromText(text);
+});
+
+// Convert legacy JSON wear object {pattern: strength, ...} to wearLayers array
 function normalizePreset(raw) {
   if (raw.wear && !raw.wearLayers) {
-    const known = new Set(Object.keys({ cloudy:1, ghosting:1, misaligned:1, pin_skip:1, smudge:1, ribbon_twist:1, head_gap:1, ink_starved:1, paper_slip:1, static_noise:1, double_feed:1, mechanical_resonance:1 }));
+    const known = new Set(Object.keys(
+      { cloudy:1, ghosting:1, misaligned:1, pin_skip:1, smudge:1, ribbon_twist:1,
+        head_gap:1, ink_starved:1, paper_slip:1, static_noise:1, double_feed:1, mechanical_resonance:1 }
+    ));
     raw.wearLayers = Object.entries(raw.wear)
       .filter(([k, v]) => known.has(k) && v > 0)
       .map(([pattern, strength]) => ({ pattern, strength }));
@@ -679,40 +796,44 @@ function importFromText(text) {
   try {
     let preset;
     const stripped = text.trim();
-    if (stripped.startsWith('{')) preset = normalizePreset(JSON.parse(stripped));
-    else preset = yamlToPreset(stripped);
-    
-    if (!preset.name) preset.name = 'Importiert';
+    if (stripped.startsWith('{')) {
+      preset = normalizePreset(JSON.parse(stripped));
+    } else {
+      preset = yamlToPreset(stripped);
+    }
+    if (!preset.name) preset.name = 'Imported';
     applyPreset(preset);
     clearModified();
-    setStatus(`Preset "${preset.name}" importiert.`);
-    
-    preset.id = 'user_' + Date.now();
-    preset.system = false;
-    const presets = loadUserPresets();
-    presets.push(preset);
-    saveUserPresets(presets);
-    activePresetId = preset.id;
-    renderPresetBar();
-  } catch (err) { alert('Import fehlgeschlagen: ' + err.message); }
+    setStatus(`Preset "${preset.name}" imported.`);
+    if (preset.name && preset.name !== 'Imported') {
+      preset.id = 'user_' + Date.now();
+      preset.system = false;
+      const presets = loadUserPresets();
+      presets.push(preset);
+      saveUserPresets(presets);
+      activePresetId = preset.id;
+      renderPresetBar();
+    }
+  } catch (err) {
+    alert('Import failed: ' + err.message);
+  }
 }
 
 // ==================== FILE HANDLING ====================
-if(dropzone && fileInput) {
-  dropzone.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
-  dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
-  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
-  dropzone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropzone.classList.remove("dragover");
-    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
-}
+
+dropzone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
 
 async function handleFile(file) {
-  if (!file || !file.type.startsWith("image/")) { setStatus("Keine gültige Bilddatei."); return; }
-  setStatus("Lade Bild...");
+  if (!file || !file.type.startsWith("image/")) { setStatus("Not an image file."); return; }
+  setStatus("Loading image...");
   let metaDpi = null;
   try {
     const buf = await file.slice(0, 256).arrayBuffer();
@@ -724,79 +845,64 @@ async function handleFile(file) {
   img.onload = () => {
     const sourceDpi = (metaDpi && metaDpi > 96) ? snapDpi(metaDpi) : estimateDpiFromImageSize(img);
     state.dpi = sourceDpi;
-    const dpiS = document.getElementById("dpiSlider");
-    const dpiV = document.getElementById("dpiVal");
-    if(dpiS) dpiS.value = sourceDpi;
-    if(dpiV) dpiV.textContent = sourceDpi;
-    
+    document.getElementById("dpiSlider").value     = sourceDpi;
+    document.getElementById("dpiVal").textContent  = sourceDpi;
     state.sourceImage = img;
     detectAndSetPaperColor(img);
     analyzeAndAdaptImage(img);
-    
-    const dzB = document.getElementById("dzBig"), dzS = document.getElementById("dzSmall");
-    if(dzB) dzB.textContent = file.name;
-    if(dzS) dzS.textContent = `${img.width} × ${img.height} · Ändern klicken`;
-    
-    if(outSection) outSection.style.display = "flex";
+    document.getElementById("dzBig").textContent   = file.name;
+    document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · tap to change`;
+    outSection.style.display = "block";
     const scale = Math.min(1, 800 / Math.max(img.width, img.height));
-    if(outCanvas && outCtx) {
-      outCanvas.width  = Math.round(img.width  * scale);
-      outCanvas.height = Math.round(img.height * scale);
-      outCtx.drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
-    }
-    
-    if(renderBtn) renderBtn.disabled = false;
-    setStatus("Bereit. Auf RENDER klicken.");
-    debouncedRefreshAscii();
+    outCanvas.width  = Math.round(img.width  * scale);
+    outCanvas.height = Math.round(img.height * scale);
+    outCtx.drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
+    renderBtn.disabled = false;
+    setStatus("Ready. Tap RENDER.");
+    refreshAscii();
   };
-  img.onerror = () => setStatus("Fehler beim Laden.");
+  img.onerror = () => setStatus("Failed to load image.");
   img.src = url;
 }
 
 // ==================== RENDER ====================
-if(renderBtn) {
-  renderBtn.addEventListener("click", async () => {
-    if (!state.sourceImage) return;
-    renderBtn.disabled  = true;
-    if(downloadBtn) downloadBtn.disabled = true;
-    setStatus("Rendern...", true);
-    try {
-      const t0 = performance.now();
-      const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
-      if(outCanvas && outCtx) {
-        outCanvas.width  = width;
-        outCanvas.height = height;
-        outCtx.putImageData(imageData, 0, 0);
-        outCanvas.toBlob(blob => {
-          lastRenderedBlob = blob;
-          if(downloadBtn) downloadBtn.disabled = false;
-        }, "image/png");
-      }
-      setStatus(`Fertig in ${((performance.now() - t0) / 1000).toFixed(2)}s · ${width}×${height}`);
-    } catch (e) {
-      console.error(e);
-      setStatus("Render fehlgeschlagen: " + e.message);
-    } finally {
-      renderBtn.disabled = false;
-    }
-  });
-}
 
-if(downloadBtn) {
-  downloadBtn.addEventListener("click", () => {
-    if (!lastRenderedBlob) return;
-    const a  = document.createElement("a");
-    a.href   = URL.createObjectURL(lastRenderedBlob);
-    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    a.download = `dotmatrix_${state.profile}_${ts}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  });
-}
+renderBtn.addEventListener("click", async () => {
+  if (!state.sourceImage) return;
+  renderBtn.disabled  = true;
+  downloadBtn.disabled = true;
+  setStatus("Rendering...", true);
+  try {
+    const t0 = performance.now();
+    const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
+    outCanvas.width  = width;
+    outCanvas.height = height;
+    outCtx.putImageData(imageData, 0, 0);
+    outCanvas.toBlob(blob => {
+      lastRenderedBlob     = blob;
+      downloadBtn.disabled = false;
+    }, "image/png");
+    setStatus(`Done in ${((performance.now() - t0) / 1000).toFixed(2)}s · ${width}×${height}`);
+  } catch (e) {
+    console.error(e);
+    setStatus("Render failed: " + e.message);
+  } finally {
+    renderBtn.disabled = false;
+  }
+});
+
+downloadBtn.addEventListener("click", () => {
+  if (!lastRenderedBlob) return;
+  const a  = document.createElement("a");
+  a.href   = URL.createObjectURL(lastRenderedBlob);
+  const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  a.download = `dotmatrix_${state.profile}_${ts}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+});
 
 // ==================== INIT ====================
-document.addEventListener("DOMContentLoaded", () => {
-  updateProfileMeta();
-  renderPresetBar();
-});
+
+updateProfileMeta();
+renderPresetBar();
