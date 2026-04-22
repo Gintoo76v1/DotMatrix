@@ -1,150 +1,216 @@
 <!doctype html>
-<html lang="de" data-theme="dark">
+<html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>DotMatrix — Retro Printer Renderer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>DotMatrix IDE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
-<script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.7/build/spline-viewer.js"></script>
 </head>
 <body>
-<div class="app-container">
+
+<div class="vscode-layout">
   
-  <aside class="sidebar glass-panel">
-    <div class="sidebar-header">
-      <h2>System</h2>
-    </div>
-    <div class="sidebar-content">
-      
-      <div class="sidebar-section">
-        <div class="section-label">Sprache / Language</div>
-        <div class="segmented" id="langBtns">
+  <div class="activity-bar">
+    <div class="activity-icon active" title="Explorer">📂</div>
+    <div class="activity-icon" title="Einstellungen">⚙️</div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-header">EXPLORER: PRESETS</div>
+    
+    <div class="accordion" open>
+      <div class="accordion-header">SYSTEM & TOOLS</div>
+      <div class="accordion-content">
+        <div class="label">Sprache</div>
+        <div class="segmented mb-2" id="langBtns">
           <button class="active" data-lang="de">🇩🇪 DE</button>
           <button data-lang="en">🇬🇧 EN</button>
         </div>
+        <button class="btn full-width mb-1" id="exportPresetBtn">⬇️ Export YAML</button>
+        <button class="btn full-width" id="importPresetBtn">⬆️ Import YAML</button>
+        <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
+      </div>
+    </div>
+
+    <div class="accordion" open>
+      <div class="accordion-header">PRESET BIBLIOTHEK</div>
+      <div class="accordion-content p-0">
+        <div class="scroll-list" id="presetList"></div>
+      </div>
+    </div>
+    
+    <div class="accordion">
+      <div class="accordion-header">NEUES PRESET</div>
+      <div class="accordion-content">
+        <input type="text" id="presetNameInput" class="text-input mb-1" placeholder="Name...">
+        <button class="btn primary full-width" id="savePresetBtn">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="editor-area">
+    <div class="editor-tabs">
+      <div class="tab active">source.png</div>
+      <div class="tab">preview.ascii</div>
+    </div>
+    
+    <div class="editor-content">
+      <div id="dropzone" class="dropzone">
+        <div class="big" id="dzBig">Bild hier ablegen oder klicken</div>
+        <div class="small" id="dzSmall">PNG · JPG · HEIC · WebP</div>
+        <input type="file" id="fileInput" accept="image/*">
       </div>
 
-      <div class="sidebar-section">
-        <div class="section-label">Erscheinungsbild</div>
-        <div class="segmented" id="themeModeBtns">
-          <button data-mode="light">Light ☀️</button>
-          <button class="active" data-mode="dark">Dark 🌙</button>
+      <div id="outputSection" class="output-container">
+        <div class="canvas-wrap">
+          <canvas id="outCanvas" width="400" height="300"></canvas>
+        </div>
+        <div class="zoom-bar">
+          <button class="icon-btn" id="zoomOutBtn">➖</button>
+          <span id="zoomLevel">100%</span>
+          <button class="icon-btn" id="zoomInBtn">➕</button>
+        </div>
+        <pre id="ascii" class="ascii">Waiting for input...</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="inspector">
+    <div class="sidebar-header">PROPERTIES</div>
+    
+    <div class="inspector-scroll">
+      <div class="accordion" open>
+        <div class="accordion-header">DRUCKER PROFIL</div>
+        <div class="accordion-content p-0">
+          <div class="scroll-list" id="profileList">
+            <div class="sli" data-profile="epson_fx"><div class="sli-row"><span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span></div></div>
+            <div class="sli" data-profile="epson_lq"><div class="sli-row"><span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span></div></div>
+            <div class="sli" data-profile="ibm_proprinter"><div class="sli-row"><span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span></div></div>
+            <div class="sli active" data-profile="oki_microline"><div class="sli-row"><span class="sli-name">OKI Microline</span><span class="sli-badge">9-PIN</span></div></div>
+            <div class="sli" data-profile="star_nx1000"><div class="sli-row"><span class="sli-name">Star NX-1000</span><span class="sli-badge">9-PIN</span></div></div>
+            <div class="sli" data-profile="panasonic_kx"><div class="sli-row"><span class="sli-name">Panasonic KX-P</span><span class="sli-badge">24-PIN</span></div></div>
+            <div class="sli" data-profile="dec_la75"><div class="sli-row"><span class="sli-name">DEC LA75</span><span class="sli-badge">9-PIN</span></div></div>
+            <div class="sli" data-profile="nec_p6"><div class="sli-row"><span class="sli-name">NEC P6</span><span class="sli-badge">24-PIN</span></div></div>
+            <div class="sli" data-profile="commodore_mps"><div class="sli-row"><span class="sli-name">MPS-803</span><span class="sli-badge">7-PIN</span></div></div>
+            <div class="sli" data-profile="apple_imagewriter"><div class="sli-row"><span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span></div></div>
+          </div>
+          <div class="p-2">
+            <div id="profileMeta" class="meta-text mb-2"></div>
+            <label class="check" data-flag="doubleStrike"><input type="checkbox"><span>Double-strike</span></label>
+            <label class="check" data-flag="condensed"><input type="checkbox"><span>Condensed Mode</span></label>
+          </div>
         </div>
       </div>
 
-      <div class="sidebar-section">
-        <div class="section-label">Werkzeuge</div>
-        <button class="btn-sm full-width" id="exportPresetBtn">⬇️ Alle Presets exportieren</button>
-        <button class="btn-sm full-width mt-2" id="importPresetBtn">⬆️ Presets importieren</button>
-        <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
+      <div class="accordion" open>
+        <div class="accordion-header">IMAGE ADJUSTMENTS</div>
+        <div class="accordion-content">
+          <label class="field"><span class="name">Brightness <b id="brightnessVal">0</b></span><input type="range" id="brightnessSlider" min="-100" max="100" value="0"></label>
+          <label class="field"><span class="name">Contrast <b id="contrastVal">20</b></span><input type="range" id="contrastSlider" min="-100" max="100" value="20"></label>
+          <label class="field"><span class="name">Gamma <b id="gammaVal">1.0</b></span><input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0"></label>
+          <label class="check mt-2" data-flag="invert"><input type="checkbox"><span>Invert Image</span></label>
+        </div>
       </div>
 
-    </div>
-  </aside>
-
-  <main class="main-content">
-    <header class="glass-panel">
-      <h1>dotmatrix<span class="dot">.</span></h1>
-      <div class="tag">retro printer aesthetic · ∎ 9-pin · 24-pin</div>
-    </header>
-
-    <div class="content-grid">
-      
-      <div class="column">
-        <section class="glass-panel">
-          <div class="section-label" data-i18n="source">Bildquelle</div>
-          <div id="dropzone" class="dropzone">
-            <div class="big" id="dzBig">Klicken zum Auswählen</div>
-            <div class="small" id="dzSmall">PNG &middot; JPG &middot; HEIC &middot; WebP</div>
-            <input type="file" id="fileInput" accept="image/*">
+      <div class="accordion" open>
+        <div class="accordion-header">HALFTONE</div>
+        <div class="accordion-content">
+          <div class="segmented mb-2" id="ditherBtns">
+            <button data-dither="floyd_steinberg">Floyd-S</button>
+            <button data-dither="ordered">Ordered</button>
+            <button data-dither="threshold" class="active">Thresh</button>
           </div>
-        </section>
-
-        <section id="outputSection" class="glass-panel" style="display:none">
-          <div class="section-label">Live Vorschau & Zoom</div>
-          <div class="canvas-wrap" id="canvasWrap">
-            <canvas id="outCanvas" width="400" height="300"></canvas>
-          </div>
-          <div class="zoom-controls mt-2">
-            <button class="btn-sm" id="zoomOutBtn">🔍 -</button>
-            <button class="btn-sm" id="zoomInBtn">🔍 +</button>
-            <span id="zoomLevel" class="text-small ml-2">100%</span>
-          </div>
-          <pre id="ascii" class="ascii empty">// Lade ein Bild hoch //</pre>
-          <div id="status" class="status">Bereit.</div>
-        </section>
+          <label class="field" id="thresholdField"><span class="name">Threshold <b id="thresholdVal">128</b></span><input type="range" id="thresholdSlider" min="0" max="255" value="128"></label>
+        </div>
       </div>
 
-      <div class="column">
-        <section class="glass-panel">
-          <div class="section-label">Presets</div>
-          <div class="scroll-list" id="presetList">
-            </div>
+      <div class="accordion" open>
+        <div class="accordion-header">MEDIA & INK</div>
+        <div class="accordion-content">
+          <div class="label">Format</div>
+          <div class="segmented mb-2" id="paperFormatBtns">
+            <button data-format="Original" class="active">Orig</button>
+            <button data-format="Fit">Auto</button>
+            <button data-format="A4">A4</button>
+            <button data-format="Letter">Letter</button>
+          </div>
+          <div class="label">Orientation</div>
+          <div class="segmented mb-2" id="orientationBtns">
+            <button data-orient="Portrait" class="active">Port</button>
+            <button data-orient="Landscape">Land</button>
+          </div>
           
-          <details class="mt-2">
-            <summary>Neues Preset speichern</summary>
-            <div class="custom-ink-row">
-              <input type="text" id="presetNameInput" class="text-input" placeholder="Mein Preset">
-              <button class="btn-sm" id="savePresetBtn">Speichern</button>
-            </div>
-          </details>
-        </section>
-
-        <section class="glass-panel">
-          <div class="section-label">Drucker Profil</div>
-          <div class="scroll-list" id="profileList">
-            <div class="sli" data-profile="epson_fx"><div class="sli-row"><span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">120×72 dpi &middot; ⌀0.35mm</div></div>
-            <div class="sli" data-profile="epson_lq"><div class="sli-row"><span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span></div><div class="sli-meta">180×180 dpi &middot; ⌀0.20mm</div></div>
-            <div class="sli" data-profile="ibm_proprinter"><div class="sli-row"><span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">120×72 dpi &middot; ⌀0.38mm</div></div>
-            <div class="sli active" data-profile="oki_microline"><div class="sli-row"><span class="sli-name">OKI Microline</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144×72 dpi &middot; ⌀0.33mm</div></div>
-            </div>
-          <div class="profile-meta" id="profileMeta"></div>
-        </section>
+          <div class="label">Ink Color</div>
+          <div class="swatches mb-2" id="inkSwatches">
+            <div class="swatch active" style="background:#19191e" data-ink="25,25,30"></div>
+            <div class="swatch" style="background:#142d82" data-ink="20,45,130"></div>
+            <div class="swatch" style="background:#a01e23" data-ink="160,30,35"></div>
+            <div class="swatch" style="background:#5a286e" data-ink="90,40,110"></div>
+            <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e"></div>
+          </div>
+          <div class="custom-ink-row mb-2">
+            <input type="color" id="inkColorPicker" class="color-picker" value="#19191e">
+            <input type="text" id="inkHexInput" class="text-input" value="#19191e" maxlength="7">
+            <button class="btn primary" id="applyInkBtn">Set</button>
+          </div>
+          
+          <div class="label">Paper Color (Auto)</div>
+          <div class="swatches" id="paperSwatches">
+            <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232"></div>
+            <div class="swatch active" style="background:#ffffff" data-paper="255,255,255"></div>
+            <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
+            <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160"></div>
+          </div>
+        </div>
       </div>
 
-      <div class="column">
-        <section class="glass-panel">
-          <div class="section-label">Bildeinstellungen</div>
-          <label class="field">
-            <span class="name"><span>Helligkeit</span><b id="brightnessVal">0</b></span>
-            <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
-          </label>
-          <label class="field">
-            <span class="name"><span>Kontrast</span><b id="contrastVal">20</b></span>
-            <input type="range" id="contrastSlider" min="-100" max="100" value="20">
-          </label>
-          <label class="field">
-            <span class="name"><span>Schwellenwert (Threshold)</span><b id="thresholdVal">128</b></span>
-            <input type="range" id="thresholdSlider" min="0" max="255" value="128">
-          </label>
-        </section>
+      <div class="accordion">
+        <div class="accordion-header">HARDWARE ERRORS</div>
+        <div class="accordion-content p-0" id="errorList">
+          <div class="er" data-pattern="cloudy"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Cloudy</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="ghosting"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Ghosting</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="misaligned"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Wobble</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="pin_skip"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Pin Skip</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="smudge"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Smudge</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="ribbon_twist"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Ribbon Twist</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="head_gap"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Head Gap</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="ink_starved"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Ink Starved</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="paper_slip"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Paper Slip</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="static_noise"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Static</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="double_feed"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Double Feed</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="mechanical_resonance"><div class="er-head"><input type="checkbox" class="er-check"><span class="er-name">Resonance</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+        </div>
+      </div>
 
-        <section class="glass-panel">
-          <div class="section-label">Tinte (Ink)</div>
-          <div class="swatches" id="inkSwatches">
-            <div class="swatch active" style="background:#19191e" data-ink="25,25,30" title="black"></div>
-            <div class="swatch" style="background:#142d82" data-ink="20,45,130" title="blue"></div>
-            <div class="swatch" style="background:#a01e23" data-ink="160,30,35" title="red"></div>
-            <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e" title="custom"></div>
-          </div>
-          <div class="custom-ink-row mt-2">
-            <input type="color" id="inkColorPicker" class="color-picker" value="#19191e">
-            <input type="text" id="inkHexInput" class="hex-input text-input" placeholder="#rrggbb" value="#19191e" maxlength="7">
-            <button class="btn-sm" id="applyInkBtn">Apply</button>
-          </div>
-        </section>
+      <div class="accordion">
+        <div class="accordion-header">ADVANCED</div>
+        <div class="accordion-content">
+          <label class="field"><span class="name">Output DPI <b id="dpiVal">300</b></span><input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300"></label>
+          <label class="field"><span class="name">Jitter <b id="jitterVal">1.0</b></span><input type="range" id="jitterSlider" min="0" max="30" value="10"></label>
+          <label class="field"><span class="name">Banding <b id="bandingVal">1.0</b></span><input type="range" id="bandingSlider" min="0" max="20" value="10"></label>
+          <label class="field"><span class="name">Max Size <b id="maxSizeVal">8000</b></span><input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="8000"></label>
+          <label class="field"><span class="name">Seed <b id="seedVal">0</b></span><input type="range" id="seedSlider" min="0" max="9999" value="0"></label>
+          <label class="check mt-2" data-flag="softBlur"><input type="checkbox"><span>Softening Blur</span></label>
+        </div>
       </div>
 
     </div>
-  </main>
-</div>
+  </div>
 
-<div class="actions glass-panel">
-  <button class="btn primary" id="renderBtn" disabled>Render 🖨️</button>
-  <button class="btn" id="downloadBtn" disabled>Download PNG 💾</button>
+  <div class="status-bar">
+    <div class="status-left">
+      <span class="status-item">v2.2.0</span>
+      <span class="status-item" id="status">Ready</span>
+    </div>
+    <div class="status-right">
+      <button class="status-btn" id="renderBtn" disabled>▶ RENDER</button>
+      <button class="status-btn" id="downloadBtn" disabled>↓ PNG</button>
+    </div>
+  </div>
+
 </div>
 
 <script type="module" src="js/main.js"></script>
