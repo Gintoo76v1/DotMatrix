@@ -216,13 +216,13 @@ function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v) {
   const s = document.getElementById(id);
   const v = document.getElementById(valId);
   const apply = () => {
+    if(!s) return;
     const raw = transform(s.value);
     state[stateKey] = raw;
     v.textContent = format(raw);
     debouncedRefreshAscii();
   };
-  s.addEventListener("input", apply);
-  apply();
+  if(s) { s.addEventListener("input", apply); apply(); }
 }
 wireSlider("thresholdSlider", "thresholdVal", "threshold");
 wireSlider("brightnessSlider","brightnessVal","brightness");
@@ -493,6 +493,9 @@ function applyPreset(p) {
       const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
       if (el) { el.classList.add('on'); el.querySelector('.er-slider').value = layer.strength ?? 50; el.querySelector('.er-val').textContent = (layer.strength ?? 50) + '%'; }
     }
+  } else {
+    state.wearLayers = [];
+    document.querySelectorAll('#errorList .er').forEach(el => { el.classList.remove('on'); el.querySelector('.er-val').textContent = '0%'; });
   }
   debouncedRefreshAscii();
 }
@@ -505,7 +508,6 @@ function renderPresetList() {
     const el = document.createElement('div');
     el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
     
-    // Mit Delete-Button für Custom Presets
     if(p.system) {
       el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><span class="sli-badge">SYS</span></div>`;
     } else {
@@ -526,7 +528,7 @@ function renderPresetList() {
   });
 }
 
-// ==================== EXPORT / IMPORT ====================
+// ==================== EXPORT / IMPORT (INKL. LEGACY REPAIR) ====================
 function downloadText(text, filename) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
   a.download = filename; document.body.appendChild(a); a.click(); a.remove();
@@ -565,10 +567,20 @@ document.getElementById('importYamlBtn').addEventListener('click', () => {
   if (!text) return alert('YAML einfügen!'); importFromText(text);
 });
 
+// Repariert alte Presets mit "wear: {cloudy: 30}" anstelle von "wearLayers: [...]"
+function normalizePreset(raw) {
+  if (raw.wear && !raw.wearLayers) {
+    const known = new Set(["cloudy", "ghosting", "misaligned", "pin_skip", "smudge", "ribbon_twist", "head_gap", "ink_starved", "paper_slip", "static_noise", "double_feed", "mechanical_resonance"]);
+    raw.wearLayers = Object.entries(raw.wear).filter(([k, v]) => known.has(k) && v > 0).map(([pattern, strength]) => ({ pattern, strength }));
+    delete raw.wear;
+  }
+  return raw;
+}
+
 function importFromText(text) {
   try {
     const stripped = text.trim();
-    let preset = stripped.startsWith('{') ? JSON.parse(stripped) : yamlToPreset(stripped);
+    let preset = stripped.startsWith('{') ? normalizePreset(JSON.parse(stripped)) : normalizePreset(yamlToPreset(stripped));
     if (!preset.name) preset.name = 'Imported';
     applyPreset(preset);
     setStatus(`Preset "${preset.name}" importiert.`);
@@ -610,7 +622,7 @@ async function handleFile(file) {
     state.sourceImage = img;
     
     detectAndSetPaperColor(img);
-    analyzeAndAdaptImage(img); // Auto-Kontrast für Dokumente
+    analyzeAndAdaptImage(img);
     
     document.getElementById("dzBig").textContent = file.name;
     document.getElementById("dzSmall").textContent = `${img.width} × ${img.height}`;
@@ -642,24 +654,3 @@ renderBtn.addEventListener("click", async () => {
     const outCanvas = document.getElementById("outCanvas");
     outCanvas.width = width; outCanvas.height = height;
     outCanvas.getContext("2d").putImageData(imageData, 0, 0);
-    outCanvas.toBlob(blob => { lastRenderedBlob = blob; downloadBtn.disabled = false; }, "image/png");
-    setStatus(`Fertig in ${((performance.now() - t0) / 1000).toFixed(2)}s`);
-  } catch (e) {
-    console.error(e); setStatus("Fehler: " + e.message);
-  } finally {
-    renderBtn.disabled = false;
-  }
-});
-
-downloadBtn.addEventListener("click", () => {
-  if (!lastRenderedBlob) return;
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(lastRenderedBlob);
-  a.download = `dotmatrix_${state.profile}_${Date.now()}.png`;
-  document.body.appendChild(a); a.click(); a.remove();
-});
-
-// ==================== INIT ====================
-applyLanguage('de');
-updateProfileMeta();
-renderPresetList();
