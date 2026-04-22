@@ -1,6 +1,12 @@
 import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
+// ==================== IOS SAFARI ANTI-ZOOM FIX ====================
+// Fängt unabsichtliche Zwei-Finger Gesten ab, die Safari zum Zoomen der UI bringen könnten.
+document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+document.addEventListener('gestureend', function (e) { e.preventDefault(); });
+
 // ==================== LANGUAGE ====================
 const translations = {
   de: { sourceTitle: "Bildquelle", dropzoneBig: "Bild auswählen", profileTitle: "Druckerprofil", adjustTitle: "Bildanpassung", presetsTitle: "Presets", errorsTitle: "Hardware Fehler", advancedTitle: "Erweitert", btnRender: "Manuell Rendern", previewTitle: "Live-Vorschau" },
@@ -11,14 +17,15 @@ function applyLanguage(lang) {
   document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key]; });
 }
 
-// ==================== PRO AUDIO SYSTEM (FIXED) ====================
+// ==================== PRO AUDIO SYSTEM ====================
 let audioCtx = null;
 const initAudio = () => {
   if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
   if (audioCtx.state === 'suspended') { audioCtx.resume(); }
 };
-// Browser verlangen einen Klick/Touch zum Freischalten von Audio
-document.addEventListener('pointerdown', initAudio, { once: true, passive: true });
+// Safari braucht harte User-Events zum Starten
+document.addEventListener('touchstart', initAudio, { once: true, passive: true });
+document.addEventListener('mousedown', initAudio, { once: true, passive: true });
 
 function playClickSound() {
   if (!state.uiSounds || !audioCtx) return;
@@ -32,20 +39,16 @@ function playClickSound() {
   osc.start(); osc.stop(audioCtx.currentTime + 0.03);
 }
 
-// Schöne Shockwaves bei Standard-Klicks (NICHT beim Draggen)
 document.addEventListener('pointerup', (e) => {
-  if (isDragging) return;
+  if (isDragging) return; // Kein Sound beim Loslassen von Drag&Drop
   if (!audioCtx) initAudio(); else if (audioCtx.state === 'suspended') audioCtx.resume();
   
-  if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) {
-    playClickSound();
-  }
-  
+  if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) playClickSound();
   if (['BUTTON','INPUT','SELECT'].includes(e.target.tagName)) return;
   
   const r = document.createElement('div'); r.className = 'click-shockwave';
   r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
-  document.body.appendChild(r); setTimeout(() => r.remove(), 600);
+  document.body.appendChild(r); setTimeout(() => r.remove(), 600); 
 });
 
 // ==================== PAN, ZOOM & LOUPE SYSTEM ====================
@@ -111,7 +114,8 @@ const pointerUp = (e) => {
   if (pointers.length < 2) canvasWrapper.lastDist = null;
   if (pointers.length === 0) { setTimeout(() => { isDragging = false; }, 50); canvasWrapper.releasePointerCapture(e.pointerId); }
 };
-canvasWrapper.addEventListener('pointerup', pointerUp); canvasWrapper.addEventListener('pointercancel', pointerUp);
+canvasWrapper.addEventListener('pointerup', pointerUp);
+canvasWrapper.addEventListener('pointercancel', pointerUp);
 
 canvasWrapper.addEventListener('wheel', (e) => {
   e.preventDefault(); 
@@ -122,6 +126,7 @@ canvasWrapper.addEventListener('wheel', (e) => {
 
 document.getElementById('zoomIn').addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.25, 5); updateTransform(true); });
 document.getElementById('zoomOut').addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.25, 0.2); updateTransform(true); });
+
 
 // ==================== RENDERING & AUTO-RENDER ====================
 let lastRenderedBlob = null;
@@ -153,7 +158,7 @@ async function performRender() {
   isRendering = false; renderBtn.disabled = false;
 }
 
-// ==================== PRESET SYSTEM (Wieder aus original Datei integriert!) ====================
+// ==================== PRESET SYSTEM ====================
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']); const lines = [];
   for (const [k, v] of Object.entries(preset)) {
@@ -252,12 +257,10 @@ function updateUIFromState() {
   document.querySelectorAll('.check').forEach(c => c.classList.toggle('on', state[c.dataset.flag]));
 }
 
-// Lade Presets aus config.js UND LocalStorage
 function renderPresetList() {
   const list = document.getElementById('presetList');
   if(!list) return;
   list.innerHTML = '';
-  // Sicherstellen, dass SYSTEM_PRESETS geladen wurden
   const allPresets = [...(SYSTEM_PRESETS || []), ...loadUserPresets()];
   allPresets.forEach(p => {
     const el = document.createElement('div'); el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
@@ -451,4 +454,9 @@ function updateProfileMeta() { const p = PROFILES[state.profile]; document.getEl
 
 // ==================== INIT ====================
 state.autoRender = true; state.uiSounds = true; state.wearLayers = []; state.bgAnim = true;
-applyLanguage('de'); updateProfileMeta(); renderPresetList();
+applyLanguage('de'); updateProfileMeta(); 
+
+// Wait for presets to be available before rendering the list
+if (typeof SYSTEM_PRESETS !== 'undefined') {
+  renderPresetList();
+}
