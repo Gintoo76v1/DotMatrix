@@ -1,457 +1,746 @@
-import { PROFILES, state, MM_PER_INCH, PAPER_SIZES_MM } from './config.js';
-import { mulberry32, gaussian, yieldUI } from './utils.js';
-import { toGrayscale, floydSteinberg, orderedDither, thresholdDither, boxBlur3x3 } from './filters.js';
-
-export function makeDotStamp(diameterPx, softness, density) {
-  let size = Math.max(3, Math.round(diameterPx));
-  if (size % 2 === 0) size++;
-  const cx = (size - 1) / 2;
-  const radius = size / 2;
-  const inner = radius * (1 - softness);
-  const stamp = new Float32Array(size * size);
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const dx = x - cx, dy = y - cx;
-      const r = Math.sqrt(dx * dx * 0.88 + dy * dy);
-      let v;
-      if (r <= inner) v = 1;
-      else v = Math.max(0, 1 - (r - inner) / Math.max(0.01, radius - inner));
-      stamp[y * size + x] = v * density;
-    }
-  }
-  return { data: stamp, size };
+/* ==================== THEME VARIABLES ==================== */
+:root[data-theme="spline"] {
+  --paper: rgba(20, 20, 30, 0.35);
+  --paper-dark: rgba(0, 0, 0, 0.4);
+  --ink: #ffffff;
+  --ink-soft: #a0a0b5;
+  --accent: #00f0ff;
+  --accent-soft: rgba(0, 240, 255, 0.2);
+  --line: rgba(255, 255, 255, 0.1);
+  --shadow-hard: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-hard-sm: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --bg-anim: none;
+  --text-glow: 0 0 12px rgba(0, 240, 255, 0.4);
+  --glass-blur: blur(24px);
+  --ui-float: floatUI 8s ease-in-out infinite;
 }
 
-export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
-  x0 = Math.round(x0);
-  y0 = Math.round(y0);
-  const x1 = x0 + ss, y1 = y0 + ss;
-  if (x1 <= 0 || y1 <= 0 || x0 >= w || y0 >= h) return;
-  const sx0 = x0 < 0 ? -x0 : 0;
-  const sy0 = y0 < 0 ? -y0 : 0;
-  const dx0 = Math.max(0, x0);
-  const dy0 = Math.max(0, y0);
-  const dx1 = Math.min(w, x1);
-  const dy1 = Math.min(h, y1);
-  for (let y = dy0; y < dy1; y++) {
-    const sy = sy0 + (y - dy0);
-    let di = y * w + dx0;
-    let si = sy * ss + sx0;
-    for (let x = dx0; x < dx1; x++, di++, si++) {
-      const v = ink[di] + stamp[si] * band;
-      ink[di] = v > 1 ? 1 : v;
-    }
+:root[data-theme="classic"] {
+  --paper: #f4eede;
+  --paper-dark: #e8ddc0;
+  --ink: #14131a;
+  --ink-soft: #3a3540;
+  --accent: #c2410c;
+  --accent-soft: #f59e0b;
+  --line: #14131a;
+  --shadow-hard: 4px 4px 0 var(--ink);
+  --shadow-hard-sm: 2px 2px 0 var(--ink);
+  --bg-anim: none;
+  --text-glow: none;
+  --glass-blur: none;
+  --ui-float: none;
+}
+
+:root[data-theme="amber"] {
+  --paper: #1a1200;
+  --paper-dark: #2b1f00;
+  --ink: #ffb000;
+  --ink-soft: #cc8d00;
+  --accent: #ffdb73;
+  --accent-soft: #805800;
+  --line: #ffb000;
+  --shadow-hard: 4px 4px 0 #000;
+  --shadow-hard-sm: 2px 2px 0 #000;
+  --bg-anim: none;
+  --text-glow: 0 0 5px rgba(255, 176, 0, 0.4);
+  --glass-blur: none;
+  --ui-float: none;
+}
+
+:root[data-theme="gameboy"] {
+  --paper: #9bbc0f;
+  --paper-dark: #8bac0f;
+  --ink: #0f380f;
+  --ink-soft: #306230;
+  --accent: #0f380f;
+  --accent-soft: #306230;
+  --line: #0f380f;
+  --shadow-hard: 4px 4px 0 var(--ink-soft);
+  --shadow-hard-sm: 2px 2px 0 var(--ink-soft);
+  --bg-anim: none;
+  --text-glow: none;
+  --glass-blur: none;
+  --ui-float: none;
+}
+
+:root[data-theme="crt-hacker"] {
+  --paper: #050a05;
+  --paper-dark: #0a140a;
+  --ink: #33ff00;
+  --ink-soft: #1f9900;
+  --accent: #fff;
+  --accent-soft: #004d00;
+  --line: #33ff00;
+  --shadow-hard: 4px 4px 0 #000;
+  --shadow-hard-sm: 2px 2px 0 #000;
+  --bg-anim: none;
+  --text-glow: 0 0 8px rgba(51, 255, 0, 0.6);
+  --glass-blur: none;
+  --ui-float: none;
+}
+
+:root[data-theme="vaporwave"] {
+  --paper: #0f0820;
+  --paper-dark: #1e1040;
+  --ink: #00f0ff;
+  --ink-soft: #0096a1;
+  --accent: #ff00a0;
+  --accent-soft: rgba(255, 0, 160, 0.25);
+  --line: rgba(255, 0, 160, 0.5);
+  --shadow-hard: 0 0 16px rgba(255, 0, 160, 0.4), 4px 4px 0 rgba(0,0,0,0.8);
+  --shadow-hard-sm: 0 0 8px rgba(255, 0, 160, 0.3), 2px 2px 0 rgba(0,0,0,0.8);
+  --bg-anim: vaporGrid 10s linear infinite;
+  --text-glow: 0 0 6px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.3);
+  --glass-blur: none;
+  --ui-float: none;
+}
+
+/* ── GLASS ── Deep glassmorphism with aurora */
+:root[data-theme="glass"] {
+  --paper: #07071a;
+  --paper-dark: rgba(255, 255, 255, 0.05);
+  --ink: #c8d4ff;
+  --ink-soft: rgba(180, 195, 255, 0.55);
+  --accent: #818cf8;
+  --accent-soft: rgba(129, 140, 248, 0.28);
+  --line: rgba(255, 255, 255, 0.1);
+  --shadow-hard: 0 8px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255,255,255,0.1);
+  --shadow-hard-sm: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+  --bg-anim: none;
+  --text-glow: 0 0 20px rgba(129, 140, 248, 0.7), 0 0 4px rgba(200, 212, 255, 0.5);
+  --glass-blur: blur(28px) saturate(200%) brightness(1.08);
+  --ui-float: floatUI 9s ease-in-out infinite;
+}
+
+/* ── TOXIC ── Radioactive neon green */
+:root[data-theme="toxic"] {
+  --paper: #020b02;
+  --paper-dark: #031303;
+  --ink: #39ff14;
+  --ink-soft: #1fcc00;
+  --accent: #aaff00;
+  --accent-soft: rgba(57, 255, 20, 0.2);
+  --line: rgba(57, 255, 20, 0.38);
+  --shadow-hard: 0 0 18px rgba(57, 255, 20, 0.45), 3px 3px 0 #000;
+  --shadow-hard-sm: 0 0 10px rgba(57, 255, 20, 0.35), 2px 2px 0 #000;
+  --bg-anim: none;
+  --text-glow: 0 0 8px #39ff14, 0 0 22px rgba(57, 255, 20, 0.55), 0 0 50px rgba(57, 255, 20, 0.2);
+  --glass-blur: none;
+  --ui-float: toxicPulse 3.5s ease-in-out infinite;
+}
+
+/* ── PROTO ── Hacker prototype, circuit-board amber */
+:root[data-theme="proto"] {
+  --paper: #0b0b12;
+  --paper-dark: #13131f;
+  --ink: #ff7b3a;
+  --ink-soft: #b84e18;
+  --accent: #ffd060;
+  --accent-soft: rgba(255, 123, 58, 0.22);
+  --line: rgba(255, 123, 58, 0.38);
+  --shadow-hard: 0 0 18px rgba(255, 123, 58, 0.3), 3px 3px 0 rgba(0,0,0,0.9);
+  --shadow-hard-sm: 0 0 10px rgba(255, 123, 58, 0.22), 2px 2px 0 rgba(0,0,0,0.9);
+  --bg-anim: none;
+  --text-glow: 0 0 10px rgba(255, 123, 58, 0.75), 0 0 3px rgba(255, 208, 96, 0.5);
+  --glass-blur: none;
+  --ui-float: none;
+}
+
+/* ==================== BASE STYLES ==================== */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.45;
+  padding: max(12px, env(safe-area-inset-top)) 12px calc(96px + env(safe-area-inset-bottom)) 12px;
+  text-shadow: var(--text-glow);
+  transition: background-color 0.4s, color 0.4s;
+  position: relative;
+  z-index: 1;
+}
+
+.retro-bg {
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 30%, var(--ink) 0, transparent 30%),
+    radial-gradient(circle at 80% 70%, var(--ink) 0, transparent 35%),
+    repeating-linear-gradient(0deg, transparent 0 3px, var(--ink) 3px 4px);
+  opacity: 0.03;
+}
+:root[data-theme="spline"] .retro-bg { display: none; }
+
+:root[data-theme="glass"] .retro-bg {
+  background-image:
+    radial-gradient(ellipse at 22% 42%, rgba(99, 102, 241, 0.28) 0%, transparent 52%),
+    radial-gradient(ellipse at 78% 60%, rgba(139, 92, 246, 0.22) 0%, transparent 52%),
+    radial-gradient(ellipse at 52% 5%, rgba(59, 130, 246, 0.18) 0%, transparent 45%),
+    radial-gradient(ellipse at 30% 88%, rgba(16, 185, 129, 0.1) 0%, transparent 38%);
+  opacity: 1;
+  animation: auroraDrift 14s ease-in-out infinite;
+}
+
+:root[data-theme="toxic"] .retro-bg {
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 19px, rgba(57, 255, 20, 0.05) 19px 20px),
+    repeating-linear-gradient(90deg, transparent 0 19px, rgba(57, 255, 20, 0.05) 19px 20px),
+    radial-gradient(circle at 50% 50%, rgba(57, 255, 20, 0.06) 0%, transparent 65%);
+  opacity: 1;
+}
+
+:root[data-theme="proto"] .retro-bg {
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 29px, rgba(255, 123, 58, 0.07) 29px 30px),
+    repeating-linear-gradient(90deg, transparent 0 29px, rgba(255, 123, 58, 0.07) 29px 30px),
+    radial-gradient(circle at 10% 10%, rgba(255, 123, 58, 0.07) 0%, transparent 30%),
+    radial-gradient(circle at 90% 90%, rgba(255, 208, 96, 0.05) 0%, transparent 30%);
+  opacity: 1;
+}
+
+/* ==================== SPLINE NATIVE VIEWER ==================== */
+.spline-bg {
+  position: fixed; 
+  inset: 0; 
+  z-index: -3; 
+  background: #000000; 
+  opacity: 0; 
+  transition: opacity 0.5s; 
+  pointer-events: none; 
+}
+:root[data-theme="spline"] .spline-bg { opacity: 1; }
+
+spline-viewer {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes floatUI {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes auroraDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(18px, -12px) scale(1.025); }
+  66%  { transform: translate(-14px, 8px) scale(0.975); }
+}
+
+@keyframes toxicPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(57, 255, 20, 0.35), 3px 3px 0 #000;
+    border-color: rgba(57, 255, 20, 0.38);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(57, 255, 20, 0.7), 0 0 45px rgba(57, 255, 20, 0.25), 3px 3px 0 #000;
+    border-color: rgba(57, 255, 20, 0.75);
   }
 }
 
-function makeValueNoise(rng, noiseW, noiseH) {
-  const grid = new Float32Array(noiseW * noiseH);
-  for (let i = 0; i < grid.length; i++) grid[i] = rng();
-  return (x, y, totalW, totalH) => {
-    const nx = (x / totalW) * (noiseW - 1);
-    const ny = (y / totalH) * (noiseH - 1);
-    const x0 = Math.floor(nx), x1 = Math.min(x0 + 1, noiseW - 1);
-    const y0 = Math.floor(ny), y1 = Math.min(y0 + 1, noiseH - 1);
-    const fx = nx - x0, fy = ny - y0;
-    const v00 = grid[y0 * noiseW + x0], v10 = grid[y0 * noiseW + x1];
-    const v01 = grid[y1 * noiseW + x0], v11 = grid[y1 * noiseW + x1];
-    return v00*(1-fx)*(1-fy) + v10*fx*(1-fy) + v01*(1-fx)*fy + v11*fx*fy;
-  };
+@keyframes toxicCheckPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(57, 255, 20, 0.6); }
+  50% { box-shadow: 0 0 22px rgba(57, 255, 20, 1.0), 0 0 40px rgba(57, 255, 20, 0.45); }
 }
 
-// ── Pre-compute all data for one wear layer ──────────────────────────────────
-function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
-  const str = (layer.strength ?? 50) / 100;
-  const ld = { pattern: layer.pattern, strength: str };
-
-  switch (layer.pattern) {
-    case 'cloudy': {
-      ld.noise = makeValueNoise(rng, 16, 16);
-      break;
-    }
-    case 'misaligned': {
-      ld.rowOff = new Float32Array(gridH);
-      let acc = 0;
-      for (let y = 0; y < gridH; y++) {
-        acc += (rng() - 0.5) * 1.4;
-        acc *= 0.91; // damping keeps drift bounded
-        ld.rowOff[y] = acc;
-      }
-      break;
-    }
-    case 'pin_skip': {
-      ld.health = new Float32Array(numPins).fill(1.0);
-      for (let p = 0; p < numPins; p++) {
-        const roll = rng();
-        if (roll < str * 0.22) {
-          ld.health[p] = 0; // completely dead pin
-        } else if (roll < str * 0.55) {
-          ld.health[p] = Math.max(0.08, 1.0 - str * (0.3 + rng() * 0.5));
-        }
-      }
-      break;
-    }
-    case 'smudge': {
-      ld.rows = new Uint8Array(gridH);
-      let inSmudge = false;
-      for (let y = 0; y < gridH; y++) {
-        if (!inSmudge && rng() < 0.04 * str) inSmudge = true;
-        else if (inSmudge && rng() < 0.22) inSmudge = false;
-        ld.rows[y] = inSmudge ? 1 : 0;
-      }
-      break;
-    }
-    case 'ribbon_twist': {
-      ld.col = new Float32Array(gridW).fill(1.0);
-      let val = 0.85 + rng() * 0.15;
-      for (let x = 0; x < gridW; x++) {
-        val += (rng() - 0.5) * 0.06;
-        val = Math.max(0.25, Math.min(1.0, val));
-        ld.col[x] = 1.0 - (1.0 - val) * str;
-      }
-      break;
-    }
-    case 'ink_starved': {
-      // Depletion accumulates as ribbon unspools through the job
-      ld.rowDep = new Float32Array(gridH);
-      let dep = 0;
-      for (let y = 0; y < gridH; y++) {
-        dep = Math.min(1.0, dep + rng() * 0.003 * str);
-        ld.rowDep[y] = dep;
-      }
-      break;
-    }
-    case 'paper_slip': {
-      // Random-walk vertical slip (feed roller inconsistency)
-      ld.rowShift = new Float32Array(gridH);
-      let slip = 0;
-      for (let y = 0; y < gridH; y++) {
-        if (rng() < 0.04 * str) slip += (rng() - 0.5) * stepY * str * 4;
-        slip *= 0.85;
-        ld.rowShift[y] = slip;
-      }
-      break;
-    }
-    case 'mechanical_resonance': {
-      // Sinusoidal X drift from print head resonance at certain carriage speeds
-      ld.freq = 0.08 + rng() * 0.06;
-      ld.amp  = 1.0;  // scaled per-cell by stepX * str
-      break;
-    }
-    case 'double_feed': {
-      // Offset of second sheet (faint background copy)
-      ld.offX = Math.round((3 + rng() * 5) * (rng() < 0.5 ? 1 : -1));
-      ld.offY = Math.round(2 + rng() * 4);
-      break;
-    }
-    case 'ghosting':
-    case 'head_gap':
-    case 'static_noise':
-      break; // computed per-cell only
-  }
-
-  return ld;
+@keyframes protoScanLine {
+  0%   { transform: translateY(-100%); opacity: 0.06; }
+  100% { transform: translateY(100vh); opacity: 0.06; }
 }
 
-export async function render(srcImage, onProgressUpdate) {
-  const profile = PROFILES[state.profile];
-  const seed = state.seed || Math.floor(Math.random() * 1e9);
-  const rng = mulberry32(seed);
-  const srcAspect = srcImage.width / srcImage.height;
-
-  const condensedMult = (state.condensed && profile.supports_condensed) ? 1.5 : 1.0;
-  const dpiH = profile.dpi_h * condensedMult;
-  const dpiV = profile.dpi_v;
-
-  let outW, outH, gridW, gridH, offsetX, offsetY, stepX, stepY, effDpi;
-
-  if (state.paperFormat === "Original") {
-    outW = srcImage.width;
-    outH = srcImage.height;
-    const longEdge = Math.max(outW, outH);
-    if (longEdge > state.maxSize) {
-      const scale = state.maxSize / longEdge;
-      outW = Math.round(outW * scale);
-      outH = Math.round(outH * scale);
-    }
-    gridW = Math.max(1, Math.round((outW / state.dpi) * dpiH));
-    gridH = Math.max(1, Math.round((outH / state.dpi) * dpiV));
-    effDpi = state.dpi;
-    offsetX = 0; offsetY = 0;
-    stepX = outW / gridW; stepY = outH / gridH;
-  } else {
-    let paperW, paperH;
-    if (state.paperFormat === "Fit") {
-      paperH = 297; paperW = paperH * srcAspect;
-    } else {
-      const size = PAPER_SIZES_MM[state.paperFormat];
-      if (state.orientation === "Landscape") { paperW = size[1]; paperH = size[0]; }
-      else { paperW = size[0]; paperH = size[1]; }
-    }
-    const marginMm = 10;
-    const printableW = Math.max(1, paperW - 2 * marginMm);
-    const printableH = Math.max(1, paperH - 2 * marginMm);
-    const maxGridW = Math.round(printableW / MM_PER_INCH * dpiH);
-    const maxGridH = Math.round(printableH / MM_PER_INCH * dpiV);
-    const targetGridAspect = srcAspect * (dpiH / dpiV);
-    if ((maxGridW / maxGridH) > targetGridAspect) {
-      gridH = maxGridH; gridW = Math.round(gridH * targetGridAspect);
-    } else {
-      gridW = maxGridW; gridH = Math.round(gridW / targetGridAspect);
-    }
-    outW = Math.round(paperW / MM_PER_INCH * state.dpi);
-    outH = Math.round(paperH / MM_PER_INCH * state.dpi);
-    const longEdge = Math.max(outW, outH);
-    if (longEdge > state.maxSize) {
-      const scale = state.maxSize / longEdge;
-      outW = Math.round(outW * scale);
-      outH = Math.round(outH * scale);
-    }
-    effDpi = outW / (paperW / MM_PER_INCH);
-    const printPxW = gridW / dpiH * effDpi;
-    const printPxH = gridH / dpiV * effDpi;
-    offsetX = Math.round((outW - printPxW) / 2);
-    offsetY = Math.round((outH - printPxH) / 2);
-    stepX = effDpi / dpiH; stepY = effDpi / dpiV;
-  }
-
-  const gridCanvas = document.createElement("canvas");
-  gridCanvas.width = gridW; gridCanvas.height = gridH;
-  const gctx = gridCanvas.getContext("2d");
-  gctx.fillStyle = "#fff";
-  gctx.fillRect(0, 0, gridW, gridH);
-  gctx.drawImage(srcImage, 0, 0, gridW, gridH);
-  const gridData = gctx.getImageData(0, 0, gridW, gridH);
-  const gray = toGrayscale(gridData, state);
-
-  let dots;
-  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, gridW, gridH);
-  else if (state.dither === "ordered")    dots = orderedDither(gray, gridW, gridH);
-  else                                    dots = thresholdDither(gray, gridW, gridH, state.threshold);
-
-  const ink = new Float32Array(outW * outH);
-  const dotPx = Math.max(2, Math.round(profile.dot_diameter_mm / MM_PER_INCH * effDpi));
-  const { data: stamp, size: stampSize } = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density);
-  const stampR = (stampSize - 1) / 2;
-
-  const passes    = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
-  const jitterPx  = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
-  const bandAmp   = profile.banding * state.bandingScale;
-
-  // ── PER-PIN CHARACTERISTICS ──────────────────────────────────────────────
-  const numPins     = profile.pins;
-  const pinYOff     = new Float32Array(numPins);
-  const pinXOff     = new Float32Array(numPins);
-  const pinDensMod  = new Float32Array(numPins);
-  const pinHealth   = new Float32Array(numPins).fill(1.0);
-
-  const pinTolPx = Math.max(0.5, profile.jitter_mm * 0.5 / MM_PER_INCH * effDpi);
-  for (let p = 0; p < numPins; p++) {
-    pinYOff[p] = (rng() - 0.5) * 2 * pinTolPx;
-    pinXOff[p] = (rng() - 0.5) * pinTolPx * 0.35;
-    const norm = (p - (numPins - 1) / 2) / Math.max(1, (numPins - 1) / 2);
-    pinDensMod[p] = 1.0 - 0.14 * norm * norm;
-  }
-
-  // ── BUILD MODULAR WEAR LAYER DATA ─────────────────────────────────────────
-  const wearLayers = Array.isArray(state.wearLayers) ? state.wearLayers : [];
-  const layerData  = wearLayers
-    .filter(l => l && l.pattern && l.pattern !== 'none' && (l.strength ?? 0) > 0)
-    .map(l => buildLayerData(l, rng, gridW, gridH, numPins, stepY));
-
-  // Row banding: slight row-to-row density variation from paper/head oscillation
-  const rowBands = new Float32Array(gridH);
-  for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
-
-  const onCells = [];
-  for (let y = 0; y < gridH; y++)
-    for (let x = 0; x < gridW; x++)
-      if (dots[y * gridW + x]) onCells.push([x, y]);
-
-  let processed = 0;
-  const total = onCells.length * passes;
-  await yieldUI();
-
-  for (let p = 0; p < passes; p++) {
-    const passJitter = jitterPx * (1 + 0.3 * p);
-
-    for (let idx = 0; idx < onCells.length; idx++) {
-      const [gx, gy] = onCells[idx];
-      const pinIdx = gy % numPins;
-
-      let cx = offsetX + gx * stepX + stepX / 2 + pinXOff[pinIdx];
-      let cy = offsetY + gy * stepY + stepY / 2 + pinYOff[pinIdx];
-      let wearFactor = 1.0;
-      let dxTotal = 0, dyTotal = 0;
-      const ghosts = [];
-      let skipCell = false;
-
-      // ── Apply each active wear layer ─────────────────────────────────────
-      for (const ld of layerData) {
-        if (skipCell) break;
-        const { pattern: pat, strength: str } = ld;
-
-        switch (pat) {
-          case 'cloudy': {
-            wearFactor *= 1.0 - ld.noise(gx, gy, gridW, gridH) * str * 0.75;
-            break;
-          }
-          case 'ghosting': {
-            // Bi-directional printing leaves ghost on opposite sweep direction
-            const dir = (Math.floor(gy / numPins) % 2 === 0) ? 1 : -1;
-            const gdx = dir * 7 * str * (effDpi / 300);
-            const gdy = (rng() - 0.5) * 2;
-            ghosts.push({ dx: gdx, dy: gdy, alphaMod: 0.25 * str });
-            break;
-          }
-          case 'pin_skip': {
-            const h = ld.health[pinIdx];
-            if (h <= 0) { skipCell = true; break; }
-            wearFactor *= h;
-            break;
-          }
-          case 'misaligned': {
-            dxTotal += ld.rowOff[gy] * str * (effDpi / 160);
-            break;
-          }
-          case 'smudge': {
-            if (ld.rows[gy]) {
-              dxTotal += (rng() - 0.25) * 9 * str;
-              wearFactor *= 0.55 + rng() * 0.3;
-            }
-            break;
-          }
-          case 'ribbon_twist': {
-            wearFactor *= ld.col[gx];
-            break;
-          }
-          case 'head_gap': {
-            // Wide platen gap: less ink transferred, smaller effective dot
-            wearFactor *= Math.max(0.05, 1.0 - str * 0.70);
-            break;
-          }
-          case 'ink_starved': {
-            // Ribbon dries out progressively; also fades toward end of each line
-            const rowFade  = ld.rowDep[gy];
-            const lineFade = (gx / Math.max(1, gridW - 1)) * str * 0.40;
-            wearFactor *= Math.max(0.04, 1.0 - rowFade * str * 0.60 - lineFade);
-            break;
-          }
-          case 'paper_slip': {
-            dyTotal += ld.rowShift[gy];
-            break;
-          }
-          case 'static_noise': {
-            // Low-probability burst of stray dots (electrostatic spike)
-            if (rng() < 0.002 * str * 5) {
-              const burst = 1 + Math.floor(rng() * 3);
-              for (let k = 0; k < burst; k++) {
-                ghosts.push({
-                  dx: (rng() - 0.5) * stepX * 8 * str,
-                  dy: (rng() - 0.5) * stepY * 2,
-                  alphaMod: rng() * 0.45 * str,
-                });
-              }
-            }
-            break;
-          }
-          case 'double_feed': {
-            // Two sheets produce a faint offset background impression
-            ghosts.push({
-              dx: ld.offX * stepX,
-              dy: ld.offY * stepY,
-              alphaMod: 0.12 * str,
-            });
-            break;
-          }
-          case 'mechanical_resonance': {
-            // Sinusoidal X drift from carriage resonance at certain speeds
-            dxTotal += Math.sin(gy * ld.freq * Math.PI * 2) * stepX * str * 1.2;
-            break;
-          }
-        }
-      }
-
-      if (skipCell) { processed++; continue; }
-
-      cx += dxTotal;
-      cy += dyTotal;
-
-      // Global ribbon depletion: subtle left-to-right density fade (≤9%)
-      const ribbonFade = 1.0 - (gx / gridW) * 0.09;
-
-      if (passJitter > 0) {
-        cx += gaussian(rng) * passJitter;
-        cy += gaussian(rng) * passJitter;
-      }
-
-      const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade * dotBandMult;
-      
-      stampInto(ink, outW, outH, stamp, bleedStampSize, cx - stampR, cy - stampR, band);
-
-      if (w_drag > 0 && rng() < w_drag * 0.1) {
-        stampInto(ink, outW, outH, stamp, stampSize, cx - stampR - stepX, cy - stampR, band * 0.15);
-      }
-
-      for (const g of ghosts) {
-        stampInto(ink, outW, outH, stamp, stampSize,
-          cx - stampR + g.dx, cy - stampR + g.dy,
-          band * g.alphaMod);
-      }
-
-      processed++;
-      if ((processed & 0x7FFF) === 0) {
-        if (onProgressUpdate) onProgressUpdate(`Rendering · ${((processed / total) * 100).toFixed(0)}%`);
-        await yieldUI();
-      }
-    }
-  }
-
-  const finalImg = new ImageData(outW, outH);
-  const [pr, pg, pb] = state.paper;
-  const [ir, ig, ib] = state.ink;
-  const d = finalImg.data;
-  for (let i = 0, j = 0; i < ink.length; i++, j += 4) {
-    const a = ink[i];
-    d[j]   = Math.round(pr * (1 - a) + ir * a);
-    d[j+1] = Math.round(pg * (1 - a) + ig * a);
-    d[j+2] = Math.round(pb * (1 - a) + ib * a);
-    d[j+3] = 255;
-  }
-
-  if (state.softBlur) boxBlur3x3(d, outW, outH);
-  return { imageData: finalImg, width: outW, height: outH };
+@keyframes vaporChromaticShift {
+  0%, 100% { text-shadow: 2px 0 #ff00a0, -2px 0 #00f0ff, 0 0 12px rgba(255,0,160,0.5); }
+  50%       { text-shadow: -2px 0 #ff00a0, 2px 0 #00f0ff, 0 0 22px rgba(0,240,255,0.6); }
 }
 
-export function asciiPreview(srcImage, width = 60) {
-  const aspect = srcImage.width / srcImage.height;
-  let h = Math.round(width / aspect / 2) * 2;
-  h = Math.max(8, Math.min(60, h));
-  const c = document.createElement("canvas");
-  c.width = width; c.height = h;
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, width, h);
-  ctx.drawImage(srcImage, 0, 0, width, h);
-  const gray = toGrayscale(ctx.getImageData(0, 0, width, h), state);
+/* ==================== INTERACTIVE ANIMATIONS ==================== */
+.click-shockwave {
+  position: fixed;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: shockwaveAnim 0.6s ease-out forwards;
+  z-index: 99999;
+  box-shadow: 0 0 15px var(--accent-soft), inset 0 0 10px var(--accent-soft);
+}
+@keyframes shockwaveAnim {
+  0% { width: 0px; height: 0px; opacity: 1; border-width: 4px; }
+  100% { width: 120px; height: 120px; opacity: 0; border-width: 0px; }
+}
 
-  let dots;
-  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, width, h);
-  else if (state.dither === "ordered")    dots = orderedDither(gray, width, h);
-  else                                    dots = thresholdDither(gray, width, h, state.threshold);
+.key-echo {
+  position: fixed;
+  font-family: "VT323", monospace;
+  font-size: 40px;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent-soft);
+  pointer-events: none;
+  animation: floatKeyAnim 1.2s ease-out forwards;
+  z-index: 99999;
+}
+@keyframes floatKeyAnim {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-100px) scale(1); opacity: 0; }
+}
 
-  let out = "";
-  for (let y = 0; y < h - 1; y += 2) {
-    let line = "";
-    for (let x = 0; x < width; x++) {
-      const top = dots[y * width + x];
-      const bot = dots[(y + 1) * width + x];
-      if (top && bot)     line += "\u2588";
-      else if (top)       line += "\u2580";
-      else if (bot)       line += "\u2584";
-      else                line += " ";
-    }
-    out += line + "\n";
-  }
-  return out;
+/* ==================== OTHER ANIMATIONS ==================== */
+body::after {
+  content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 9999; pointer-events: none; opacity: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 4px, 3px 100%;
+  transition: opacity 0.5s;
+}
+:root[data-theme="crt-hacker"] body::after { opacity: 1; animation: scanlines 10s linear infinite; }
+@keyframes scanlines { 0% { background-position: 0 0, 0 0; } 100% { background-position: 0 100vh, 0 0; } }
+
+.vapor-grid {
+  position: fixed; inset: -50%; z-index: -1; pointer-events: none; opacity: 0;
+  background-image: linear-gradient(var(--accent) 2px, transparent 2px), linear-gradient(90deg, var(--accent) 2px, transparent 2px);
+  background-size: 40px 40px; transform: perspective(500px) rotateX(60deg) translateY(0); transition: opacity 0.5s;
+}
+:root[data-theme="vaporwave"] .vapor-grid { opacity: 0.15; animation: var(--bg-anim); }
+@keyframes vaporGrid { 0% { transform: perspective(500px) rotateX(60deg) translateY(0); } 100% { transform: perspective(500px) rotateX(60deg) translateY(40px); } }
+
+/* ==================== THEME-SPECIFIC OVERRIDES ==================== */
+
+:root[data-theme="glass"] header,
+:root[data-theme="glass"] section {
+  background: linear-gradient(145deg, rgba(255,255,255,0.075) 0%, rgba(255,255,255,0.025) 60%, rgba(129,140,248,0.04) 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-top-color: rgba(255,255,255,0.2);
+}
+:root[data-theme="glass"] .segmented button.active {
+  background: rgba(129, 140, 248, 0.85) !important;
+  color: #fff !important;
+  box-shadow: 0 0 20px rgba(129, 140, 248, 0.5), inset 0 0 8px rgba(255,255,255,0.15);
+}
+:root[data-theme="glass"] .btn.primary {
+  background: rgba(129, 140, 248, 0.9) !important;
+  color: #fff !important;
+  box-shadow: 0 0 24px rgba(129, 140, 248, 0.55) !important;
+}
+:root[data-theme="glass"] .theme-btn.active {
+  background: var(--accent) !important;
+  color: #000 !important;
+}
+
+:root[data-theme="toxic"] .check.on .box {
+  animation: toxicCheckPulse 1.6s ease-in-out infinite;
+}
+:root[data-theme="toxic"] .segmented button.active {
+  box-shadow: 0 0 18px rgba(57, 255, 20, 0.75), inset 0 0 8px rgba(57, 255, 20, 0.2) !important;
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.9);
+}
+:root[data-theme="toxic"] input[type=range]::-webkit-slider-thumb {
+  box-shadow: 0 0 14px rgba(57, 255, 20, 0.8);
+}
+:root[data-theme="toxic"] section:nth-child(even),
+:root[data-theme="toxic"] section:nth-child(even) {
+  animation-delay: -1.75s;
+}
+
+:root[data-theme="proto"] body::after {
+  opacity: 0.8;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255, 123, 58, 0.04) 50%, transparent 100%);
+  background-size: 100% 80px;
+  animation: protoScanLine 5s linear infinite;
+}
+
+:root[data-theme="crt-hacker"] header,
+:root[data-theme="crt-hacker"] section {
+  box-shadow: 0 0 2px rgba(51,255,0,0.6), 0 0 20px rgba(51,255,0,0.12), 4px 4px 0 #000;
+}
+:root[data-theme="crt-hacker"] input[type=range]::-webkit-slider-thumb {
+  box-shadow: 0 0 12px rgba(51, 255, 0, 0.8);
+}
+
+:root[data-theme="vaporwave"] .dot,
+:root[data-theme="vaporwave"] .section-label::before {
+  animation: vaporChromaticShift 4s ease-in-out infinite;
+}
+:root[data-theme="vaporwave"] header,
+:root[data-theme="vaporwave"] section {
+  box-shadow: 0 0 16px rgba(255, 0, 160, 0.25), 4px 4px 0 rgba(0,0,0,0.8);
+}
+
+/* ==================== UI COMPONENTS ==================== */
+h1, h2, .display { font-family: "VT323", monospace; font-weight: normal; letter-spacing: 0.5px; }
+
+header, section {
+  border: 2px solid var(--line);
+  box-shadow: var(--shadow-hard);
+  background: var(--paper);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 14px;
+  margin-bottom: 18px;
+  transition: background-color 0.4s, border-color 0.4s, box-shadow 0.4s;
+  animation: var(--ui-float);
+  border-radius: 4px;
+  position: relative;
+  z-index: 10;
+}
+section:nth-child(even) { animation-delay: -4s; }
+header { padding: 8px 12px 10px; position: relative; overflow: hidden; }
+header::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 18px;
+  background-image: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 8px);
+  opacity: .3;
+}
+header h1 { margin: 18px 0 0; font-size: 40px; line-height: 0.95; }
+header h1 .dot { color: var(--accent); text-shadow: var(--text-glow); }
+header .tag { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-soft); margin-top: 2px; }
+
+.section-label {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  font-weight: 600; color: var(--ink); margin: 0 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::before { content: "█"; color: var(--accent); font-size: 10px; text-shadow: var(--text-glow); }
+
+.theme-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-top: 4px;}
+.theme-btn {
+  flex: 0 0 auto; padding: 4px 8px; font-size: 10px; font-family: "IBM Plex Mono", monospace;
+  text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer;
+  border: 1px solid var(--line); background: var(--paper-dark); color: var(--ink);
+  backdrop-filter: var(--glass-blur); border-radius: 3px;
+}
+.theme-btn.active { background: var(--ink); color: #000; text-shadow: none; box-shadow: 0 0 10px var(--accent-soft); }
+:root[data-theme="spline"] .theme-btn.active { color: #000; background: var(--accent); }
+:root[data-theme="classic"] .theme-btn.active { color: var(--paper); }
+
+.dropzone {
+  border: 2px dashed var(--ink); padding: 28px 14px; text-align: center;
+  background: var(--paper-dark); cursor: pointer; position: relative;
+  transition: background-color 0.2s; border-radius: 4px; z-index: 10;
+}
+.dropzone.dragover { background: var(--accent-soft); border-color: var(--accent); }
+.dropzone .big { font-family: "VT323", monospace; font-size: 28px; line-height: 1; margin-bottom: 6px; }
+.dropzone .small { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+input[type=file] { display: none; }
+
+.canvas-wrap {
+  position: relative;
+  background: repeating-linear-gradient(45deg, var(--paper-dark) 0 8px, transparent 8px 16px);
+  border: 1px solid var(--line); padding: 6px; display: flex;
+  justify-content: center; align-items: center; min-height: 120px;
+  margin-bottom: 14px; border-radius: 4px;
+}
+canvas { max-width: 100%; height: auto; display: block; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+button { -webkit-appearance: none !important; appearance: none !important; color: var(--ink); transition: 0.2s; }
+
+.segmented {
+  display: flex; border: 1px solid var(--line); overflow: hidden; background: transparent; border-radius: 4px;
+}
+.segmented.scrollable { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.segmented button {
+  flex: 1; background: var(--paper-dark); border: 0; border-right: 1px solid var(--line);
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 10px 4px; cursor: pointer; min-height: 44px; color: var(--ink);
+}
+.segmented.scrollable button { flex: 0 0 auto; min-width: 90px; }
+.segmented button:last-child { border-right: 0; }
+.segmented button.active { background: var(--ink) !important; color: #000 !important; text-shadow: none; }
+:root[data-theme="spline"] .segmented button.active { background: var(--accent) !important; color: #000 !important; box-shadow: 0 0 15px var(--accent-soft); }
+:root[data-theme="classic"] .segmented button.active { color: var(--paper) !important; }
+.segmented button:active { transform: scale(0.95); }
+
+.profile-meta { font-size: 10px; letter-spacing: 0.1em; color: var(--ink-soft); margin-top: 6px; font-variant-numeric: tabular-nums; }
+label.field { display: block; margin-top: 10px; }
+label.field .name { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-soft); display: flex; justify-content: space-between; }
+label.field .name b { color: var(--ink); font-variant-numeric: tabular-nums; text-shadow: var(--text-glow); }
+
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 4px 0 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; background: var(--line); border-radius: 2px; }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; height: 22px; width: 22px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--paper); margin-top: -9px; cursor: pointer;
+  box-shadow: 0 0 10px var(--accent-soft); transition: transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
+
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.swatch { width: 36px; height: 36px; border: 1px solid var(--line); cursor: pointer; position: relative; border-radius: 4px; }
+.swatch.active::after { content: ""; position: absolute; inset: -3px; border: 2px solid var(--accent); pointer-events: none; border-radius: 6px; box-shadow: 0 0 8px var(--accent-soft); }
+
+.checks { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.check {
+  display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 4px;
+  border: 1px solid var(--line); cursor: pointer; user-select: none; background: var(--paper-dark);
+  min-height: 44px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.check .box {
+  width: 18px; height: 18px; border: 1px solid var(--line); border-radius: 3px;
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: transparent;
+}
+.check.on .box { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px var(--accent-soft); }
+.check.on .box::after {
+  content: "×"; color: #000; font-size: 18px; line-height: 1;
+  font-family: "VT323", monospace; margin-top: -2px; text-shadow: none;
+}
+.check[data-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
+
+.ascii {
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 8px; line-height: 0.9;
+  white-space: pre; overflow-x: auto; padding: 10px; background: rgba(0,0,0,0.5); color: var(--accent);
+  border: 1px solid var(--line); letter-spacing: 0.02em; margin: 0; text-shadow: var(--text-glow); border-radius: 4px;
+}
+.ascii.empty { color: var(--ink-soft); text-shadow: none; }
+
+.actions {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  padding: 10px 12px calc(10px + env(safe-area-bottom));
+  background: var(--paper); border-top: 1px solid var(--line);
+  display: flex; gap: 8px; z-index: 20; backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+}
+.btn {
+  flex: 1; border: 1px solid var(--line); background: var(--paper-dark); padding: 14px; border-radius: 4px;
+  font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
+  box-shadow: var(--shadow-hard-sm); min-height: 52px; color: var(--ink);
+}
+.btn:active { transform: translateY(2px); box-shadow: none; }
+.btn.primary { background: var(--ink) !important; color: #000 !important; text-shadow: none; }
+:root[data-theme="spline"] .btn.primary { background: var(--accent) !important; box-shadow: 0 0 20px var(--accent-soft); }
+:root[data-theme="classic"] .btn.primary { color: var(--paper) !important; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(1); box-shadow: none; }
+
+.status { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-soft); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.status.working { color: var(--accent); text-shadow: var(--text-glow); }
+
+details summary {
+  cursor: pointer; list-style: none; padding: 6px 0; font-size: 10px;
+  letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600;
+  display: flex; align-items: center; gap: 8px; user-select: none; color: var(--ink);
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: "[+]"; color: var(--accent); font-family: "VT323", monospace; font-size: 14px; text-shadow: var(--text-glow); }
+details[open] summary::before { content: "[−]"; }
+footer { text-align: center; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); padding: 20px 0 0; }
+
+/* ==================== SCROLL LIST ==================== */
+.scroll-list {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow-y: auto;
+  max-height: 260px;
+  background: var(--paper-dark);
+}
+.sli {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+.sli:last-child { border-bottom: 0; }
+.sli:hover { background: var(--accent-soft); }
+.sli.active {
+  background: var(--ink) !important;
+  color: #000 !important;
+  text-shadow: none;
+}
+:root[data-theme="spline"] .sli.active { background: var(--accent) !important; color: #000 !important; }
+:root[data-theme="classic"] .sli.active { color: var(--paper) !important; }
+.sli-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sli-name { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.sli-badge {
+  font-size: 9px; letter-spacing: 0.12em; font-weight: 600;
+  padding: 2px 5px; border-radius: 2px; border: 1px solid currentColor;
+  opacity: 0.6; flex-shrink: 0;
+}
+.sli-meta { font-size: 10px; letter-spacing: 0.08em; color: var(--ink-soft); margin-top: 2px; }
+.sli.active .sli-meta { color: rgba(0,0,0,0.6); }
+:root[data-theme="classic"] .sli.active .sli-meta { color: rgba(0,0,0,0.55); }
+
+/* ==================== ERROR LIST ==================== */
+.er {
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-dark);
+  overflow: hidden;
+}
+.er:last-child { border-bottom: 0; }
+.er-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 48px;
+  transition: background 0.15s;
+}
+.er-head:hover { background: var(--accent-soft); }
+.er-check {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border: 1px solid var(--line); border-radius: 2px;
+  background: transparent;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.er.on .er-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent-soft);
+}
+.er.on .er-check::after {
+  content: "x"; color: #000; font-size: 14px; line-height: 1;
+  font-family: "VT323", monospace; margin-top: -1px; text-shadow: none;
+}
+.er-name {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; flex-shrink: 0; min-width: 80px;
+}
+.er-desc {
+  font-size: 10px; color: var(--ink-soft); letter-spacing: 0.04em;
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.er-val {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  flex-shrink: 0; font-variant-numeric: tabular-nums;
+  color: var(--ink-soft); min-width: 32px; text-align: right;
+}
+.er.on .er-val { color: var(--accent); text-shadow: var(--text-glow); }
+.er-body {
+  display: none;
+  padding: 4px 12px 10px;
+  background: var(--paper-dark);
+  border-top: 1px solid var(--line);
+}
+.er.on .er-body { display: block; }
+.er-slider { width: 100%; }
+
+/* ==================== PRESET BAR ==================== */
+.preset-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.preset-pill {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-dark);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.15s;
+}
+.preset-pill:hover { background: var(--accent-soft); }
+.preset-pill.active {
+  background: var(--ink) !important;
+  color: #000 !important;
+  text-shadow: none;
+  box-shadow: 0 0 10px var(--accent-soft);
+}
+:root[data-theme="spline"] .preset-pill.active { background: var(--accent) !important; color: #000 !important; }
+:root[data-theme="classic"] .preset-pill.active { color: var(--paper) !important; }
+.preset-pill.user { border-style: dashed; }
+.preset-pill.user.active { border-style: solid; }
+.preset-pill.delete-btn {
+  padding: 6px 8px;
+  font-size: 14px;
+  opacity: 0.5;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+}
+.preset-pill.delete-btn:hover { opacity: 1; color: #f33; background: rgba(255,0,0,0.1); }
+
+/* ==================== SMALL BUTTON ==================== */
+.btn-sm {
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-dark);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+}
+.btn-sm:hover { background: var(--accent-soft); border-color: var(--accent); }
+.btn-sm:active { transform: translateY(1px); }
+
+/* ==================== TEXT INPUT / TEXTAREA ==================== */
+.text-input, .yaml-area {
+  width: 100%;
+  background: var(--paper-dark);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  padding: 8px 10px;
+  margin-top: 4px;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.text-input:focus, .yaml-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.yaml-area { font-size: 10px; line-height: 1.5; }
+footer .dots { color: var(--accent); letter-spacing: 0.4em; }
+
+/* ==================== CUSTOM INK PICKER ==================== */
+.custom-ink-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.color-picker {
+  width: 32px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-dark);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.hex-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 11px;
+  margin-top: 0;
+}
+.custom-swatch {
+  border: 2px dashed var(--line) !important;
+  position: relative;
+}
+.custom-swatch::after {
+  content: '+';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  pointer-events: none;
+}
+
+/* ==================== PRESET MODIFIED INDICATOR ==================== */
+.preset-pill.active.modified::after {
+  content: ' ✎';
+  opacity: 0.7;
+  font-size: 10px;
 }
