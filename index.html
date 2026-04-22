@@ -11,7 +11,7 @@
 </head>
 <body class="dark-mode" data-accent="amber">
 
-  <div class="app-bg">
+  <div class="app-bg" id="appBg" data-anim="drift">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
   </div>
@@ -122,11 +122,11 @@
             <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
           </div>
 
-          <h2 style="margin-top:32px;" data-i18n="createPresetTitle">Preset Erstellen</h2>
+          <h2 style="margin-top:32px;" data-i18n="createPresetTitle">Preset Erstellen / Code</h2>
           <input type="text" id="presetNameInput" class="text-input" placeholder="Name für Preset">
           <div style="display:flex; gap:8px; margin-top:10px;">
             <button class="btn-sm" id="savePresetBtn" style="flex:1;" data-i18n="btnSavePreset">Speichern</button>
-            <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">YAML exportieren</button>
+            <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">Als YAML exportieren</button>
           </div>
           <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code hier einfügen..." rows="10" style="margin-top:16px;"></textarea>
           <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:10px;">Aus Textfeld anwenden</button>
@@ -161,6 +161,7 @@
         <div class="tab-content" id="tab-system">
           <h2 data-i18n="systemTitle">System Settings</h2>
           <label class="field"><span class="name">Sprache</span><select id="langSelector" class="text-input"><option value="de">🇩🇪 Deutsch</option><option value="en">🇺🇸 English</option></select></label>
+          
           <label class="field" style="margin-top:20px;"><span class="name">Theme Accent</span>
             <select id="themeAccentSelector" class="text-input">
               <option value="amber" selected>🟠 Amber</option>
@@ -170,9 +171,20 @@
               <option value="classic">🟤 Classic</option>
             </select>
           </label>
+
+          <label class="field" id="bgAnimStyleField" style="margin-top:20px;">
+            <span class="name">Background Animation Style</span>
+            <select id="bgAnimSelector" class="text-input">
+              <option value="drift">Drift (Smooth)</option>
+              <option value="breathe">Breathe (Pulse)</option>
+              <option value="orbit">Orbit (Circular)</option>
+            </select>
+          </label>
+
           <div class="checks" style="margin-top:32px;">
             <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
             <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
+            <label class="check" data-flag="bgAnim"><span class="box"></span><span>Background Glow Animation</span></label>
           </div>
         </div>
       </div>
@@ -181,7 +193,6 @@
     <main class="main-editor glass-panel">
       <div class="toolbar">
         <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
-        
         <div style="display:flex; align-items:center; gap: 20px;">
           <div class="zoom-controls">
             <button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button>
@@ -201,15 +212,14 @@
         </div>
       </div>
       
-      <div class="floating-container">
-        <div class="status-panel glass-panel" id="statusPanel">
-          <span id="status" class="status-large">Warte auf Bild...</span>
-        </div>
-        <div class="floating-actions glass-panel">
-          <div class="action-buttons">
-            <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
-            <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
-          </div>
+      <div class="status-panel glass-panel" id="statusPanel">
+        <span id="status" class="status-large">Warte auf Bild...</span>
+      </div>
+
+      <div class="floating-actions glass-panel">
+        <div class="action-buttons">
+          <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
+          <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
         </div>
       </div>
     </main>
