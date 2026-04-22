@@ -127,12 +127,12 @@
             <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">Als YAML exportieren</button>
           </div>
           <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code..." rows="10" style="margin-top:16px;"></textarea>
-          <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:10px;" data-i18n="btnApplyYaml">Aus Textfeld anwenden</button>
+          <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:10px;">Aus Textfeld anwenden</button>
         </div>
 
         <div class="tab-content" id="tab-errors">
           <h2 data-i18n="errorsTitle">Hardware Fehler</h2>
-          <div class="error-container" id="errorList">
+          <div class="error-container scroll-list" id="errorList">
             <div class="er" data-pattern="cloudy"><div class="er-head"><span class="er-check"></span><span class="er-name">Cloudy</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="ghosting"><div class="er-head"><span class="er-check"></span><span class="er-name">Ghosting</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="misaligned"><div class="er-head"><span class="er-check"></span><span class="er-name">Wobble</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
@@ -147,34 +147,19 @@
             <div class="er" data-pattern="mechanical_resonance"><div class="er-head"><span class="er-check"></span><span class="er-name">Resonance</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
           </div>
 
-          <h2 style="margin-top:32px;" data-i18n="advancedTitle">Erweiterte Optionen</h2>
+          <h2 style="margin-top:32px;">Erweiterte Optionen</h2>
           <label class="field"><span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span><input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300"></label>
           <label class="field"><span class="name"><span>Jitter Scale</span><b id="jitterVal">1.0</b></span><input type="range" id="jitterSlider" min="0" max="30" value="10"></label>
           <label class="field"><span class="name"><span>Banding Scale</span><b id="bandingVal">1.0</b></span><input type="range" id="bandingSlider" min="0" max="20" value="10"></label>
           <label class="field"><span class="name"><span>Max Size</span><b id="maxSizeVal">3000</b></span><input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="3000"></label>
-          <label class="field"><span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span><input type="range" id="seedSlider" min="0" max="9999" value="0"></label>
-          <div class="checks" style="margin-top:16px;"><label class="check" data-flag="softBlur"><span class="box"></span><span data-i18n="softBlur">Softening Blur</span></label></div>
+          <label class="field"><span class="name"><span>Seed</span><b id="seedVal">0</b></span><input type="range" id="seedSlider" min="0" max="9999" value="0"></label>
+          <div class="checks" style="margin-top:16px;"><label class="check" data-flag="softBlur"><span class="box"></span><span>Softening Blur</span></label></div>
         </div>
 
         <div class="tab-content" id="tab-system">
           <h2 data-i18n="systemTitle">System Settings</h2>
-          <label class="field">
-            <span class="name" data-i18n="language">Sprache / Language</span>
-            <select id="langSelector" class="text-input">
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="en">🇺🇸 English</option>
-              <option value="fr">🇫🇷 Français</option>
-            </select>
-          </label>
-          <label class="field" style="margin-top:20px;">
-            <span class="name" data-i18n="themeMode">Theme Mode</span>
-            <select id="themeModeSelector" class="text-input">
-              <option value="dark">🌙 Dark Mode</option>
-              <option value="light">☀️ Light Mode</option>
-            </select>
-          </label>
-          <label class="field" style="margin-top:20px;">
-            <span class="name" data-i18n="themeAccent">Theme Accent</span>
+          <label class="field"><span class="name">Sprache</span><select id="langSelector" class="text-input"><option value="de">🇩🇪 Deutsch</option><option value="en">🇺🇸 English</option></select></label>
+          <label class="field" style="margin-top:20px;"><span class="name">Theme Accent</span>
             <select id="themeAccentSelector" class="text-input">
               <option value="amber" selected>🟠 Amber</option>
               <option value="toxic">🟢 Toxic Green</option>
@@ -183,10 +168,9 @@
               <option value="classic">🟤 Classic</option>
             </select>
           </label>
-          <h2 style="margin-top:32px;" data-i18n="behaviorTitle">Verhalten</h2>
-          <div class="checks">
-            <label class="check" data-flag="uiSounds"><span class="box"></span><span data-i18n="uiSounds">UI Click Sounds</span></label>
-            <label class="check" data-flag="autoRender"><span class="box"></span><span data-i18n="autoRender">Auto-Render (Live)</span></label>
+          <div class="checks" style="margin-top:32px;">
+            <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
+            <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
           </div>
         </div>
       </div>
@@ -194,19 +178,13 @@
 
     <main class="main-editor glass-panel">
       <div class="toolbar">
-        <div style="display:flex; align-items:center; gap:16px;">
-          <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
-          <div class="status-panel" id="statusPanel">
-            <span id="status" class="status-large">Warte auf Bild...</span>
-          </div>
-        </div>
+        <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
         <div class="zoom-controls">
-          <button id="zoomOut" title="Zoom Out">➖</button>
-          <span id="zoomLevel">100%</span>
-          <button id="zoomIn" title="Zoom In">➕</button>
+          <button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button>
           <button id="loupeToggle" title="Lupe aktivieren" style="margin-left:12px; font-size:14px;">🔍</button>
         </div>
       </div>
+      
       <div class="canvas-wrapper" id="canvasWrapper">
         <div class="zoom-container" id="zoomContainer">
           <canvas id="outCanvas" width="400" height="300"></canvas>
@@ -217,6 +195,10 @@
         </div>
       </div>
       
+      <div class="status-panel glass-panel" id="statusPanel">
+        <span id="status" class="status-large">Warte auf Bild...</span>
+      </div>
+
       <div class="floating-actions glass-panel">
         <div class="action-buttons">
           <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
