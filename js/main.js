@@ -2,7 +2,6 @@ import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
 // ==================== IOS SAFARI ANTI-ZOOM FIX ====================
-// Fängt unabsichtliche Zwei-Finger Gesten ab, die Safari zum Zoomen der UI bringen könnten.
 document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
 document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
 document.addEventListener('gestureend', function (e) { e.preventDefault(); });
@@ -23,7 +22,6 @@ const initAudio = () => {
   if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
   if (audioCtx.state === 'suspended') { audioCtx.resume(); }
 };
-// Safari braucht harte User-Events zum Starten
 document.addEventListener('touchstart', initAudio, { once: true, passive: true });
 document.addEventListener('mousedown', initAudio, { once: true, passive: true });
 
@@ -40,7 +38,7 @@ function playClickSound() {
 }
 
 document.addEventListener('pointerup', (e) => {
-  if (isDragging) return; // Kein Sound beim Loslassen von Drag&Drop
+  if (isDragging) return; 
   if (!audioCtx) initAudio(); else if (audioCtx.state === 'suspended') audioCtx.resume();
   
   if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) playClickSound();
@@ -126,7 +124,6 @@ canvasWrapper.addEventListener('wheel', (e) => {
 
 document.getElementById('zoomIn').addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.25, 5); updateTransform(true); });
 document.getElementById('zoomOut').addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.25, 0.2); updateTransform(true); });
-
 
 // ==================== RENDERING & AUTO-RENDER ====================
 let lastRenderedBlob = null;
@@ -456,7 +453,6 @@ function updateProfileMeta() { const p = PROFILES[state.profile]; document.getEl
 state.autoRender = true; state.uiSounds = true; state.wearLayers = []; state.bgAnim = true;
 applyLanguage('de'); updateProfileMeta(); 
 
-// Wait for presets to be available before rendering the list
 if (typeof SYSTEM_PRESETS !== 'undefined') {
   renderPresetList();
 }
