@@ -16,6 +16,14 @@ if (errorCloseBtn) errorCloseBtn.onclick = () => document.getElementById('errorP
 window.onerror = function(message, source, lineno, colno, error) { showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; };
 window.addEventListener('unhandledrejection', function(event) { showError(`[Promise Fehler]: ${event.reason}`); });
 
+// ==================== FIX: SMARTER SCROLL SCHUTZ ====================
+// Erlaubt das Scrollen in Listen und Slidern, verbietet aber das Ziehen der Hauptseite
+document.addEventListener('touchmove', (e) => {
+  if (!e.target.closest('.scroll-list, .sidebar-scrollable, .yaml-area, input[type="range"]')) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
 // ==================== LANGUAGE ====================
 const translations = {
   de: { sourceTitle: "Bildquelle", dropzoneBig: "Bild auswählen", profileTitle: "Druckerprofil", adjustTitle: "Bildanpassung", presetsTitle: "Presets", errorsTitle: "Hardware Fehler", advancedTitle: "Erweitert", btnRender: "Manuell Rendern", previewTitle: "Live-Vorschau" },
@@ -53,17 +61,9 @@ function playClickSound() {
   } catch(e) {} 
 }
 
-// TÖTET DAS NATIVER SCROLLEN NUR IM CANVAS BEREICH
-const canvasWrapper = document.getElementById('canvasWrapper');
-if (canvasWrapper) {
-  canvasWrapper.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-  }, { passive: false });
-}
-
 let hasDragged = false;
 document.addEventListener('pointerup', (e) => {
-  if (hasDragged) return; // Kein Sound, wenn man das Bild verschoben hat
+  if (hasDragged) return; 
   if (!audioCtx) initAudio(); else if (audioCtx.state === 'suspended') audioCtx.resume();
   
   if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) playClickSound();
@@ -74,8 +74,9 @@ document.addEventListener('pointerup', (e) => {
   document.body.appendChild(r); setTimeout(() => r.remove(), 600); 
 });
 
-// ==================== PAN & ZOOM SYSTEM (ABSOLUT JITTER-FREE) ====================
+// ==================== PAN & ZOOM SYSTEM (JETZT 100% SMOOTH) ====================
 const zoomContainer = document.getElementById('zoomContainer');
+const canvasWrapper = document.getElementById('canvasWrapper');
 const zoomLevelText = document.getElementById('zoomLevel');
 const outCanvas = document.getElementById('outCanvas');
 
@@ -83,7 +84,6 @@ let currentZoom = 1;
 let panX = 0, panY = 0;
 let pointers = [];
 
-// Variablen für die absolute Mathematik (Tötet den Wackelpudding)
 let initialDist = 0;
 let initialZoom = 1;
 let lastCenterX = 0;
@@ -99,7 +99,6 @@ function updateTransform(smooth = false) {
 if (canvasWrapper) {
   canvasWrapper.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; 
-    e.preventDefault(); // Nativer Zoom stoppen
     hasDragged = false;
     
     const existingIdx = pointers.findIndex(p => p.pointerId === e.pointerId);
@@ -136,12 +135,13 @@ if (canvasWrapper) {
     } else if (pointers.length === 2) {
       const currentDist = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
       
-      // Absolute Zoom-Berechnung: Verhindert das Aufschaukeln (Wackelpudding)
+      // FIX: Der Low-Pass Filter tötet das Wackelpudding-Zittern!
       if (initialDist > 0) {
-        currentZoom = Math.max(0.2, Math.min(initialZoom * (currentDist / initialDist), 5));
+        let targetZoom = initialZoom * (currentDist / initialDist);
+        currentZoom += (targetZoom - currentZoom) * 0.15; // 0.15 dämpft Mikrobewegungen extrem ab
+        currentZoom = Math.max(0.2, Math.min(currentZoom, 5));
       }
       
-      // Panning mit zwei Fingern gleichzeitig!
       const centerX = (pointers[0].clientX + pointers[1].clientX) / 2;
       const centerY = (pointers[0].clientY + pointers[1].clientY) / 2;
       panX += (centerX - lastCenterX);
@@ -157,7 +157,6 @@ if (canvasWrapper) {
     pointers = pointers.filter(p => p.pointerId !== e.pointerId);
     
     if (pointers.length === 1) {
-      // Re-Ankern des verbleibenden Fingers
       lastCenterX = pointers[0].clientX;
       lastCenterY = pointers[0].clientY;
     } else if (pointers.length === 0) {
