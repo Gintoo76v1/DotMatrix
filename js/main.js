@@ -6,14 +6,13 @@ function showError(msg) {
   const pop = document.getElementById('errorPopup');
   document.getElementById('errorText').textContent = msg;
   pop.classList.add('show');
-  setTimeout(() => pop.classList.remove('show'), 7000); // Auto-Hide nach 7 Sekunden
+  setTimeout(() => pop.classList.remove('show'), 7000); 
 }
 
 document.getElementById('errorCloseBtn').onclick = () => {
   document.getElementById('errorPopup').classList.remove('show');
 };
 
-// Überwacht ALLE Fehler, die unbemerkt im System passieren
 window.onerror = function(message, source, lineno, colno, error) {
   showError(`[JS Fehler]: ${message} (Zeile ${lineno})`);
   return false; 
@@ -21,11 +20,6 @@ window.onerror = function(message, source, lineno, colno, error) {
 window.addEventListener('unhandledrejection', function(event) {
   showError(`[Promise Fehler]: ${event.reason}`);
 });
-
-// ==================== IOS SAFARI ANTI-ZOOM FIX ====================
-document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
-document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
-document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
 // ==================== LANGUAGE ====================
 const translations = {
@@ -61,7 +55,7 @@ function playClickSound() {
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.03);
-  } catch(e) {} // Fehler hier ignorieren, da Audio nicht systemkritisch ist
+  } catch(e) {} 
 }
 
 document.addEventListener('pointerup', (e) => {
