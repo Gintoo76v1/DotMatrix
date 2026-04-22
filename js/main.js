@@ -6,33 +6,15 @@ function showError(msg) {
   const pop = document.getElementById('errorPopup');
   const txt = document.getElementById('errorText');
   if(pop && txt) {
-    txt.textContent = msg;
-    pop.classList.add('show');
-    setTimeout(() => pop.classList.remove('show'), 7000); 
-  } else {
-    console.error(msg); 
-  }
+    txt.textContent = msg; pop.classList.add('show'); setTimeout(() => pop.classList.remove('show'), 7000); 
+  } else console.error(msg); 
 }
 
 const errorCloseBtn = document.getElementById('errorCloseBtn');
-if (errorCloseBtn) {
-  errorCloseBtn.onclick = () => { document.getElementById('errorPopup').classList.remove('show'); };
-}
+if (errorCloseBtn) errorCloseBtn.onclick = () => document.getElementById('errorPopup').classList.remove('show');
 
-window.onerror = function(message, source, lineno, colno, error) {
-  showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; 
-};
-window.addEventListener('unhandledrejection', function(event) {
-  showError(`[Promise Fehler]: ${event.reason}`);
-});
-
-// ==================== STRICT TOUCH ZONE LOCK ====================
-// Blockiert alles Wischen/Zoomen auf der restlichen Website
-document.addEventListener('touchmove', function(e) {
-  if (!e.target.closest('.scroll-list, .sidebar-scrollable, .yaml-area')) {
-    e.preventDefault();
-  }
-}, { passive: false });
+window.onerror = function(message, source, lineno, colno, error) { showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; };
+window.addEventListener('unhandledrejection', function(event) { showError(`[Promise Fehler]: ${event.reason}`); });
 
 // ==================== LANGUAGE ====================
 const translations = {
@@ -71,10 +53,17 @@ function playClickSound() {
   } catch(e) {} 
 }
 
-// ==================== SCHOCKWELLEN EFFEKT ====================
-let isDragging = false;
+// TÖTET DAS NATIVER SCROLLEN NUR IM CANVAS BEREICH
+const canvasWrapper = document.getElementById('canvasWrapper');
+if (canvasWrapper) {
+  canvasWrapper.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+  }, { passive: false });
+}
+
+let hasDragged = false;
 document.addEventListener('pointerup', (e) => {
-  if (isDragging) return; 
+  if (hasDragged) return; // Kein Sound, wenn man das Bild verschoben hat
   if (!audioCtx) initAudio(); else if (audioCtx.state === 'suspended') audioCtx.resume();
   
   if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) playClickSound();
@@ -85,9 +74,8 @@ document.addEventListener('pointerup', (e) => {
   document.body.appendChild(r); setTimeout(() => r.remove(), 600); 
 });
 
-// ==================== 🛠️ BUGFIX: PAN & ZOOM SYSTEM (ROBUST & TELEPORT-FREE) ====================
+// ==================== PAN & ZOOM SYSTEM (ABSOLUT JITTER-FREE) ====================
 const zoomContainer = document.getElementById('zoomContainer');
-const canvasWrapper = document.getElementById('canvasWrapper');
 const zoomLevelText = document.getElementById('zoomLevel');
 const outCanvas = document.getElementById('outCanvas');
 
@@ -95,10 +83,11 @@ let currentZoom = 1;
 let panX = 0, panY = 0;
 let pointers = [];
 
-// Hilfsvariablen für sauberes Tracking
-let startX = 0, startY = 0; 
-let prevDiff = -1;
-let prevCenterX = 0, prevCenterY = 0;
+// Variablen für die absolute Mathematik (Tötet den Wackelpudding)
+let initialDist = 0;
+let initialZoom = 1;
+let lastCenterX = 0;
+let lastCenterY = 0;
 
 function updateTransform(smooth = false) {
   if (!zoomContainer || !zoomLevelText) return;
@@ -108,80 +97,76 @@ function updateTransform(smooth = false) {
 }
 
 if (canvasWrapper) {
-  
-  // Nativer Touch-Schutz auf dem Canvas
-  canvasWrapper.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-
   canvasWrapper.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; 
-    pointers.push(e);
+    e.preventDefault(); // Nativer Zoom stoppen
+    hasDragged = false;
+    
+    const existingIdx = pointers.findIndex(p => p.pointerId === e.pointerId);
+    if (existingIdx !== -1) pointers[existingIdx] = e;
+    else pointers.push(e);
+
     canvasWrapper.setPointerCapture(e.pointerId);
 
     if (pointers.length === 1) {
-      isDragging = true;
-      startX = e.clientX - panX; 
-      startY = e.clientY - panY;
+      lastCenterX = pointers[0].clientX;
+      lastCenterY = pointers[0].clientY;
     } else if (pointers.length === 2) {
-      // Zwei Finger: Merke dir die Mitte (Centroid) und den Abstand
-      prevCenterX = (pointers[0].clientX + pointers[1].clientX) / 2;
-      prevCenterY = (pointers[0].clientY + pointers[1].clientY) / 2;
-      prevDiff = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
+      initialDist = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
+      initialZoom = currentZoom;
+      lastCenterX = (pointers[0].clientX + pointers[1].clientX) / 2;
+      lastCenterY = (pointers[0].clientY + pointers[1].clientY) / 2;
     }
   });
 
   canvasWrapper.addEventListener('pointermove', (e) => {
     const index = pointers.findIndex(p => p.pointerId === e.pointerId);
-    if (index !== -1) pointers[index] = e;
+    if (index === -1) return;
+    pointers[index] = e;
+    hasDragged = true;
 
-    if (pointers.length === 1 && isDragging) {
-      // Normales 1-Finger Verschieben
-      panX = pointers[0].clientX - startX; 
-      panY = pointers[0].clientY - startY; 
+    if (pointers.length === 1) {
+      const dx = pointers[0].clientX - lastCenterX;
+      const dy = pointers[0].clientY - lastCenterY;
+      panX += dx;
+      panY += dy;
+      lastCenterX = pointers[0].clientX;
+      lastCenterY = pointers[0].clientY;
       updateTransform(false);
-      
     } else if (pointers.length === 2) {
-      // 2-Finger Zoom UND Verschieben (Pan)
-      const curCenterX = (pointers[0].clientX + pointers[1].clientX) / 2;
-      const curCenterY = (pointers[0].clientY + pointers[1].clientY) / 2;
-      const curDiff = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
-
-      // Zwei-Finger-Pan anwenden (verhindert das Zittern)
-      panX += curCenterX - prevCenterX;
-      panY += curCenterY - prevCenterY;
-
-      // Zwei-Finger-Zoom anwenden
-      if (prevDiff > 0) {
-        currentZoom = Math.max(0.2, Math.min(currentZoom + (curDiff - prevDiff) * 0.01, 5));
+      const currentDist = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
+      
+      // Absolute Zoom-Berechnung: Verhindert das Aufschaukeln (Wackelpudding)
+      if (initialDist > 0) {
+        currentZoom = Math.max(0.2, Math.min(initialZoom * (currentDist / initialDist), 5));
       }
-
+      
+      // Panning mit zwei Fingern gleichzeitig!
+      const centerX = (pointers[0].clientX + pointers[1].clientX) / 2;
+      const centerY = (pointers[0].clientY + pointers[1].clientY) / 2;
+      panX += (centerX - lastCenterX);
+      panY += (centerY - lastCenterY);
+      lastCenterX = centerX;
+      lastCenterY = centerY;
+      
       updateTransform(false);
-
-      // Zustand für nächsten Frame speichern
-      prevCenterX = curCenterX;
-      prevCenterY = curCenterY;
-      prevDiff = curDiff;
     }
   });
 
-  // TELEPORT-FIX: Sauberes Loslassen der Finger
   const pointerUp = (e) => {
     pointers = pointers.filter(p => p.pointerId !== e.pointerId);
-    canvasWrapper.releasePointerCapture(e.pointerId);
     
     if (pointers.length === 1) {
-      // Wenn man von 2 Fingern auf 1 Finger wechselt -> Soft Reset!
-      // Berechnet den Startpunkt für den verbleibenden Finger neu, damit das Bild nicht springt.
-      startX = pointers[0].clientX - panX;
-      startY = pointers[0].clientY - panY;
+      // Re-Ankern des verbleibenden Fingers
+      lastCenterX = pointers[0].clientX;
+      lastCenterY = pointers[0].clientY;
     } else if (pointers.length === 0) {
-      isDragging = false;
-      prevDiff = -1;
+      canvasWrapper.releasePointerCapture(e.pointerId);
+      setTimeout(() => { hasDragged = false; }, 50);
     }
   };
-  
   canvasWrapper.addEventListener('pointerup', pointerUp);
   canvasWrapper.addEventListener('pointercancel', pointerUp);
-  canvasWrapper.addEventListener('pointerout', pointerUp);
 
   canvasWrapper.addEventListener('wheel', (e) => {
     e.preventDefault(); 
