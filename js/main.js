@@ -1,5 +1,26 @@
-import { state, PROFILES, SYSTEM_PRESETS } from './config.js';
+import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render } from './engine.js';
+
+// ==================== GLOBAL ERROR CATCHER (FANCY POPUP) ====================
+function showError(msg) {
+  const pop = document.getElementById('errorPopup');
+  document.getElementById('errorText').textContent = msg;
+  pop.classList.add('show');
+  setTimeout(() => pop.classList.remove('show'), 7000); // Auto-Hide nach 7 Sekunden
+}
+
+document.getElementById('errorCloseBtn').onclick = () => {
+  document.getElementById('errorPopup').classList.remove('show');
+};
+
+// Überwacht ALLE Fehler, die unbemerkt im System passieren
+window.onerror = function(message, source, lineno, colno, error) {
+  showError(`[JS Fehler]: ${message} (Zeile ${lineno})`);
+  return false; 
+};
+window.addEventListener('unhandledrejection', function(event) {
+  showError(`[Promise Fehler]: ${event.reason}`);
+});
 
 // ==================== IOS SAFARI ANTI-ZOOM FIX ====================
 document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
@@ -12,29 +33,35 @@ const translations = {
   en: { sourceTitle: "Image Source", dropzoneBig: "Select Image", profileTitle: "Printer Profile", adjustTitle: "Adjustments", presetsTitle: "Presets", errorsTitle: "Hardware Errors", advancedTitle: "Advanced", btnRender: "Manual Render", previewTitle: "Live Preview" }
 };
 function applyLanguage(lang) {
-  const dict = translations[lang] || translations.de;
-  document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key]; });
+  try {
+    const dict = translations[lang] || translations.de;
+    document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key]; });
+  } catch(e) { showError(`[Language Fehler]: ${e.message}`); }
 }
 
 // ==================== PRO AUDIO SYSTEM ====================
 let audioCtx = null;
 const initAudio = () => {
-  if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-  if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+  try {
+    if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+  } catch(e) { console.warn("Audio konnte nicht initialisiert werden.", e); }
 };
 document.addEventListener('touchstart', initAudio, { once: true, passive: true });
 document.addEventListener('mousedown', initAudio, { once: true, passive: true });
 
 function playClickSound() {
   if (!state.uiSounds || !audioCtx) return;
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-  osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
-  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.start(); osc.stop(audioCtx.currentTime + 0.03);
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.03);
+  } catch(e) {} // Fehler hier ignorieren, da Audio nicht systemkritisch ist
 }
 
 document.addEventListener('pointerup', (e) => {
@@ -124,15 +151,23 @@ const triggerUpdate = (function() {
 })();
 
 async function performRender() {
-  if (!state.sourceImage || isRendering) return; isRendering = true;
-  renderBtn.disabled = true; setStatus("Rendern...", true);
+  if (!state.sourceImage || isRendering) return; 
   try {
+    isRendering = true;
+    renderBtn.disabled = true; setStatus("Rendern...", true);
+    
     const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
-    outCanvas.width = width; outCanvas.height = height; outCanvas.getContext("2d").putImageData(imageData, 0, 0);
+    outCanvas.width = width; outCanvas.height = height; 
+    outCanvas.getContext("2d").putImageData(imageData, 0, 0);
     outCanvas.toBlob(blob => { lastRenderedBlob = blob; downloadBtn.disabled = false; }, "image/png");
+    
     setStatus(`${width}×${height} px ready`);
-  } catch (e) { console.error(e); }
-  isRendering = false; renderBtn.disabled = false;
+  } catch (e) { 
+    showError(`[Render Engine Absturz]: ${e.message}`);
+    setStatus("Render Error");
+  } finally {
+    isRendering = false; renderBtn.disabled = false;
+  }
 }
 
 // ==================== PRESET SYSTEM ====================
@@ -170,7 +205,7 @@ function yamlToPreset(yaml) {
 
 const STORAGE_KEY = 'dotmatrix_user_presets';
 function loadUserPresets() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
-function saveUserPresets(presets) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch {} }
+function saveUserPresets(presets) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch(e) { showError(`[Speicher Fehler]: ${e.message}`); } }
 function deleteUserPreset(id) { saveUserPresets(loadUserPresets().filter(p => p.id !== id)); renderPresetList(); }
 
 function captureCurrentPreset(name) {
@@ -182,51 +217,53 @@ function captureCurrentPreset(name) {
 let activePresetId = null;
 
 function applyPreset(p) {
-  if (!p) return; 
-  if (p.profile) state.profile = p.profile;
-  const setS = (id, vid, v) => { const e=document.getElementById(id); if(e && v!==undefined){ e.value=v; document.getElementById(vid).textContent=v; state[id.replace('Slider','')] = parseFloat(v); }};
-  if (p.brightness !== undefined) setS('brightnessSlider', 'brightnessVal', p.brightness);
-  if (p.contrast !== undefined) setS('contrastSlider', 'contrastVal', p.contrast);
-  if (p.gamma !== undefined) setS('gammaSlider', 'gammaVal', p.gamma);
-  if (p.threshold !== undefined) setS('thresholdSlider', 'thresholdVal', p.threshold);
-  if (p.dpi !== undefined) setS('dpiSlider', 'dpiVal', p.dpi);
-  if (p.jitterScale !== undefined) setS('jitterSlider', 'jitterVal', p.jitterScale * 10);
-  if (p.bandingScale !== undefined) setS('bandingSlider', 'bandingVal', p.bandingScale * 10);
-  if (p.maxSize !== undefined) setS('maxSizeSlider', 'maxSizeVal', p.maxSize);
-  
-  if (p.dither) { state.dither = p.dither; document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === p.dither)); document.getElementById('thresholdField').style.display = p.dither === 'threshold'?'block':'none'; }
-  if (p.paperFormat) { state.paperFormat = p.paperFormat; document.querySelectorAll('#paperFormatBtns button').forEach(b => b.classList.toggle('active', b.dataset.format === p.paperFormat)); }
-  if (p.orientation) { state.orientation = p.orientation; document.querySelectorAll('#orientationBtns button').forEach(b => b.classList.toggle('active', b.dataset.orient === p.orientation)); }
-  
-  if (p.ink) {
-    state.ink = p.ink; const inkStr = p.ink.join(','); let found = false;
-    document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach(s => { const m = s.dataset.ink === inkStr; s.classList.toggle('active', m); if (m) found = true; });
-    const custom = document.getElementById('customInkSwatch');
-    if (!found && custom) { const hex = "#" + p.ink.map(x => x.toString(16).padStart(2, '0')).join(''); custom.dataset.ink = inkStr; custom.style.background = hex; custom.classList.add('active'); document.getElementById('inkColorPicker').value = hex; document.getElementById('inkHexInput').value = hex; }
-    else if (custom) custom.classList.remove('active');
-  }
-  
-  if (p.paper !== undefined) {
-    if (p.paper === null) {
-      if (state.sourceImage) detectAndSetPaperColor(state.sourceImage);
-      else { state.paper = [255, 255, 255]; document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.paper === "255,255,255")); }
-    } else {
-      state.paper = p.paper; const paperStr = p.paper.join(',');
-      document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.paper === paperStr));
+  try {
+    if (!p) return; 
+    if (p.profile) state.profile = p.profile;
+    const setS = (id, vid, v) => { const e=document.getElementById(id); if(e && v!==undefined){ e.value=v; document.getElementById(vid).textContent=v; state[id.replace('Slider','')] = parseFloat(v); }};
+    if (p.brightness !== undefined) setS('brightnessSlider', 'brightnessVal', p.brightness);
+    if (p.contrast !== undefined) setS('contrastSlider', 'contrastVal', p.contrast);
+    if (p.gamma !== undefined) setS('gammaSlider', 'gammaVal', p.gamma);
+    if (p.threshold !== undefined) setS('thresholdSlider', 'thresholdVal', p.threshold);
+    if (p.dpi !== undefined) setS('dpiSlider', 'dpiVal', p.dpi);
+    if (p.jitterScale !== undefined) setS('jitterSlider', 'jitterVal', p.jitterScale * 10);
+    if (p.bandingScale !== undefined) setS('bandingSlider', 'bandingVal', p.bandingScale * 10);
+    if (p.maxSize !== undefined) setS('maxSizeSlider', 'maxSizeVal', p.maxSize);
+    
+    if (p.dither) { state.dither = p.dither; document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === p.dither)); document.getElementById('thresholdField').style.display = p.dither === 'threshold'?'block':'none'; }
+    if (p.paperFormat) { state.paperFormat = p.paperFormat; document.querySelectorAll('#paperFormatBtns button').forEach(b => b.classList.toggle('active', b.dataset.format === p.paperFormat)); }
+    if (p.orientation) { state.orientation = p.orientation; document.querySelectorAll('#orientationBtns button').forEach(b => b.classList.toggle('active', b.dataset.orient === p.orientation)); }
+    
+    if (p.ink) {
+      state.ink = p.ink; const inkStr = p.ink.join(','); let found = false;
+      document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach(s => { const m = s.dataset.ink === inkStr; s.classList.toggle('active', m); if (m) found = true; });
+      const custom = document.getElementById('customInkSwatch');
+      if (!found && custom) { const hex = "#" + p.ink.map(x => x.toString(16).padStart(2, '0')).join(''); custom.dataset.ink = inkStr; custom.style.background = hex; custom.classList.add('active'); document.getElementById('inkColorPicker').value = hex; document.getElementById('inkHexInput').value = hex; }
+      else if (custom) custom.classList.remove('active');
     }
-  }
+    
+    if (p.paper !== undefined) {
+      if (p.paper === null) {
+        if (state.sourceImage) detectAndSetPaperColor(state.sourceImage);
+        else { state.paper = [255, 255, 255]; document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.paper === "255,255,255")); }
+      } else {
+        state.paper = p.paper; const paperStr = p.paper.join(',');
+        document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.paper === paperStr));
+      }
+    }
 
-  state.doubleStrike = !!p.doubleStrike; state.condensed = !!p.condensed; state.softBlur = !!p.softBlur; state.invert = !!p.invert;
-  
-  if (p.wearLayers !== undefined) {
-    state.wearLayers = p.wearLayers.map(l => ({ ...l }));
-    document.querySelectorAll('#errorList .er').forEach(el => { el.classList.remove('on'); el.querySelector('.er-val').textContent = '0%'; });
-    for (const layer of p.wearLayers) {
-      const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
-      if (el) { el.classList.add('on'); el.querySelector('.er-slider').value = layer.strength ?? 50; el.querySelector('.er-val').textContent = (layer.strength ?? 50) + '%'; }
+    state.doubleStrike = !!p.doubleStrike; state.condensed = !!p.condensed; state.softBlur = !!p.softBlur; state.invert = !!p.invert;
+    
+    if (p.wearLayers !== undefined) {
+      state.wearLayers = p.wearLayers.map(l => ({ ...l }));
+      document.querySelectorAll('#errorList .er').forEach(el => { el.classList.remove('on'); el.querySelector('.er-val').textContent = '0%'; });
+      for (const layer of p.wearLayers) {
+        const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
+        if (el) { el.classList.add('on'); el.querySelector('.er-slider').value = layer.strength ?? 50; el.querySelector('.er-val').textContent = (layer.strength ?? 50) + '%'; }
+      }
     }
-  }
-  updateUIFromState(); updateProfileMeta(); triggerUpdate();
+    updateUIFromState(); updateProfileMeta(); triggerUpdate();
+  } catch(e) { showError(`[Preset Apply Fehler]: ${e.message}`); }
 }
 
 function updateUIFromState() {
@@ -235,21 +272,23 @@ function updateUIFromState() {
 }
 
 function renderPresetList() {
-  const list = document.getElementById('presetList');
-  if(!list) return;
-  list.innerHTML = '';
-  const allPresets = [...(SYSTEM_PRESETS || []), ...loadUserPresets()];
-  allPresets.forEach(p => {
-    const el = document.createElement('div'); el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
-    if(p.system) { 
-      el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><span class="sli-badge">SYS</span></div>`; 
-    } else { 
-      el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><div><span class="sli-badge" style="margin-right:5px;">USR</span><button class="sli-del" title="Löschen">×</button></div></div>`; 
-      el.querySelector('.sli-del').addEventListener('click', (e) => { e.stopPropagation(); if(confirm(`Preset "${p.name}" löschen?`)) { if(activePresetId === p.id) activePresetId = null; deleteUserPreset(p.id); }}); 
-    }
-    el.addEventListener('click', () => { activePresetId = p.id; document.querySelectorAll('#presetList .sli').forEach(s => s.classList.remove('active')); el.classList.add('active'); applyPreset(p); });
-    list.appendChild(el);
-  });
+  try {
+    const list = document.getElementById('presetList');
+    if(!list) return;
+    list.innerHTML = '';
+    const allPresets = [...(SYSTEM_PRESETS || []), ...loadUserPresets()];
+    allPresets.forEach(p => {
+      const el = document.createElement('div'); el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
+      if(p.system) { 
+        el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><span class="sli-badge">SYS</span></div>`; 
+      } else { 
+        el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><div><span class="sli-badge" style="margin-right:5px;">USR</span><button class="sli-del" title="Löschen">×</button></div></div>`; 
+        el.querySelector('.sli-del').addEventListener('click', (e) => { e.stopPropagation(); if(confirm(`Preset "${p.name}" löschen?`)) { if(activePresetId === p.id) activePresetId = null; deleteUserPreset(p.id); }}); 
+      }
+      el.addEventListener('click', () => { activePresetId = p.id; document.querySelectorAll('#presetList .sli').forEach(s => s.classList.remove('active')); el.classList.add('active'); applyPreset(p); });
+      list.appendChild(el);
+    });
+  } catch(e) { showError(`[Preset Liste Fehler]: ${e.message}`); }
 }
 
 function downloadText(text, filename) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
@@ -257,8 +296,8 @@ document.getElementById('exportPresetBtn').addEventListener('click', () => { let
 document.getElementById('exportCurrentBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); document.getElementById('presetYamlArea').value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
 document.getElementById('importPresetBtn').addEventListener('click', () => document.getElementById('presetFileInput').click());
 document.getElementById('presetFileInput').addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
-document.getElementById('savePresetBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return alert('Name erforderlich'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
-document.getElementById('importYamlBtn').addEventListener('click', () => { const text = document.getElementById('presetYamlArea').value.trim(); if (!text) return alert('YAML einfügen!'); importFromText(text); });
+document.getElementById('savePresetBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return showError('Name für das Preset ist erforderlich.'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
+document.getElementById('importYamlBtn').addEventListener('click', () => { const text = document.getElementById('presetYamlArea').value.trim(); if (!text) return showError('Bitte füge YAML Code in das Textfeld ein!'); importFromText(text); });
 
 function importFromText(text) {
   try {
@@ -267,7 +306,7 @@ function importFromText(text) {
     if (!preset.name) preset.name = 'Imported';
     applyPreset(preset); setStatus(`Importiert.`);
     if (preset.name !== 'Imported') { preset.id = 'usr_' + Date.now(); preset.system = false; const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); }
-  } catch (err) { alert('Import fehlgeschlagen: ' + err.message); }
+  } catch (err) { showError(`[YAML Import Fehler]: Das Format des Codes ist ungültig. (${err.message})`); }
 }
 
 // ==================== IMAGE ANALYSIS ====================
@@ -287,14 +326,16 @@ function detectAndSetPaperColor(img) {
 }
 
 function analyzeAndAdaptImage(img) {
-  const c = document.createElement("canvas"); c.width = 160; c.height = 160; const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0, 160, 160); const { data } = ctx.getImageData(0, 0, 160, 160);
-  const hist = new Uint32Array(256); for (let i = 0; i < data.length; i += 4) hist[Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2])]++;
-  const total = 160*160; let cum = 0, p2 = 0, p98 = 255;
-  for (let i = 0; i < 256; i++) { cum += hist[i]; if (cum/total < 0.02) p2 = i; if (cum/total < 0.98) p98 = i; }
-  if (hist.slice(180).reduce((a,b)=>a+b,0)/total > 0.45) { state.contrast = 45; state.dither = "threshold"; } 
-  else { state.brightness = Math.max(-60, Math.min(60, Math.round(((p2+p98)/2-128)*-0.35))); }
-  updateUIFromState();
+  try {
+    const c = document.createElement("canvas"); c.width = 160; c.height = 160; const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, 160, 160); const { data } = ctx.getImageData(0, 0, 160, 160);
+    const hist = new Uint32Array(256); for (let i = 0; i < data.length; i += 4) hist[Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2])]++;
+    const total = 160*160; let cum = 0, p2 = 0, p98 = 255;
+    for (let i = 0; i < 256; i++) { cum += hist[i]; if (cum/total < 0.02) p2 = i; if (cum/total < 0.98) p98 = i; }
+    if (hist.slice(180).reduce((a,b)=>a+b,0)/total > 0.45) { state.contrast = 45; state.dither = "threshold"; } 
+    else { state.brightness = Math.max(-60, Math.min(60, Math.round(((p2+p98)/2-128)*-0.35))); }
+    updateUIFromState();
+  } catch(e) { showError(`[Bildanalyse Fehler]: ${e.message}`); }
 }
 
 // ==================== WIRING & EVENTS ====================
@@ -359,20 +400,23 @@ dropzone.addEventListener("drop", (e) => { e.preventDefault(); dropzone.style.bo
 function estimateDpiFromImageSize(img) { return Math.max(100, Math.min(1200, Math.round((Math.max(img.width, img.height) / (297 / 25.4)) / 50) * 50)); }
 
 async function handleFile(file) {
-  if (!file || !file.type.startsWith("image/")) return setStatus("Kein Bild.");
+  if (!file || !file.type.startsWith("image/")) return showError("Bitte wähle eine gültige Bilddatei aus (PNG, JPG, WebP).");
   setStatus("Lade Bild...");
-  const url = URL.createObjectURL(file); const img = new Image();
-  img.onload = () => {
-    state.dpi = estimateDpiFromImageSize(img);
-    document.getElementById("dpiSlider").value = state.dpi; document.getElementById("dpiVal").textContent = state.dpi;
-    state.sourceImage = img; detectAndSetPaperColor(img); analyzeAndAdaptImage(img);
-    document.getElementById("dzBig").textContent = file.name; document.getElementById("dzSmall").textContent = `${img.width} × ${img.height}`;
-    const scale = Math.min(1, 800 / Math.max(img.width, img.height));
-    outCanvas.width = Math.round(img.width * scale); outCanvas.height = Math.round(img.height * scale);
-    outCanvas.getContext("2d").drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
-    renderBtn.disabled = false; triggerUpdate();
-  };
-  img.src = url;
+  try {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      state.dpi = estimateDpiFromImageSize(img);
+      document.getElementById("dpiSlider").value = state.dpi; document.getElementById("dpiVal").textContent = state.dpi;
+      state.sourceImage = img; detectAndSetPaperColor(img); analyzeAndAdaptImage(img);
+      document.getElementById("dzBig").textContent = file.name; document.getElementById("dzSmall").textContent = `${img.width} × ${img.height}`;
+      const scale = Math.min(1, 800 / Math.max(img.width, img.height));
+      outCanvas.width = Math.round(img.width * scale); outCanvas.height = Math.round(img.height * scale);
+      outCanvas.getContext("2d").drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
+      renderBtn.disabled = false; triggerUpdate();
+    };
+    img.onerror = () => showError("[Bild Fehler]: Das Bild konnte nicht gelesen werden.");
+    img.src = url;
+  } catch(e) { showError(`[Upload Fehler]: ${e.message}`); }
 }
 
 document.getElementById('profileList').addEventListener('click', (e) => {
@@ -430,9 +474,13 @@ document.getElementById('bgAnimSelector').addEventListener('change', e => {
 function updateProfileMeta() { const p = PROFILES[state.profile]; document.getElementById("profileMeta").textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi`; }
 
 // ==================== INIT ====================
-state.autoRender = true; state.uiSounds = true; state.wearLayers = []; state.bgAnim = true;
-applyLanguage('de'); updateProfileMeta(); 
+try {
+  state.autoRender = true; state.uiSounds = true; state.wearLayers = []; state.bgAnim = true;
+  applyLanguage('de'); updateProfileMeta(); 
 
-if (typeof SYSTEM_PRESETS !== 'undefined') {
-  renderPresetList();
+  if (typeof SYSTEM_PRESETS !== 'undefined') {
+    renderPresetList();
+  }
+} catch(e) {
+  showError(`[Initialisierungsfehler]: System konnte nicht geladen werden. ${e.message}`);
 }
