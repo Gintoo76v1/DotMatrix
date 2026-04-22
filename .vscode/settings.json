@@ -1,8 +1,0 @@
-{
-    "chat.mcp.serverSampling": {
-        "DotMatrix/.vscode/mcp.json: microsoft/markitdown": {
-            "allowedModels": []
-        }
-    },
-    "liveServer.settings.port": 5502
-}
