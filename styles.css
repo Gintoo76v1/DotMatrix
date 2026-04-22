@@ -81,20 +81,20 @@ body {
 .activity-bar {
   width: 75px; flex-shrink: 0;
   display: flex; flex-direction: column; align-items: center;
-  padding: 16px 0; gap: 10px; 
+  padding: 16px 0; gap: 10px; /* Saubere Abstände zwischen den Icons */
   z-index: 100; 
 }
 .icon-btn {
   font-size: 22px; width: 48px; height: 48px;
   display: flex; justify-content: center; align-items: center;
   cursor: pointer; opacity: 0.4; transition: 0.3s; 
-  border-radius: 14px; 
+  border-radius: 14px; /* NEU: Weich abgerundete Ecken */
   background: transparent;
 }
 .icon-btn:hover { opacity: 0.8; background: rgba(255,255,255,0.05); }
 .icon-btn.active { 
   opacity: 1; 
-  background: rgba(0,0,0,0.25); 
+  background: rgba(0,0,0,0.25); /* NEU: Runder, glasiger Hintergrund */
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.05);
 }
@@ -154,8 +154,7 @@ canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); max-width: 1
 h2 { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 14px; color: var(--ink-soft); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-/* HIER IST DER FIX: .er WURDE ENTFERNT */
-.dropzone, .scroll-list, .text-input, .color-picker, .segmented {
+.dropzone, .scroll-list, .text-input, .color-picker, .segmented, .er {
   background: var(--paper-dark);
   border: 1px solid var(--glass-border);
   border-radius: 12px; 
@@ -170,8 +169,6 @@ h2 { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin:
   max-height: 260px; overflow-y: auto; overflow-x: hidden; 
   -webkit-overflow-scrolling: touch; 
 }
-
-/* Printer Profil & Preset Liste */
 .sli { padding: 14px 16px; border-bottom: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s; }
 .sli:last-child { border-bottom: 0; }
 .sli:hover { background: rgba(255,255,255,0.1); }
@@ -225,9 +222,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .check.on .box { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-soft);}
 .check.on .box::after { content: "×"; color: #000; font-family: "VT323", monospace; font-size: 22px; margin-top: -2px; }
 
-/* ==================== HARDWARE ERRORS (FIXED) ==================== */
-/* .er hat keinen eigenen Background/Border-Radius mehr! */
-.er { border-bottom: 1px solid var(--glass-border); transition: 0.2s; }
+.er { transition: 0.2s;}
 .er:last-child { border-bottom: none; }
 .er-head { display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer; min-height: 48px;}
 .er-head:hover { background: rgba(255,255,255,0.08); }
@@ -246,6 +241,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .zoom-controls span { font-size: 11px; display: inline-block; width: 45px; text-align: center; }
 
 /* ==================== HOCHFORMAT (PORTRAIT MODE) ==================== */
+/* Das Layout ändert sich dynamisch, wenn das iPad/Tablet vertikal gehalten wird */
 @media (orientation: portrait), (max-width: 900px) {
   .app-container { 
     flex-direction: column; 
@@ -253,6 +249,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
     gap: 12px; 
   }
   
+  /* Icons wandern nach oben */
   .activity-bar { 
     width: 100%; height: auto; 
     flex-direction: row; justify-content: center; 
@@ -261,6 +258,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
   }
   .icon-btn { width: 48px; height: 48px; }
   
+  /* Live-Vorschau wandert in die Mitte (direkt unter die Icons) */
   .main-editor { 
     width: 100%; 
     flex: 1 1 45%; 
@@ -268,6 +266,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
     min-height: 380px; 
   }
   
+  /* Einstellungen wandern nach unten (daumenfreundlich!) */
   .sidebar { 
     width: 100%; 
     flex: 1 1 55%; 
