@@ -1,8 +1,22 @@
 import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
-// ==================== JFIF / PNG DPI DETECTION ====================
+// ==================== UTILITIES & DEBOUNCE (Fix Freezes) ====================
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
+const debouncedRefreshAscii = debounce(refreshAscii, 100);
+
+// ==================== JFIF / PNG DPI DETECTION ====================
 function readJfifDpi(buf) {
   const v = new DataView(buf);
   if (v.byteLength < 18 || v.getUint16(0) !== 0xFFD8) return null;
@@ -45,32 +59,7 @@ function estimateDpiFromImageSize(img) {
   return snapDpi(Math.round(longPx / a4LongIn));
 }
 
-// ==================== INTERACTIVE ANIMATIONS ====================
-
-document.addEventListener('click', (e) => {
-  if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
-  const r = document.createElement('div');
-  r.className = 'click-shockwave';
-  r.style.left = e.clientX + 'px';
-  r.style.top  = e.clientY + 'px';
-  document.body.appendChild(r);
-  setTimeout(() => r.remove(), 600);
-});
-
-document.addEventListener('keydown', (e) => {
-  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
-  if (['Shift','Control','Alt','Meta','CapsLock','Tab'].includes(e.key)) return;
-  const k = document.createElement('div');
-  k.className = 'key-echo';
-  k.textContent = e.key.length === 1 ? e.key.toUpperCase() : `[${e.key.toUpperCase()}]`;
-  k.style.left   = (Math.random() * 80 + 10) + 'vw';
-  k.style.bottom = '15vh';
-  document.body.appendChild(k);
-  setTimeout(() => k.remove(), 1200);
-});
-
 // ==================== DOM ELEMENTS ====================
-
 const dropzone    = document.getElementById("dropzone");
 const fileInput   = document.getElementById("fileInput");
 const outCanvas   = document.getElementById("outCanvas");
@@ -85,7 +74,6 @@ const profileMeta = document.getElementById("profileMeta");
 let lastRenderedBlob = null;
 
 // ==================== HELPERS ====================
-
 function setStatus(text, working = false) {
   statusEl.textContent = text;
   statusEl.className = "status" + (working ? " working" : "");
@@ -177,13 +165,13 @@ function refreshAscii() {
   if (!state.sourceImage) return;
   try {
     asciiEl.classList.remove("empty");
-    asciiEl.textContent = asciiPreview(state.sourceImage, 56);
+    asciiEl.textContent = asciiPreview(state.sourceImage, 60);
   } catch (e) { console.warn(e); }
 }
 
 function updateProfileMeta() {
   const p = PROFILES[state.profile];
-  profileMeta.textContent = `${p.label} · ${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · dot ⌀ ${p.dot_diameter_mm}mm`;
+  profileMeta.textContent = `${p.label} · ${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · ⌀ ${p.dot_diameter_mm}mm`;
   const condCheck = document.querySelector('[data-flag="condensed"]');
   if (!p.supports_condensed) {
     condCheck.dataset.disabled = "true";
@@ -194,18 +182,7 @@ function updateProfileMeta() {
   }
 }
 
-// ==================== THEME ====================
-
-document.getElementById('themeSelector').addEventListener('click', (e) => {
-  const btn = e.target.closest('.theme-btn');
-  if (!btn) return;
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.documentElement.setAttribute('data-theme', btn.dataset.settheme);
-});
-
 // ==================== SEGMENTED BUTTONS ====================
-
 function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
   document.getElementById(containerId).addEventListener("click", (e) => {
     const btn = e.target.closest("button");
@@ -215,7 +192,7 @@ function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
     state[stateKey] = btn.dataset[attrKey];
     if (onChange) onChange();
     markModified();
-    refreshAscii();
+    debouncedRefreshAscii();
   });
 }
 
@@ -227,7 +204,6 @@ wireSegmented("paperFormatBtns", "paperFormat", "format");
 wireSegmented("orientationBtns",  "orientation", "orient");
 
 // ==================== PROFILE SCROLL LIST ====================
-
 document.getElementById('profileList').addEventListener('click', (e) => {
   const item = e.target.closest('.sli');
   if (!item) return;
@@ -236,11 +212,10 @@ document.getElementById('profileList').addEventListener('click', (e) => {
   state.profile = item.dataset.profile;
   updateProfileMeta();
   markModified();
-  refreshAscii();
+  debouncedRefreshAscii();
 });
 
-// ==================== ERROR SCROLL LIST (multi-select + per-error slider) ====================
-
+// ==================== ERROR SCROLL LIST ====================
 function syncWearLayersFromUI() {
   state.wearLayers = [];
   document.querySelectorAll('#errorList .er.on').forEach(el => {
@@ -278,19 +253,17 @@ document.getElementById('errorList').addEventListener('input', (e) => {
 });
 
 // ==================== CHECKBOXES ====================
-
 document.querySelectorAll(".check").forEach(el => {
   el.addEventListener("click", () => {
     if (el.dataset.disabled === "true") return;
     el.classList.toggle("on");
     state[el.dataset.flag] = el.classList.contains("on");
     markModified();
-    refreshAscii();
+    debouncedRefreshAscii();
   });
 });
 
 // ==================== SWATCHES ====================
-
 function wireSwatches(containerId, stateKey, attrKey) {
   const box = document.getElementById(containerId);
   box.addEventListener("click", (e) => {
@@ -305,8 +278,7 @@ function wireSwatches(containerId, stateKey, attrKey) {
 wireSwatches("inkSwatches",   "ink",   "ink");
 wireSwatches("paperSwatches", "paper", "paper");
 
-// ==================== CUSTOM INK PICKER ====================
-
+// ==================== CUSTOM INK PICKER (Fixed) ====================
 function hexToRgb(hex) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
   if (!m) return null;
@@ -332,34 +304,36 @@ function applyCustomInk(hex) {
 const inkColorPicker = document.getElementById('inkColorPicker');
 const inkHexInput    = document.getElementById('inkHexInput');
 
-inkColorPicker.addEventListener('input', () => {
-  const hex = inkColorPicker.value;
-  inkHexInput.value = hex;
-  applyCustomInk(hex);
-});
-
-inkHexInput.addEventListener('input', () => {
-  const raw = inkHexInput.value.trim();
-  const hex = raw.startsWith('#') ? raw : '#' + raw;
+function handleInkChange(hex) {
   if (/^#[0-9a-f]{6}$/i.test(hex)) {
     inkColorPicker.value = hex;
+    inkHexInput.value = hex;
     applyCustomInk(hex);
   }
-});
+}
 
+inkColorPicker.addEventListener('input', (e) => {
+  inkHexInput.value = e.target.value;
+});
+inkColorPicker.addEventListener('change', (e) => {
+  handleInkChange(e.target.value);
+});
+inkHexInput.addEventListener('change', (e) => {
+  let hex = e.target.value.trim();
+  if (!hex.startsWith('#')) hex = '#' + hex;
+  handleInkChange(hex);
+});
 document.getElementById('applyInkBtn').addEventListener('click', () => {
-  const raw = inkHexInput.value.trim();
-  const hex = raw.startsWith('#') ? raw : '#' + raw;
+  let hex = inkHexInput.value.trim();
+  if (!hex.startsWith('#')) hex = '#' + hex;
   if (/^#[0-9a-f]{6}$/i.test(hex)) {
-    inkColorPicker.value = hex;
-    applyCustomInk(hex);
+    handleInkChange(hex);
   } else {
-    alert('Enter a valid hex color, e.g. #3a2b1c');
+    alert('Bitte einen gültigen Hex-Code eingeben, z.B. #142d82');
   }
 });
 
-// ==================== SLIDERS ====================
-
+// ==================== SLIDERS (with Debounce) ====================
 function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, liveRefresh = false) {
   const s = document.getElementById(id);
   const v = document.getElementById(valId);
@@ -368,7 +342,7 @@ function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, l
     state[stateKey] = raw;
     v.textContent = format(raw);
     if (fromUser) markModified();
-    if (liveRefresh) refreshAscii();
+    if (liveRefresh) debouncedRefreshAscii();
   };
   s.addEventListener("input", () => apply(true));
   apply(false);
@@ -384,18 +358,15 @@ wireSlider("maxSizeSlider",   "maxSizeVal",   "maxSize",   v => +v, v => v);
 wireSlider("seedSlider",      "seedVal",      "seed",      v => +v, v => v);
 
 // ==================== PRESET YAML SERIALIZER / PARSER ====================
-
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']);
   const lines = [];
   for (const [k, v] of Object.entries(preset)) {
     if (SKIP.has(k)) continue;
     if (Array.isArray(v)) {
-      if (v.length === 0) {
-        lines.push(`${k}: []`);
-      } else if (typeof v[0] === 'number') {
-        lines.push(`${k}: [${v.join(', ')}]`);
-      } else {
+      if (v.length === 0) lines.push(`${k}: []`);
+      else if (typeof v[0] === 'number') lines.push(`${k}: [${v.join(', ')}]`);
+      else {
         lines.push(`${k}:`);
         for (const obj of v) {
           const entries = Object.entries(obj);
@@ -467,30 +438,24 @@ function yamlToPreset(yaml) {
   return preset;
 }
 
-// ==================== PRESET SYSTEM ====================
-
+// ==================== PRESET SYSTEM (Merged UI) ====================
 const STORAGE_KEY = 'dotmatrix_user_presets';
 
 function loadUserPresets() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
 }
-
 function saveUserPresets(presets) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch {}
 }
-
 function deleteUserPreset(id) {
   const presets = loadUserPresets().filter(p => p.id !== id);
   saveUserPresets(presets);
   renderPresetBar();
 }
 
-// Capture the full current UI state into a plain preset object
 function captureCurrentPreset(name) {
   return {
-    name:         name || 'Unnamed',
+    name:         name || 'Neu',
     system:       false,
     profile:      state.profile,
     brightness:   state.brightness,
@@ -515,12 +480,10 @@ function captureCurrentPreset(name) {
   };
 }
 
-// Apply a preset object to the full UI + state
 function applyPreset(preset) {
   if (!preset) return;
   clearModified();
 
-  // Profile
   if (preset.profile && PROFILES[preset.profile]) {
     state.profile = preset.profile;
     document.querySelectorAll('#profileList .sli').forEach(s => {
@@ -529,14 +492,10 @@ function applyPreset(preset) {
     updateProfileMeta();
   }
 
-  // Image adjustments
   const setSlider = (id, valId, val, fmt = v => v) => {
     const el = document.getElementById(id);
     const ve = document.getElementById(valId);
-    if (el && val !== undefined && val !== null) {
-      el.value = val;
-      if (ve) ve.textContent = fmt(val);
-    }
+    if (el && val !== undefined && val !== null) { el.value = val; if (ve) ve.textContent = fmt(val); }
   };
   if (preset.brightness !== undefined) { state.brightness = preset.brightness; setSlider('brightnessSlider','brightnessVal', preset.brightness); }
   if (preset.contrast   !== undefined) { state.contrast   = preset.contrast;   setSlider('contrastSlider',  'contrastVal',   preset.contrast); }
@@ -548,31 +507,21 @@ function applyPreset(preset) {
   if (preset.maxSize    !== undefined) { state.maxSize    = preset.maxSize;    setSlider('maxSizeSlider',   'maxSizeVal',    preset.maxSize); }
   if (preset.seed       !== undefined) { state.seed       = preset.seed;       setSlider('seedSlider',      'seedVal',       preset.seed); }
 
-  // Dither
   if (preset.dither) {
     state.dither = preset.dither;
-    document.querySelectorAll('#ditherBtns button').forEach(b =>
-      b.classList.toggle('active', b.dataset.dither === preset.dither)
-    );
-    document.getElementById('thresholdField').style.display =
-      preset.dither === 'threshold' ? 'block' : 'none';
+    document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === preset.dither));
+    document.getElementById('thresholdField').style.display = preset.dither === 'threshold' ? 'block' : 'none';
   }
 
-  // Paper format / orientation
   if (preset.paperFormat) {
     state.paperFormat = preset.paperFormat;
-    document.querySelectorAll('#paperFormatBtns button').forEach(b =>
-      b.classList.toggle('active', b.dataset.format === preset.paperFormat)
-    );
+    document.querySelectorAll('#paperFormatBtns button').forEach(b => b.classList.toggle('active', b.dataset.format === preset.paperFormat));
   }
   if (preset.orientation) {
     state.orientation = preset.orientation;
-    document.querySelectorAll('#orientationBtns button').forEach(b =>
-      b.classList.toggle('active', b.dataset.orient === preset.orientation)
-    );
+    document.querySelectorAll('#orientationBtns button').forEach(b => b.classList.toggle('active', b.dataset.orient === preset.orientation));
   }
 
-  // Ink swatch
   if (preset.ink) {
     state.ink = preset.ink;
     const inkStr = preset.ink.join(',');
@@ -582,7 +531,6 @@ function applyPreset(preset) {
       s.classList.toggle('active', match);
       if (match) found = true;
     });
-    // If no preset swatch matched, show in custom swatch
     const customSwatch = document.getElementById('customInkSwatch');
     if (!found && customSwatch) {
       const hex = rgbToHex(...preset.ink);
@@ -596,7 +544,6 @@ function applyPreset(preset) {
     }
   }
 
-  // Paper swatch (null = keep auto-detected)
   if (preset.paper) {
     state.paper = preset.paper;
     const paperStr = preset.paper.join(',');
@@ -605,7 +552,6 @@ function applyPreset(preset) {
     });
   }
 
-  // Checkboxes (doubleStrike, condensed, softBlur, invert)
   const setBool = (flag, val) => {
     if (val === undefined) return;
     state[flag] = val;
@@ -616,26 +562,22 @@ function applyPreset(preset) {
   setBool('condensed',    preset.condensed);
   setBool('softBlur',     preset.softBlur);
   setBool('invert',       preset.invert);
-  updateProfileMeta(); // re-check condensed support
+  updateProfileMeta();
 
-  // Wear layers
   if (preset.wearLayers !== undefined) {
     state.wearLayers = preset.wearLayers.map(l => ({ ...l }));
     applyWearLayersToUI(state.wearLayers);
   }
 
-  refreshAscii();
+  debouncedRefreshAscii();
 }
 
-// Update the error list UI to match a given wearLayers array
 function applyWearLayersToUI(layers) {
-  // First clear all
   document.querySelectorAll('#errorList .er').forEach(el => {
     el.classList.remove('on');
     const valEl = el.querySelector('.er-val');
     if (valEl) valEl.textContent = '0%';
   });
-  // Then activate the relevant ones
   for (const layer of layers) {
     const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
     if (!el) continue;
@@ -647,8 +589,6 @@ function applyWearLayersToUI(layers) {
   }
 }
 
-// ==================== PRESET BAR ====================
-
 let activePresetId = null;
 let presetDirty    = false;
 
@@ -658,59 +598,49 @@ function markModified() {
     renderPresetBar();
   }
 }
-
-function clearModified() {
-  presetDirty = false;
-}
+function clearModified() { presetDirty = false; }
 
 function renderPresetBar() {
-  const bar         = document.getElementById('presetBar');
+  const list = document.getElementById('presetList');
   const userPresets = loadUserPresets();
-  bar.innerHTML     = '';
+  list.innerHTML = '';
 
-  const allPresets = [
-    ...SYSTEM_PRESETS,
-    ...userPresets,
-  ];
+  const allPresets = [...SYSTEM_PRESETS, ...userPresets];
 
   for (const preset of allPresets) {
     const isActive = preset.id === activePresetId;
     const isDirty  = isActive && presetDirty;
-    const pill = document.createElement('button');
-    pill.className   = 'preset-pill'
-      + (preset.system ? '' : ' user')
-      + (isActive ? ' active' : '')
-      + (isDirty  ? ' modified' : '');
-    pill.textContent = preset.name;
-    pill.dataset.id  = preset.id;
-    pill.addEventListener('click', () => {
+    
+    const div = document.createElement('div');
+    div.className = 'sli' + (isActive ? ' active' : '') + (isDirty ? ' modified' : '');
+    div.dataset.id = preset.id;
+    
+    let innerHTML = `<div class="sli-row">
+                       <span class="sli-name">${preset.name}</span>
+                       ${preset.system ? '<span class="sli-badge" style="border:none; opacity:0.5;">SYS</span>' : '<button class="delete-btn" title="Löschen">×</button>'}
+                     </div>`;
+    div.innerHTML = innerHTML;
+
+    div.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        e.stopPropagation();
+        if (confirm(`Preset "${preset.name}" wirklich löschen?`)) {
+          if (activePresetId === preset.id) { activePresetId = null; clearModified(); }
+          deleteUserPreset(preset.id);
+        }
+        return;
+      }
       activePresetId = preset.id;
       clearModified();
       renderPresetBar();
       applyPreset(preset);
     });
-    bar.appendChild(pill);
 
-    // Delete button for user presets
-    if (!preset.system) {
-      const del = document.createElement('button');
-      del.className   = 'preset-pill delete-btn';
-      del.textContent = '×';
-      del.title       = 'Delete preset';
-      del.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm(`Delete preset "${preset.name}"?`)) {
-          if (activePresetId === preset.id) { activePresetId = null; clearModified(); }
-          deleteUserPreset(preset.id);
-        }
-      });
-      bar.appendChild(del);
-    }
+    list.appendChild(div);
   }
 }
 
 // ==================== EXPORT / IMPORT ====================
-
 function downloadText(text, filename) {
   const a = document.createElement('a');
   a.href     = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
@@ -720,14 +650,8 @@ function downloadText(text, filename) {
   a.remove();
 }
 
-document.getElementById('exportPresetBtn').addEventListener('click', () => {
-  let name = document.getElementById('presetNameInput').value.trim();
-  if (!name) {
-    name = prompt('Enter a name for this preset:', 'My Preset');
-    if (name === null) return;
-    name = name.trim() || 'dotmatrix-preset';
-    document.getElementById('presetNameInput').value = name;
-  }
+document.getElementById('exportCurrentBtn').addEventListener('click', () => {
+  const name   = prompt('Name für Export?', 'Mein Preset') || 'Mein Preset';
   const preset = captureCurrentPreset(name);
   const yaml   = presetToYaml(preset);
   const slug   = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -746,21 +670,10 @@ document.getElementById('presetFileInput').addEventListener('change', async (e) 
   e.target.value = '';
 });
 
-// Preset Creator buttons
-document.getElementById('exportCurrentBtn').addEventListener('click', () => {
-  const name   = document.getElementById('presetNameInput').value.trim() || 'my-preset';
-  const preset = captureCurrentPreset(name);
-  const yaml   = presetToYaml(preset);
-  // Also fill the textarea so user can copy
-  document.getElementById('presetYamlArea').value = yaml;
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  downloadText(yaml, `${slug}.yaml`);
-});
-
 document.getElementById('savePresetBtn').addEventListener('click', () => {
-  const name = document.getElementById('presetNameInput').value.trim();
-  if (!name) { alert('Enter a preset name first.'); return; }
-  const preset = captureCurrentPreset(name);
+  const name = prompt('Name für neues Preset:', 'Mein Preset');
+  if (!name) return;
+  const preset = captureCurrentPreset(name.trim());
   preset.id    = 'user_' + Date.now();
   const presets = loadUserPresets();
   presets.push(preset);
@@ -768,22 +681,12 @@ document.getElementById('savePresetBtn').addEventListener('click', () => {
   activePresetId = preset.id;
   clearModified();
   renderPresetBar();
-  setStatus(`Preset "${name}" saved.`);
+  setStatus(`Preset "${preset.name}" gespeichert.`);
 });
 
-document.getElementById('importYamlBtn').addEventListener('click', () => {
-  const text = document.getElementById('presetYamlArea').value.trim();
-  if (!text) { alert('Paste YAML or JSON into the text area first.'); return; }
-  importFromText(text);
-});
-
-// Convert legacy JSON wear object {pattern: strength, ...} to wearLayers array
 function normalizePreset(raw) {
   if (raw.wear && !raw.wearLayers) {
-    const known = new Set(Object.keys(
-      { cloudy:1, ghosting:1, misaligned:1, pin_skip:1, smudge:1, ribbon_twist:1,
-        head_gap:1, ink_starved:1, paper_slip:1, static_noise:1, double_feed:1, mechanical_resonance:1 }
-    ));
+    const known = new Set(Object.keys({ cloudy:1, ghosting:1, misaligned:1, pin_skip:1, smudge:1, ribbon_twist:1, head_gap:1, ink_starved:1, paper_slip:1, static_noise:1, double_feed:1, mechanical_resonance:1 }));
     raw.wearLayers = Object.entries(raw.wear)
       .filter(([k, v]) => known.has(k) && v > 0)
       .map(([pattern, strength]) => ({ pattern, strength }));
@@ -796,31 +699,27 @@ function importFromText(text) {
   try {
     let preset;
     const stripped = text.trim();
-    if (stripped.startsWith('{')) {
-      preset = normalizePreset(JSON.parse(stripped));
-    } else {
-      preset = yamlToPreset(stripped);
-    }
-    if (!preset.name) preset.name = 'Imported';
+    if (stripped.startsWith('{')) preset = normalizePreset(JSON.parse(stripped));
+    else preset = yamlToPreset(stripped);
+    
+    if (!preset.name) preset.name = 'Importiert';
     applyPreset(preset);
     clearModified();
-    setStatus(`Preset "${preset.name}" imported.`);
-    if (preset.name && preset.name !== 'Imported') {
-      preset.id = 'user_' + Date.now();
-      preset.system = false;
-      const presets = loadUserPresets();
-      presets.push(preset);
-      saveUserPresets(presets);
-      activePresetId = preset.id;
-      renderPresetBar();
-    }
+    setStatus(`Preset "${preset.name}" importiert.`);
+    
+    preset.id = 'user_' + Date.now();
+    preset.system = false;
+    const presets = loadUserPresets();
+    presets.push(preset);
+    saveUserPresets(presets);
+    activePresetId = preset.id;
+    renderPresetBar();
   } catch (err) {
-    alert('Import failed: ' + err.message);
+    alert('Import fehlgeschlagen: ' + err.message);
   }
 }
 
 // ==================== FILE HANDLING ====================
-
 dropzone.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
 dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
@@ -832,8 +731,8 @@ dropzone.addEventListener("drop", (e) => {
 });
 
 async function handleFile(file) {
-  if (!file || !file.type.startsWith("image/")) { setStatus("Not an image file."); return; }
-  setStatus("Loading image...");
+  if (!file || !file.type.startsWith("image/")) { setStatus("Keine gültige Bilddatei."); return; }
+  setStatus("Lade Bild...");
   let metaDpi = null;
   try {
     const buf = await file.slice(0, 256).arrayBuffer();
@@ -851,27 +750,26 @@ async function handleFile(file) {
     detectAndSetPaperColor(img);
     analyzeAndAdaptImage(img);
     document.getElementById("dzBig").textContent   = file.name;
-    document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · tap to change`;
-    outSection.style.display = "block";
+    document.getElementById("dzSmall").textContent = `${img.width} × ${img.height} · Ändern klicken`;
+    outSection.style.display = "flex";
     const scale = Math.min(1, 800 / Math.max(img.width, img.height));
     outCanvas.width  = Math.round(img.width  * scale);
     outCanvas.height = Math.round(img.height * scale);
     outCtx.drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
     renderBtn.disabled = false;
-    setStatus("Ready. Tap RENDER.");
-    refreshAscii();
+    setStatus("Bereit. Auf RENDER klicken.");
+    debouncedRefreshAscii();
   };
-  img.onerror = () => setStatus("Failed to load image.");
+  img.onerror = () => setStatus("Fehler beim Laden.");
   img.src = url;
 }
 
 // ==================== RENDER ====================
-
 renderBtn.addEventListener("click", async () => {
   if (!state.sourceImage) return;
   renderBtn.disabled  = true;
   downloadBtn.disabled = true;
-  setStatus("Rendering...", true);
+  setStatus("Rendern...", true);
   try {
     const t0 = performance.now();
     const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
@@ -882,10 +780,10 @@ renderBtn.addEventListener("click", async () => {
       lastRenderedBlob     = blob;
       downloadBtn.disabled = false;
     }, "image/png");
-    setStatus(`Done in ${((performance.now() - t0) / 1000).toFixed(2)}s · ${width}×${height}`);
+    setStatus(`Fertig in ${((performance.now() - t0) / 1000).toFixed(2)}s · ${width}×${height}`);
   } catch (e) {
     console.error(e);
-    setStatus("Render failed: " + e.message);
+    setStatus("Render fehlgeschlagen: " + e.message);
   } finally {
     renderBtn.disabled = false;
   }
@@ -903,6 +801,5 @@ downloadBtn.addEventListener("click", () => {
 });
 
 // ==================== INIT ====================
-
 updateProfileMeta();
 renderPresetBar();
