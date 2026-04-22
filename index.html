@@ -9,14 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body class="dark-mode">
+<body class="dark-mode" data-accent="cyan">
 
   <div class="app-container">
     
     <nav class="activity-bar glass-panel">
-      <div class="icon-btn active" data-tab="tab-source" title="Quelle & Medien">🖨️</div>
-      <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
-      <div class="icon-btn" data-tab="tab-errors" title="Hardware Fehler & Erweitert">🔧</div>
+      <div class="icon-btn active" data-tab="tab-source" title="Quelle & Print">🖨️</div>
+      <div class="icon-btn" data-tab="tab-presets" title="Presets & YAML">📂</div>
+      <div class="icon-btn" data-tab="tab-errors" title="Hardware & Erweitert">🔧</div>
       <div class="spacer"></div>
       <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
     </nav>
@@ -54,7 +54,7 @@
         <label class="field"><span class="name"><span data-i18n="brightness">Helligkeit</span><b id="brightnessVal">0</b></span><input type="range" id="brightnessSlider" min="-100" max="100" value="0"></label>
         <label class="field"><span class="name"><span data-i18n="contrast">Kontrast</span><b id="contrastVal">20</b></span><input type="range" id="contrastSlider" min="-100" max="100" value="20"></label>
         <label class="field"><span class="name"><span data-i18n="gamma">Gamma</span><b id="gammaVal">1.0</b></span><input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0"></label>
-        <div class="checks"><label class="check" data-flag="invert"><span class="box"></span><span data-i18n="invert">Invert Image</span></label></div>
+        <div class="checks" style="margin-top:10px;"><label class="check" data-flag="invert"><span class="box"></span><span data-i18n="invert">Invert Image</span></label></div>
 
         <h2 data-i18n="halftoneTitle" style="margin-top:20px;">Halftone</h2>
         <div class="segmented" id="ditherBtns">
@@ -73,6 +73,7 @@
           <button data-format="Fit">Auto</button>
           <button data-format="A4">A4</button>
           <button data-format="A5">A5</button>
+          <button data-format="A6">A6</button>
           <button data-format="Letter">Letter</button>
         </div>
         <div class="segmented" id="orientationBtns">
@@ -87,12 +88,14 @@
               <div class="swatch active" style="background:#19191e" data-ink="25,25,30"></div>
               <div class="swatch" style="background:#142d82" data-ink="20,45,130"></div>
               <div class="swatch" style="background:#a01e23" data-ink="160,30,35"></div>
+              <div class="swatch" style="background:#5a286e" data-ink="90,40,110"></div>
+              <div class="swatch" style="background:#2e5f36" data-ink="46,95,54"></div>
               <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e"></div>
             </div>
             <div class="custom-ink-row" style="margin-top:8px;">
               <input type="color" id="inkColorPicker" class="color-picker" value="#19191e">
               <input type="text" id="inkHexInput" class="hex-input text-input" value="#19191e" maxlength="7" spellcheck="false">
-            </div>
+              <button class="btn-sm" id="applyInkBtn" style="display:none;">Apply</button> </div>
           </div>
           <div>
             <div style="font-size:10px;text-transform:uppercase;margin-bottom:6px" data-i18n="paperTitle">Papier</div>
@@ -101,6 +104,7 @@
               <div class="swatch active" style="background:#ffffff" data-paper="255,255,255"></div>
               <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
               <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160"></div>
+              <div class="swatch" style="background:#f0d9cf" data-paper="240,217,207"></div>
             </div>
           </div>
         </div>
@@ -109,15 +113,21 @@
       <div class="tab-content" id="tab-presets">
         <h2 data-i18n="presetsTitle">Presets</h2>
         <div class="scroll-list" id="presetList"></div>
+        
         <div style="display:flex; gap:6px; margin-top:10px;">
-          <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport">Export YAML</button>
-          <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport">Import YAML</button>
+          <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport" style="flex:1;">Export YAML</button>
+          <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport" style="flex:1;">Import YAML</button>
           <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
         </div>
-        <h2 style="margin-top:20px;" data-i18n="createPresetTitle">Preset Erstellen</h2>
-        <input type="text" id="presetNameInput" class="text-input" placeholder="Name">
-        <button class="btn-sm" id="savePresetBtn" style="width:100%; margin-top:8px;" data-i18n="btnSavePreset">Speichern</button>
-        <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code..." rows="5" style="margin-top:10px;"></textarea>
+
+        <h2 style="margin-top:30px;" data-i18n="createPresetTitle">Preset Erstellen / Code</h2>
+        <input type="text" id="presetNameInput" class="text-input" placeholder="Name für Preset">
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <button class="btn-sm" id="savePresetBtn" style="flex:1;" data-i18n="btnSavePreset">Als Preset speichern</button>
+          <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">Als YAML exportieren</button>
+        </div>
+        
+        <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code hier einfügen..." rows="8" style="margin-top:10px;"></textarea>
         <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:8px;" data-i18n="btnApplyYaml">Aus Textfeld anwenden</button>
       </div>
 
@@ -130,8 +140,12 @@
           <div class="er" data-pattern="pin_skip"><div class="er-head"><span class="er-check"></span><span class="er-name">Pin Skip</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
           <div class="er" data-pattern="smudge"><div class="er-head"><span class="er-check"></span><span class="er-name">Smudge</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
           <div class="er" data-pattern="ribbon_twist"><div class="er-head"><span class="er-check"></span><span class="er-name">Ribbon Twist</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="head_gap"><div class="er-head"><span class="er-check"></span><span class="er-name">Head Gap</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
           <div class="er" data-pattern="ink_starved"><div class="er-head"><span class="er-check"></span><span class="er-name">Ink Starved</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
           <div class="er" data-pattern="paper_slip"><div class="er-head"><span class="er-check"></span><span class="er-name">Paper Slip</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="static_noise"><div class="er-head"><span class="er-check"></span><span class="er-name">Static</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="double_feed"><div class="er-head"><span class="er-check"></span><span class="er-name">Double Feed</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="mechanical_resonance"><div class="er-head"><span class="er-check"></span><span class="er-name">Resonance</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
         </div>
 
         <h2 style="margin-top:20px;" data-i18n="advancedTitle">Erweiterte Render-Optionen</h2>
@@ -139,12 +153,13 @@
         <label class="field"><span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span><input type="range" id="jitterSlider" min="0" max="30" value="10"></label>
         <label class="field"><span class="name"><span>Banding scale</span><b id="bandingVal">1.0</b></span><input type="range" id="bandingSlider" min="0" max="20" value="10"></label>
         <label class="field"><span class="name"><span>Max Size (px)</span><b id="maxSizeVal">8000</b></span><input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="8000"></label>
-        <label class="field"><span class="name"><span>Seed</span><b id="seedVal">0</b></span><input type="range" id="seedSlider" min="0" max="9999" value="0"></label>
-        <div class="checks"><label class="check" data-flag="softBlur"><span class="box"></span><span data-i18n="softBlur">Softening Blur</span></label></div>
+        <label class="field"><span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span><input type="range" id="seedSlider" min="0" max="9999" value="0"></label>
+        <div class="checks" style="margin-top:14px;"><label class="check" data-flag="softBlur"><span class="box"></span><span data-i18n="softBlur">Softening Blur</span></label></div>
       </div>
 
       <div class="tab-content" id="tab-system">
         <h2 data-i18n="systemTitle">System Settings</h2>
+        
         <label class="field">
           <span class="name" data-i18n="language">Sprache / Language</span>
           <select id="langSelector" class="text-input">
@@ -153,11 +168,23 @@
             <option value="fr">🇫🇷 Français</option>
           </select>
         </label>
+        
         <label class="field" style="margin-top:15px;">
           <span class="name" data-i18n="themeMode">Theme Mode</span>
           <select id="themeModeSelector" class="text-input">
             <option value="dark">🌙 Dark Mode</option>
             <option value="light">☀️ Light Mode</option>
+          </select>
+        </label>
+
+        <label class="field" style="margin-top:15px;">
+          <span class="name" data-i18n="themeAccent">Theme Accent</span>
+          <select id="themeAccentSelector" class="text-input">
+            <option value="cyan">🔵 Cyan (Default)</option>
+            <option value="amber">🟠 Amber</option>
+            <option value="toxic">🟢 Toxic Green</option>
+            <option value="vapor">🟣 Vaporwave</option>
+            <option value="classic">🟤 Classic / Retro</option>
           </select>
         </label>
       </div>
