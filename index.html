@@ -1,25 +1,27 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>DotMatrix Studio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DotMatrix Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body class="dark-mode"> <div class="app-container">
+<body class="dark-mode">
+
+  <div class="app-container">
     
-    <nav class="activity-bar">
-      <div class="icon-btn active" data-tab="tab-source" title="Source & Print">🖨️</div>
+    <nav class="activity-bar glass-panel">
+      <div class="icon-btn active" data-tab="tab-source" title="Quelle & Medien">🖨️</div>
       <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
-      <div class="icon-btn" data-tab="tab-errors" title="Hardware Errors">🔧</div>
+      <div class="icon-btn" data-tab="tab-errors" title="Hardware Fehler & Erweitert">🔧</div>
       <div class="spacer"></div>
-      <div class="icon-btn" data-tab="tab-system" title="System Settings">⚙️</div>
+      <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
     </nav>
 
-    <aside class="sidebar glass-card">
+    <aside class="sidebar glass-panel">
       
       <div class="tab-content active" id="tab-source">
         <h2 data-i18n="sourceTitle">Bildquelle</h2>
@@ -31,45 +33,120 @@
 
         <h2 data-i18n="profileTitle" style="margin-top:20px;">Druckerprofil</h2>
         <div class="scroll-list" id="profileList">
-          </div>
+          <div class="sli" data-profile="epson_fx"><div class="sli-row"><span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span></div></div>
+          <div class="sli" data-profile="epson_lq"><div class="sli-row"><span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span></div></div>
+          <div class="sli" data-profile="ibm_proprinter"><div class="sli-row"><span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span></div></div>
+          <div class="sli active" data-profile="oki_microline"><div class="sli-row"><span class="sli-name">OKI Microline</span><span class="sli-badge">9-PIN</span></div></div>
+          <div class="sli" data-profile="star_nx1000"><div class="sli-row"><span class="sli-name">Star NX-1000</span><span class="sli-badge">9-PIN</span></div></div>
+          <div class="sli" data-profile="panasonic_kx"><div class="sli-row"><span class="sli-name">Panasonic KX-P</span><span class="sli-badge">24-PIN</span></div></div>
+          <div class="sli" data-profile="dec_la75"><div class="sli-row"><span class="sli-name">DEC LA75</span><span class="sli-badge">9-PIN</span></div></div>
+          <div class="sli" data-profile="nec_p6"><div class="sli-row"><span class="sli-name">NEC P6</span><span class="sli-badge">24-PIN</span></div></div>
+          <div class="sli" data-profile="commodore_mps"><div class="sli-row"><span class="sli-name">MPS-803</span><span class="sli-badge">7-PIN</span></div></div>
+          <div class="sli" data-profile="apple_imagewriter"><div class="sli-row"><span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span></div></div>
+        </div>
         <div class="profile-meta" id="profileMeta"></div>
+        <div class="checks" style="margin-top:8px">
+          <label class="check" data-flag="doubleStrike"><span class="box"></span><span data-i18n="doubleStrike">Double-strike</span></label>
+          <label class="check" data-flag="condensed"><span class="box"></span><span data-i18n="condensedMode">Condensed Mode</span></label>
+        </div>
 
         <h2 data-i18n="adjustTitle" style="margin-top:20px;">Bildanpassung</h2>
-        <label class="field"><span class="name"><span>Helligkeit</span><b id="brightnessVal">0</b></span><input type="range" id="brightnessSlider" min="-100" max="100" value="0"></label>
-        <label class="field"><span class="name"><span>Kontrast</span><b id="contrastVal">20</b></span><input type="range" id="contrastSlider" min="-100" max="100" value="20"></label>
-        
-        <h2 data-i18n="inkTitle" style="margin-top:20px;">Tinte</h2>
-        <div class="custom-ink-row">
-          <input type="color" id="inkColorPicker" class="color-picker" value="#19191e" title="Farbe wählen">
-          <input type="text" id="inkHexInput" class="hex-input text-input" value="#19191e" maxlength="7" spellcheck="false">
+        <label class="field"><span class="name"><span data-i18n="brightness">Helligkeit</span><b id="brightnessVal">0</b></span><input type="range" id="brightnessSlider" min="-100" max="100" value="0"></label>
+        <label class="field"><span class="name"><span data-i18n="contrast">Kontrast</span><b id="contrastVal">20</b></span><input type="range" id="contrastSlider" min="-100" max="100" value="20"></label>
+        <label class="field"><span class="name"><span data-i18n="gamma">Gamma</span><b id="gammaVal">1.0</b></span><input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0"></label>
+        <div class="checks"><label class="check" data-flag="invert"><span class="box"></span><span data-i18n="invert">Invert Image</span></label></div>
+
+        <h2 data-i18n="halftoneTitle" style="margin-top:20px;">Halftone</h2>
+        <div class="segmented" id="ditherBtns">
+          <button data-dither="floyd_steinberg">Floyd-S</button>
+          <button data-dither="ordered">Ordered</button>
+          <button data-dither="threshold" class="active">Thresh</button>
+        </div>
+        <label class="field" id="thresholdField" style="display:block">
+          <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
+          <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+        </label>
+
+        <h2 data-i18n="paperFormatTitle" style="margin-top:20px;">Paper & Format</h2>
+        <div class="segmented scrollable" id="paperFormatBtns" style="margin-bottom:10px">
+          <button data-format="Original" class="active">Orig</button>
+          <button data-format="Fit">Auto</button>
+          <button data-format="A4">A4</button>
+          <button data-format="A5">A5</button>
+          <button data-format="Letter">Letter</button>
+        </div>
+        <div class="segmented" id="orientationBtns">
+          <button data-orient="Portrait" class="active">Portrait</button>
+          <button data-orient="Landscape">Landscape</button>
+        </div>
+
+        <div class="grid-2" style="margin-top:20px;">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;margin-bottom:6px" data-i18n="inkTitle">Tinte</div>
+            <div class="swatches" id="inkSwatches">
+              <div class="swatch active" style="background:#19191e" data-ink="25,25,30"></div>
+              <div class="swatch" style="background:#142d82" data-ink="20,45,130"></div>
+              <div class="swatch" style="background:#a01e23" data-ink="160,30,35"></div>
+              <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e"></div>
+            </div>
+            <div class="custom-ink-row" style="margin-top:8px;">
+              <input type="color" id="inkColorPicker" class="color-picker" value="#19191e">
+              <input type="text" id="inkHexInput" class="hex-input text-input" value="#19191e" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;margin-bottom:6px" data-i18n="paperTitle">Papier</div>
+            <div class="swatches" id="paperSwatches">
+              <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232"></div>
+              <div class="swatch active" style="background:#ffffff" data-paper="255,255,255"></div>
+              <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
+              <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160"></div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="tab-content" id="tab-presets">
         <h2 data-i18n="presetsTitle">Presets</h2>
-        <div class="scroll-list" id="presetList">
-          </div>
-        <div class="action-row" style="margin-top:10px;">
+        <div class="scroll-list" id="presetList"></div>
+        <div style="display:flex; gap:6px; margin-top:10px;">
           <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport">Export YAML</button>
           <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport">Import YAML</button>
           <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
         </div>
-        <div style="margin-top:20px;">
-          <input type="text" id="presetNameInput" class="text-input" placeholder="Name für neues Preset">
-          <button class="btn-sm" id="savePresetBtn" style="width:100%; margin-top:8px;" data-i18n="btnSavePreset">Als neues Preset speichern</button>
-        </div>
+        <h2 style="margin-top:20px;" data-i18n="createPresetTitle">Preset Erstellen</h2>
+        <input type="text" id="presetNameInput" class="text-input" placeholder="Name">
+        <button class="btn-sm" id="savePresetBtn" style="width:100%; margin-top:8px;" data-i18n="btnSavePreset">Speichern</button>
+        <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code..." rows="5" style="margin-top:10px;"></textarea>
+        <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:8px;" data-i18n="btnApplyYaml">Aus Textfeld anwenden</button>
       </div>
 
       <div class="tab-content" id="tab-errors">
         <h2 data-i18n="errorsTitle">Hardware Fehler</h2>
         <div class="scroll-list" id="errorList">
-          </div>
+          <div class="er" data-pattern="cloudy"><div class="er-head"><span class="er-check"></span><span class="er-name">Cloudy</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="ghosting"><div class="er-head"><span class="er-check"></span><span class="er-name">Ghosting</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="misaligned"><div class="er-head"><span class="er-check"></span><span class="er-name">Wobble</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="pin_skip"><div class="er-head"><span class="er-check"></span><span class="er-name">Pin Skip</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="smudge"><div class="er-head"><span class="er-check"></span><span class="er-name">Smudge</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="ribbon_twist"><div class="er-head"><span class="er-check"></span><span class="er-name">Ribbon Twist</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="ink_starved"><div class="er-head"><span class="er-check"></span><span class="er-name">Ink Starved</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+          <div class="er" data-pattern="paper_slip"><div class="er-head"><span class="er-check"></span><span class="er-name">Paper Slip</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
+        </div>
+
+        <h2 style="margin-top:20px;" data-i18n="advancedTitle">Erweiterte Render-Optionen</h2>
+        <label class="field"><span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span><input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300"></label>
+        <label class="field"><span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span><input type="range" id="jitterSlider" min="0" max="30" value="10"></label>
+        <label class="field"><span class="name"><span>Banding scale</span><b id="bandingVal">1.0</b></span><input type="range" id="bandingSlider" min="0" max="20" value="10"></label>
+        <label class="field"><span class="name"><span>Max Size (px)</span><b id="maxSizeVal">8000</b></span><input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="8000"></label>
+        <label class="field"><span class="name"><span>Seed</span><b id="seedVal">0</b></span><input type="range" id="seedSlider" min="0" max="9999" value="0"></label>
+        <div class="checks"><label class="check" data-flag="softBlur"><span class="box"></span><span data-i18n="softBlur">Softening Blur</span></label></div>
       </div>
 
       <div class="tab-content" id="tab-system">
-        <h2 data-i18n="systemTitle">System</h2>
+        <h2 data-i18n="systemTitle">System Settings</h2>
         <label class="field">
-          <span class="name">Language / Sprache</span>
+          <span class="name" data-i18n="language">Sprache / Language</span>
           <select id="langSelector" class="text-input">
             <option value="de">🇩🇪 Deutsch</option>
             <option value="en">🇺🇸 English</option>
@@ -77,7 +154,7 @@
           </select>
         </label>
         <label class="field" style="margin-top:15px;">
-          <span class="name">UI Theme Mode</span>
+          <span class="name" data-i18n="themeMode">Theme Mode</span>
           <select id="themeModeSelector" class="text-input">
             <option value="dark">🌙 Dark Mode</option>
             <option value="light">☀️ Light Mode</option>
@@ -85,7 +162,7 @@
         </label>
       </div>
 
-      <div class="sidebar-actions">
+      <div class="sidebar-actions glass-panel">
         <div id="status" class="status">Bereit.</div>
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
@@ -95,12 +172,12 @@
     </aside>
 
     <main class="main-editor">
-      <div class="toolbar">
-        <span data-i18n="previewTitle">Live-Vorschau</span>
+      <div class="toolbar glass-panel">
+        <span data-i18n="previewTitle" style="font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Live-Vorschau</span>
         <div class="zoom-controls">
-          <button id="zoomOut">➖</button>
+          <button id="zoomOut" title="Zoom Out">➖</button>
           <span id="zoomLevel">100%</span>
-          <button id="zoomIn">➕</button>
+          <button id="zoomIn" title="Zoom In">➕</button>
         </div>
       </div>
       <div class="canvas-wrapper" id="canvasWrapper">
