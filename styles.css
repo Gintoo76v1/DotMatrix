@@ -24,9 +24,10 @@ body.light-mode {
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+/* FIX: Absolute Verankerung OHNE die radikale Touch-Sperre im CSS */
 html, body { 
   position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; 
-  overflow: hidden; overscroll-behavior: none; touch-action: none; 
+  overflow: hidden; overscroll-behavior: none; 
   -webkit-text-size-adjust: 100%; text-size-adjust: 100%; margin: 0; padding: 0;
 }
 
@@ -71,11 +72,7 @@ input[type="file"] { display: none; }
 
 .activity-bar { width: 75px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 12px; }
 
-/* FIX: STRICT MANIPULATION AUF BUTTONS BLOCKIERT DOUBLE-TAP-ZOOM! */
-button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-controls button { 
-  touch-action: manipulation !important; 
-  user-select: none; 
-}
+button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-controls button { touch-action: manipulation !important; user-select: none; }
 
 .icon-btn { font-size: 24px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.4; transition: 0.3s; border-radius: 15px; background: transparent; border: 1px solid transparent; }
 .icon-btn:hover { opacity: 0.8; background: rgba(255,255,255,0.05); }
@@ -90,11 +87,12 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-c
 .main-editor { flex-grow: 1; display: flex; flex-direction: column; position: relative; min-height: 0;}
 .toolbar { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); z-index: 10;}
 
-/* FIX: ALLES IM CANVAS HAT JETZT STRIKT TOUCH-ACTION: NONE! Browser bleibt draußen! */
 .canvas-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; touch-action: none; cursor: grab; padding: 30px; position: relative; }
 .canvas-wrapper:active { cursor: grabbing; }
 .zoom-container { transform-origin: center center; display: flex; flex-direction: column; align-items: center; gap: 20px; touch-action: none; }
-canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radius: 8px; max-width: none; touch-action: none; }
+
+/* FIX: Macht das Bild für Klicks durchlässig -> Alle Touches gehen sauber auf den Wrapper! */
+canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radius: 8px; max-width: none; touch-action: none; pointer-events: none; }
 
 .floating-container { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 50; width: 100%; max-width: 420px; padding: 0 20px; pointer-events: none; }
 .status-panel { width: 100%; padding: 10px 16px; border-radius: 12px; pointer-events: auto; display: flex; justify-content: center; align-items: center; background: var(--paper-dark); border: 1px solid var(--glass-border); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
@@ -110,7 +108,7 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .dropzone .big { margin-bottom: 6px; }
 .dropzone .small { font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.1em; }
 
-.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
+.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
 .sli { padding: 14px 16px; border-bottom: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s; }
 .sli:last-child { border-bottom: 0; }
 .sli:hover { background: rgba(255,255,255,0.1); }
