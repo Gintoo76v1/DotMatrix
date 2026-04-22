@@ -28,18 +28,6 @@ const translations = {
     systemTitle: "System Settings", language: "Language", themeMode: "Theme Mode", themeAccent: "Theme Accent",
     behaviorTitle: "Behavior", uiSounds: "UI Click Sounds", autoRender: "Auto-Render (Live Preview)",
     btnRender: "Manual Render", previewTitle: "Live Preview"
-  },
-  fr: {
-    sourceTitle: "Source d'image", dropzoneBig: "Sélectionner",
-    profileTitle: "Profil", doubleStrike: "Double frappe", condensedMode: "Mode condensé",
-    adjustTitle: "Ajustements", brightness: "Luminosité", contrast: "Contraste", gamma: "Gamma", invert: "Inverser",
-    halftoneTitle: "Demi-teinte", paperFormatTitle: "Papier et Format",
-    inkTitle: "Encre", paperTitle: "Papier",
-    presetsTitle: "Préréglages", btnExport: "Exporter YAML", btnImport: "Importer YAML",
-    createPresetTitle: "Créer / Code", btnSavePreset: "Sauvegarder", btnApplyYaml: "Appliquer YAML",
-    errorsTitle: "Erreurs", advancedTitle: "Options avancées", softBlur: "Flou",
-    systemTitle: "Système", language: "Langue", themeMode: "Thème", themeAccent: "Accent",
-    btnRender: "Rendu", previewTitle: "Aperçu en direct"
   }
 };
 
@@ -51,13 +39,12 @@ function applyLanguage(lang) {
   });
 }
 
-// ==================== STATE ERWEITERUNG (Für neue Optionen) ====================
+// ==================== STATE ERWEITERUNG ====================
 state.uiSounds = true;
 state.autoRender = true;
-// Reduziere Default MaxSize für bessere Live-Performance
 state.maxSize = 3000; 
 
-// ==================== CLICK SOUNDS (Web Audio API) ====================
+// ==================== CLICK SOUNDS ====================
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playClickSound() {
   if (!state.uiSounds) return;
@@ -67,7 +54,7 @@ function playClickSound() {
   osc.type = 'sine';
   osc.frequency.setValueAtTime(800, audioCtx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
-  gain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Leise
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
   osc.connect(gain);
   gain.connect(audioCtx.destination);
@@ -75,12 +62,8 @@ function playClickSound() {
   osc.stop(audioCtx.currentTime + 0.05);
 }
 
-// ==================== INTERACTIVE ANIMATIONS & SOUNDS ====================
 document.addEventListener('click', (e) => {
-  // Entsperre Audio Context beim ersten Klick
   if (audioCtx.state === 'suspended') audioCtx.resume();
-
-  // Spiele Sound wenn auf interaktive Elemente geklickt wird
   const isInteractive = e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"]');
   if (isInteractive) playClickSound();
 
@@ -101,7 +84,7 @@ function setStatus(text, working = false) {
   statusEl.style.color = working ? "var(--accent)" : "inherit";
 }
 
-// ==================== RENDERING & AUTO-RENDER LOGIC ====================
+// ==================== RENDERING & AUTO-RENDER ====================
 let lastRenderedBlob = null;
 const renderBtn = document.getElementById("renderBtn");
 const downloadBtn = document.getElementById("downloadBtn");
@@ -137,7 +120,7 @@ async function performRender() {
     renderBtn.disabled = false;
     if (renderQueued) {
       renderQueued = false;
-      performRender(); // Abarbeiten des Queues
+      performRender();
     }
   }
 }
@@ -152,7 +135,6 @@ downloadBtn.addEventListener("click", () => {
   document.body.appendChild(a); a.click(); a.remove();
 });
 
-// Debouncer: Wartet bis der User fertig ist mit Slidern
 function debounce(func, wait) {
   let timeout;
   return function(...args) {
@@ -161,13 +143,11 @@ function debounce(func, wait) {
   };
 }
 
-// Haupt-Update Funktion: Triggert entweder echtes Rendering oder nur ASCII-Vorschau
 const triggerUpdate = debounce(() => {
   if (!state.sourceImage) return;
   if (state.autoRender) {
     performRender();
   } else {
-    // Wenn Auto-Render aus ist, mach nur die schnelle ASCII Vorschau
     try {
       const asciiEl = document.getElementById("ascii");
       asciiEl.classList.remove("empty");
@@ -178,7 +158,7 @@ const triggerUpdate = debounce(() => {
   }
 }, 300);
 
-// ==================== APP LAYOUT TABS (VS CODE STYLE) ====================
+// ==================== TABS & SYSTEM ====================
 document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.activity-bar .icon-btn').forEach(b => b.classList.remove('active'));
@@ -188,7 +168,6 @@ document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => {
   });
 });
 
-// ==================== SYSTEM (LANG, THEME, BEHAVIOR) ====================
 document.getElementById('langSelector').addEventListener('change', (e) => applyLanguage(e.target.value));
 document.getElementById('themeModeSelector').addEventListener('change', (e) => {
   document.body.className = e.target.value === 'light' ? 'light-mode' : 'dark-mode';
@@ -197,11 +176,9 @@ document.getElementById('themeAccentSelector').addEventListener('change', (e) =>
   document.body.setAttribute('data-accent', e.target.value);
 });
 
-// Init Checkboxen für UI Sounds und Auto Render
 document.querySelector('[data-flag="uiSounds"]').classList.toggle('on', state.uiSounds);
 document.querySelector('[data-flag="autoRender"]').classList.toggle('on', state.autoRender);
 
-// ==================== ZOOM CONTROLS ====================
 let currentZoom = 1;
 const zoomContainer = document.getElementById('zoomContainer');
 const zoomLevelText = document.getElementById('zoomLevel');
@@ -219,7 +196,7 @@ document.getElementById('canvasWrapper').addEventListener('wheel', (e) => {
   }
 });
 
-// ==================== UI WIRING & LOGIC ====================
+// ==================== WIRING ====================
 function updateProfileMeta() {
   const p = PROFILES[state.profile];
   document.getElementById("profileMeta").textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · ⌀ ${p.dot_diameter_mm}mm`;
@@ -277,7 +254,6 @@ function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v) {
     triggerUpdate();
   };
   s.addEventListener("input", apply);
-  // Do not trigger update on init
   const rawInit = transform(s.value);
   state[stateKey] = rawInit;
   v.textContent = format(rawInit);
@@ -292,7 +268,7 @@ wireSlider("bandingSlider",   "bandingVal",   "bandingScale", v => +v/10, v => (
 wireSlider("maxSizeSlider",   "maxSizeVal",   "maxSize");
 wireSlider("seedSlider",      "seedVal",      "seed");
 
-// ==================== COLORS, INK ====================
+// ==================== COLORS ====================
 function wireSwatches(containerId, stateKey, attrKey) {
   const box = document.getElementById(containerId);
   box.addEventListener("click", (e) => {
@@ -401,7 +377,7 @@ function analyzeAndAdaptImage(img) {
   } catch (e) { console.warn(e); }
 }
 
-// ==================== ERRORS / WEAR LAYERS ====================
+// ==================== WEAR LAYERS ====================
 function syncWearLayersFromUI() {
   state.wearLayers = [];
   document.querySelectorAll('#errorList .er.on').forEach(el => {
@@ -424,7 +400,7 @@ document.getElementById('errorList').addEventListener('input', (e) => {
   syncWearLayersFromUI();
 });
 
-// ==================== PRESET SYSTEM ====================
+// ==================== PRESETS ====================
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']);
   const lines = [];
@@ -580,6 +556,7 @@ function renderPresetList() {
   });
 }
 
+// ==================== DROPS & IMPORT/EXPORT ====================
 function downloadText(text, filename) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
   a.download = filename; document.body.appendChild(a); a.click(); a.remove();
@@ -633,7 +610,6 @@ function importFromText(text) {
   } catch (err) { alert('Import fehlgeschlagen: ' + err.message); }
 }
 
-// ==================== FILE DROPPING ====================
 const dropzone = document.getElementById("dropzone");
 const fileInput = document.getElementById("fileInput");
 dropzone.addEventListener("click", () => fileInput.click());
