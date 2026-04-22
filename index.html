@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body class="dark-mode" data-accent="toxic">
+<body class="dark-mode" data-accent="amber">
 
   <div class="app-bg">
     <div class="orb orb-1"></div>
@@ -19,7 +19,7 @@
 
   <div class="app-container">
     
-    <nav class="activity-bar glass-panel">
+    <nav class="activity-bar milky-glass">
       <div class="icon-btn active" data-tab="tab-source" title="Quelle & Print">🖨️</div>
       <div class="icon-btn" data-tab="tab-presets" title="Presets & YAML">📂</div>
       <div class="icon-btn" data-tab="tab-errors" title="Hardware & Erweitert">🔧</div>
@@ -27,7 +27,7 @@
       <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
     </nav>
 
-    <aside class="sidebar glass-panel">
+    <aside class="sidebar milky-glass">
       <div class="sidebar-scrollable">
         
         <div class="tab-content active" id="tab-source">
@@ -187,9 +187,9 @@
           <label class="field" style="margin-top:20px;">
             <span class="name" data-i18n="themeAccent">Theme Accent</span>
             <select id="themeAccentSelector" class="text-input">
-              <option value="toxic" selected>🟢 Toxic Green (Glassmorphism.com)</option>
+              <option value="amber" selected>🟠 Amber (Default)</option>
+              <option value="toxic">🟢 Toxic Green</option>
               <option value="cyan">🔵 Cyan</option>
-              <option value="amber">🟠 Amber</option>
               <option value="vapor">🟣 Vaporwave</option>
               <option value="classic">🟤 Classic Retro</option>
             </select>
