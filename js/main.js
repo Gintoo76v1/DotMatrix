@@ -32,15 +32,6 @@ function playClickSound() {
   osc.start(); osc.stop(audioCtx.currentTime + 0.03);
 }
 
-document.addEventListener('pointerup', (e) => {
-  if (isDragging) return; 
-  if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) playClickSound();
-  if (['BUTTON','INPUT','SELECT'].includes(e.target.tagName)) return;
-  const r = document.createElement('div'); r.className = 'click-shockwave';
-  r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
-  document.body.appendChild(r); setTimeout(() => r.remove(), 600); 
-});
-
 // ==================== PAN, ZOOM & LOUPE SYSTEM ====================
 const zoomContainer = document.getElementById('zoomContainer');
 const canvasWrapper = document.getElementById('canvasWrapper');
@@ -82,7 +73,7 @@ canvasWrapper.addEventListener('pointermove', (e) => {
       const scaleX = outCanvas.width / rect.width; const scaleY = outCanvas.height / rect.height;
       const x = (e.clientX - rect.left) * scaleX; const y = (e.clientY - rect.top) * scaleY;
       const lctx = loupeCanvas.getContext('2d'); lctx.clearRect(0,0,160,160);
-      const sSize = 160 / 3; // 3x Zoom
+      const sSize = 160 / 3; 
       lctx.drawImage(outCanvas, x - sSize/2, y - sSize/2, sSize, sSize, 0, 0, 160, 160);
     }
   }
@@ -116,7 +107,17 @@ canvasWrapper.addEventListener('wheel', (e) => {
 document.getElementById('zoomIn').addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.25, 5); updateTransform(true); });
 document.getElementById('zoomOut').addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.25, 0.2); updateTransform(true); });
 
-// ==================== RENDERING & AUTO-RENDER ====================
+// Memory Leak Fix for Shockwaves
+document.addEventListener('pointerup', (e) => {
+  if (isDragging) return;
+  if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) playClickSound();
+  if (['BUTTON','INPUT','SELECT'].includes(e.target.tagName)) return;
+  const r = document.createElement('div'); r.className = 'click-shockwave';
+  r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
+  document.body.appendChild(r); setTimeout(() => r.remove(), 600);
+});
+
+// ==================== RENDERING & PRESETS ====================
 let lastRenderedBlob = null;
 const renderBtn = document.getElementById("renderBtn"); 
 const downloadBtn = document.getElementById("downloadBtn"); 
@@ -142,11 +143,57 @@ async function performRender() {
     outCanvas.width = width; outCanvas.height = height; outCanvas.getContext("2d").putImageData(imageData, 0, 0);
     outCanvas.toBlob(blob => { lastRenderedBlob = blob; downloadBtn.disabled = false; }, "image/png");
     setStatus(`${width}×${height} px ready`);
-  } catch (e) { console.error(e); setStatus("Fehler"); }
+  } catch (e) { console.error(e); }
   isRendering = false; renderBtn.disabled = false;
 }
 
-// ==================== PRESET SYSTEM ====================
+function updateUIFromState() {
+  document.querySelectorAll('#profileList .sli').forEach(s => s.classList.toggle('active', s.dataset.profile === state.profile));
+  document.querySelectorAll('.check').forEach(c => c.classList.toggle('on', state[c.dataset.flag]));
+  document.querySelectorAll('#errorList .er').forEach(er => {
+    const layer = state.wearLayers.find(l => l.pattern === er.dataset.pattern);
+    er.classList.toggle('on', !!layer);
+    if (layer) { er.querySelector('.er-slider').value = layer.strength; er.querySelector('.er-val').textContent = layer.strength + '%'; }
+    else er.querySelector('.er-val').textContent = '0%';
+  });
+}
+
+function applyPreset(p) {
+  if (!p) return; 
+  if (p.profile) state.profile = p.profile;
+  const setS = (id, vid, v, k, fmt=v=>v) => { const e=document.getElementById(id); if(e && v!==undefined){ e.value=v; document.getElementById(vid).textContent=fmt(v); state[k] = v; }};
+  
+  setS('brightnessSlider', 'brightnessVal', p.brightness, 'brightness');
+  setS('contrastSlider', 'contrastVal', p.contrast, 'contrast');
+  setS('gammaSlider', 'gammaVal', p.gamma, 'gamma', v=>(+v).toFixed(1));
+  setS('thresholdSlider', 'thresholdVal', p.threshold, 'threshold');
+  setS('dpiSlider', 'dpiVal', p.dpi, 'dpi');
+  setS('jitterSlider', 'jitterVal', p.jitterScale ? p.jitterScale*10 : undefined, 'jitterScale', v=>(+v/10).toFixed(1));
+  setS('bandingSlider', 'bandingVal', p.bandingScale ? p.bandingScale*10 : undefined, 'bandingScale', v=>(+v/10).toFixed(1));
+  setS('maxSizeSlider', 'maxSizeVal', p.maxSize, 'maxSize');
+  setS('seedSlider', 'seedVal', p.seed, 'seed');
+
+  if (p.dither) { state.dither = p.dither; document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === p.dither)); document.getElementById('thresholdField').style.display = p.dither === 'threshold'?'block':'none'; }
+  if (p.paperFormat) { state.paperFormat = p.paperFormat; document.querySelectorAll('#paperFormatBtns button').forEach(b => b.classList.toggle('active', b.dataset.format === p.paperFormat)); }
+  if (p.orientation) { state.orientation = p.orientation; document.querySelectorAll('#orientationBtns button').forEach(b => b.classList.toggle('active', b.dataset.orient === p.orientation)); }
+  
+  if (p.ink) {
+    state.ink = p.ink; const inkStr = p.ink.join(','); let found = false;
+    document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach(s => { const m = s.dataset.ink === inkStr; s.classList.toggle('active', m); if (m) found = true; });
+    const custom = document.getElementById('customInkSwatch');
+    if (!found && custom) { const hex = "#" + p.ink.map(x => x.toString(16).padStart(2, '0')).join(''); custom.dataset.ink = inkStr; custom.style.background = hex; custom.classList.add('active'); document.getElementById('inkColorPicker').value = hex; document.getElementById('inkHexInput').value = hex; }
+    else if (custom) custom.classList.remove('active');
+  }
+  if (p.paper !== undefined) {
+    if (p.paper === null) { if (state.sourceImage) detectAndSetPaperColor(state.sourceImage); else { state.paper = [255, 255, 255]; document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.paper === "255,255,255")); } }
+    else { state.paper = p.paper; const paperStr = p.paper.join(','); document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.toggle('active', s.dataset.paper === paperStr)); }
+  }
+
+  state.doubleStrike = !!p.doubleStrike; state.condensed = !!p.condensed; state.softBlur = !!p.softBlur; state.invert = !!p.invert;
+  state.wearLayers = p.wearLayers || [];
+  updateUIFromState(); updateProfileMeta(); triggerUpdate();
+}
+
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']); const lines = [];
   for (const [k, v] of Object.entries(preset)) {
@@ -166,8 +213,7 @@ function yamlToPreset(yaml) {
     if (indent === 0) {
       currentArrayKey = null; currentObj = null; const ci = trimmed.indexOf(':'); if (ci === -1) continue;
       const key = trimmed.slice(0, ci).trim(); const val = trimmed.slice(ci + 1).trim();
-      if (!val) { currentArrayKey = key; preset[key] = []; }
-      else if (val === '[]') preset[key] = []; else if (val === 'null') preset[key] = null; else if (val === 'true') preset[key] = true; else if (val === 'false') preset[key] = false;
+      if (!val) { currentArrayKey = key; preset[key] = []; } else if (val === '[]') preset[key] = []; else if (val === 'null') preset[key] = null; else if (val === 'true') preset[key] = true; else if (val === 'false') preset[key] = false;
       else if (val.startsWith('[')) { const inner = val.slice(1, val.lastIndexOf(']')); preset[key] = inner.split(',').map(s => isNaN(parseFloat(s.trim())) ? s.trim() : parseFloat(s.trim())); }
       else { preset[key] = isNaN(parseFloat(val)) ? val : parseFloat(val); }
     } else if (indent === 2 && trimmed.startsWith('- ') && currentArrayKey) {
@@ -193,14 +239,165 @@ function captureCurrentPreset(name) {
 
 let activePresetId = null;
 
-function applyPreset(p) {
-  if (!p) return; 
-  if (p.profile) state.profile = p.profile;
-  const setS = (id, vid, v) => { const e=document.getElementById(id); if(e){ e.value=v; document.getElementById(vid).textContent=v; state[id.replace('Slider','')] = v; }};
-  if (p.brightness !== undefined) setS('brightnessSlider', 'brightnessVal', p.brightness);
-  if (p.contrast !== undefined) setS('contrastSlider', 'contrastVal', p.contrast);
-  if (p.gamma !== undefined) setS('gammaSlider', 'gammaVal', p.gamma);
-  if (p.threshold !== undefined) setS('thresholdSlider', 'thresholdVal', p.threshold);
-  if (p.dpi !== undefined) setS('dpiSlider', 'dpiVal', p.dpi);
-  if (p.jitterScale !== undefined) setS('jitterSlider', 'jitterVal', p.jitterScale);
-  if (p.bandingScale !== undefined) setS('bandingSlider', 'bandingVal', p
+function renderPresetList() {
+  const list = document.getElementById('presetList'); list.innerHTML = '';
+  const allPresets = [...SYSTEM_PRESETS, ...loadUserPresets()];
+  allPresets.forEach(p => {
+    const el = document.createElement('div'); el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
+    if(p.system) { el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><span class="sli-badge">SYS</span></div>`; } 
+    else { el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><div><span class="sli-badge" style="margin-right:5px;">USR</span><button class="sli-del" title="Löschen">×</button></div></div>`; el.querySelector('.sli-del').addEventListener('click', (e) => { e.stopPropagation(); if(confirm(`Preset "${p.name}" löschen?`)) { if(activePresetId === p.id) activePresetId = null; deleteUserPreset(p.id); }}); }
+    el.addEventListener('click', () => { activePresetId = p.id; document.querySelectorAll('#presetList .sli').forEach(s => s.classList.remove('active')); el.classList.add('active'); applyPreset(p); });
+    list.appendChild(el);
+  });
+}
+
+function downloadText(text, filename) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
+document.getElementById('exportPresetBtn').addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+document.getElementById('exportCurrentBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); document.getElementById('presetYamlArea').value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+document.getElementById('importPresetBtn').addEventListener('click', () => document.getElementById('presetFileInput').click());
+document.getElementById('presetFileInput').addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
+document.getElementById('savePresetBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return alert('Name erforderlich'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
+document.getElementById('importYamlBtn').addEventListener('click', () => { const text = document.getElementById('presetYamlArea').value.trim(); if (!text) return alert('YAML einfügen!'); importFromText(text); });
+
+function importFromText(text) {
+  try { const stripped = text.trim(); let preset = stripped.startsWith('{') ? JSON.parse(stripped) : yamlToPreset(stripped); if (!preset.name) preset.name = 'Imported'; applyPreset(preset); setStatus(`Importiert.`); if (preset.name !== 'Imported') { preset.id = 'usr_' + Date.now(); preset.system = false; const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); } } catch (err) { alert('Import fehlgeschlagen: ' + err.message); }
+}
+
+function detectAndSetPaperColor(img) {
+  try {
+    const c = document.createElement("canvas"); c.width = 64; c.height = 64; const ctx = c.getContext("2d"); ctx.drawImage(img, 0, 0, 64, 64);
+    const data = ctx.getImageData(0, 0, 64, 64).data; let r = 0, g = 0, b = 0, count = 0;
+    for (let y = 4; y < 60; y++) { for (let x = 4; x < 60; x++) { const idx = (y * 64 + x) * 4; r += data[idx]; g += data[idx+1]; b += data[idx+2]; count++; } }
+    r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
+    let bestSwatch = null, minDist = Infinity;
+    document.querySelectorAll('#paperSwatches .swatch').forEach(sw => {
+      if(!sw.dataset.paper) return; const rgb = sw.dataset.paper.split(",").map(Number);
+      const dist = (r-rgb[0])**2 + (g-rgb[1])**2 + (b-rgb[2])**2; if (dist < minDist) { minDist = dist; bestSwatch = sw; }
+    });
+    if (bestSwatch) { document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.remove("active")); bestSwatch.classList.add("active"); state.paper = bestSwatch.dataset.paper.split(",").map(Number); }
+  } catch (e) { console.warn(e); }
+}
+
+function analyzeAndAdaptImage(img) {
+  const c = document.createElement("canvas"); c.width = 160; c.height = 160; const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, 160, 160); const { data } = ctx.getImageData(0, 0, 160, 160);
+  const hist = new Uint32Array(256); for (let i = 0; i < data.length; i += 4) hist[Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2])]++;
+  const total = 160*160; let cum = 0, p2 = 0, p98 = 255;
+  for (let i = 0; i < 256; i++) { cum += hist[i]; if (cum/total < 0.02) p2 = i; if (cum/total < 0.98) p98 = i; }
+  if (hist.slice(180).reduce((a,b)=>a+b,0)/total > 0.45) { state.contrast = 45; state.dither = "threshold"; } 
+  else { state.brightness = Math.max(-60, Math.min(60, Math.round(((p2+p98)/2-128)*-0.35))); }
+  updateUIFromState();
+}
+
+// ==================== WIRING & EVENTS ====================
+function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
+  const container = document.getElementById(containerId); if (!container) return;
+  container.addEventListener("click", (e) => {
+    const btn = e.target.closest("button"); if (!btn) return;
+    container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active"); state[stateKey] = btn.dataset[attrKey];
+    if (onChange) onChange(); triggerUpdate();
+  });
+}
+wireSegmented("ditherBtns", "dither", "dither", () => { document.getElementById("thresholdField").style.display = state.dither === "threshold" ? "block" : "none"; });
+wireSegmented("paperFormatBtns", "paperFormat", "format");
+wireSegmented("orientationBtns", "orientation", "orient");
+
+function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v) {
+  const s = document.getElementById(id); const v = document.getElementById(valId); if (!s || !v) return;
+  const apply = () => { const raw = transform(s.value); state[stateKey] = raw; v.textContent = format(raw); triggerUpdate(); };
+  s.addEventListener("input", apply);
+  const rawInit = transform(s.value); state[stateKey] = rawInit; v.textContent = format(rawInit);
+}
+wireSlider("thresholdSlider", "thresholdVal", "threshold");
+wireSlider("brightnessSlider","brightnessVal","brightness");
+wireSlider("contrastSlider",  "contrastVal",  "contrast");
+wireSlider("gammaSlider",     "gammaVal",     "gamma", v => +v, v => (+v).toFixed(1));
+wireSlider("dpiSlider",       "dpiVal",       "dpi");
+wireSlider("jitterSlider",    "jitterVal",    "jitterScale", v => +v/10, v => (+v).toFixed(1));
+wireSlider("bandingSlider",   "bandingVal",   "bandingScale", v => +v/10, v => (+v).toFixed(1));
+wireSlider("maxSizeSlider",   "maxSizeVal",   "maxSize");
+wireSlider("seedSlider",      "seedVal",      "seed");
+
+function wireSwatches(containerId, stateKey, attrKey) {
+  const box = document.getElementById(containerId); if(!box) return;
+  box.addEventListener("click", (e) => {
+    const sw = e.target.closest(".swatch"); if (!sw || !sw.dataset[attrKey]) return;
+    box.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
+    sw.classList.add("active"); state[stateKey] = sw.dataset[attrKey].split(",").map(Number); triggerUpdate();
+  });
+}
+wireSwatches("inkSwatches", "ink", "ink");
+wireSwatches("paperSwatches", "paper", "paper");
+
+const inkColorPicker = document.getElementById('inkColorPicker'); const inkHexInput = document.getElementById('inkHexInput');
+function applyCustomInk(hex) {
+  const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); if (!m) return;
+  const rgb = [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+  const swatch = document.getElementById('customInkSwatch'); swatch.dataset.ink = rgb.join(','); swatch.style.background = hex;
+  document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active')); swatch.classList.add('active');
+  state.ink = rgb; triggerUpdate();
+}
+inkColorPicker.addEventListener('input', (e) => { inkHexInput.value = e.target.value; applyCustomInk(e.target.value); });
+inkHexInput.addEventListener('input', (e) => { const hex = e.target.value.trim(); if (/^#[0-9a-f]{6}$/i.test(hex)) { inkColorPicker.value = hex; applyCustomInk(hex); }});
+
+const dropzone = document.getElementById("dropzone"); const fileInput = document.getElementById("fileInput");
+dropzone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.style.borderColor = "var(--accent)"; });
+dropzone.addEventListener("dragleave", () => dropzone.style.borderColor = "var(--glass-border-light)");
+dropzone.addEventListener("drop", (e) => { e.preventDefault(); dropzone.style.borderColor = "var(--glass-border-light)"; if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+function estimateDpiFromImageSize(img) { return Math.max(100, Math.min(1200, Math.round((Math.max(img.width, img.height) / (297 / 25.4)) / 50) * 50)); }
+
+async function handleFile(file) {
+  if (!file || !file.type.startsWith("image/")) return setStatus("Kein Bild.");
+  setStatus("Lade Bild...");
+  const url = URL.createObjectURL(file); const img = new Image();
+  img.onload = () => {
+    state.dpi = estimateDpiFromImageSize(img);
+    document.getElementById("dpiSlider").value = state.dpi; document.getElementById("dpiVal").textContent = state.dpi;
+    state.sourceImage = img; detectAndSetPaperColor(img); analyzeAndAdaptImage(img);
+    document.getElementById("dzBig").textContent = file.name; document.getElementById("dzSmall").textContent = `${img.width} × ${img.height}`;
+    const scale = Math.min(1, 800 / Math.max(img.width, img.height));
+    outCanvas.width = Math.round(img.width * scale); outCanvas.height = Math.round(img.height * scale);
+    outCanvas.getContext("2d").drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
+    renderBtn.disabled = false; triggerUpdate();
+  };
+  img.src = url;
+}
+
+document.getElementById('profileList').addEventListener('click', (e) => {
+  const item = e.target.closest('.sli'); if (!item) return;
+  document.querySelectorAll('#profileList .sli').forEach(s => s.classList.remove('active'));
+  item.classList.add('active'); state.profile = item.dataset.profile;
+  updateProfileMeta(); triggerUpdate();
+});
+
+document.querySelectorAll('#errorList .er').forEach(er => {
+  er.querySelector('.er-head').onclick = () => {
+    er.classList.toggle('on'); er.querySelector('.er-val').textContent = er.classList.contains('on') ? er.querySelector('.er-slider').value + '%' : '0%';
+    state.wearLayers = Array.from(document.querySelectorAll('#errorList .er.on')).map(el => ({ pattern: el.dataset.pattern, strength: +el.querySelector('.er-slider').value }));
+    triggerUpdate();
+  };
+  er.querySelector('.er-slider').oninput = (e) => {
+    er.querySelector('.er-val').textContent = e.target.value + '%';
+    state.wearLayers = Array.from(document.querySelectorAll('#errorList .er.on')).map(el => ({ pattern: el.dataset.pattern, strength: +e.target.value }));
+    triggerUpdate();
+  };
+});
+
+document.querySelectorAll('.check').forEach(el => el.onclick = () => { el.classList.toggle('on'); state[el.dataset.flag] = el.classList.contains('on'); triggerUpdate(); });
+document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => btn.onclick = () => {
+  document.querySelectorAll('.activity-bar .icon-btn, .tab-content').forEach(el => el.classList.remove('active'));
+  btn.classList.add('active'); document.getElementById(btn.dataset.tab).classList.add('active');
+});
+document.getElementById('themeAccentSelector').addEventListener('change', e => document.body.setAttribute('data-accent', e.target.value));
+document.getElementById('themeModeSelector').addEventListener('change', e => document.body.className = e.target.value === 'light' ? 'light-mode' : 'dark-mode');
+document.getElementById('langSelector').addEventListener('change', (e) => applyLanguage(e.target.value));
+
+function updateProfileMeta() { const p = PROFILES[state.profile]; document.getElementById("profileMeta").textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi`; }
+
+// Init
+state.autoRender = true; state.uiSounds = true; state.wearLayers = []; 
+applyLanguage('de'); updateProfileMeta(); renderPresetList();
