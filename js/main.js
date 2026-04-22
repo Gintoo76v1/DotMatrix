@@ -28,6 +28,18 @@ const translations = {
     systemTitle: "System Settings", language: "Language", themeMode: "Theme Mode", themeAccent: "Theme Accent",
     behaviorTitle: "Behavior", uiSounds: "UI Click Sounds", autoRender: "Auto-Render (Live Preview)",
     btnRender: "Manual Render", previewTitle: "Live Preview"
+  },
+  fr: {
+    sourceTitle: "Source d'image", dropzoneBig: "Sélectionner",
+    profileTitle: "Profil", doubleStrike: "Double frappe", condensedMode: "Mode condensé",
+    adjustTitle: "Ajustements", brightness: "Luminosité", contrast: "Contraste", gamma: "Gamma", invert: "Inverser",
+    halftoneTitle: "Demi-teinte", paperFormatTitle: "Papier et Format",
+    inkTitle: "Encre", paperTitle: "Papier",
+    presetsTitle: "Préréglages", btnExport: "Exporter YAML", btnImport: "Importer YAML",
+    createPresetTitle: "Créer / Code", btnSavePreset: "Sauvegarder", btnApplyYaml: "Appliquer YAML",
+    errorsTitle: "Erreurs", advancedTitle: "Options avancées", softBlur: "Flou",
+    systemTitle: "Système", language: "Langue", themeMode: "Thème", themeAccent: "Accent",
+    btnRender: "Rendu", previewTitle: "Aperçu en direct"
   }
 };
 
