@@ -23,9 +23,7 @@
     <nav class="activity-bar glass-panel">
       <div class="activity-top">
         <div class="brand" title="DotMatrix">DM</div>
-        <button class="activity-btn active" title="Einstellungen" data-i18n-title="navSettings">
-          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </button>
+        <button class="activity-btn active" title="Einstellungen" data-i18n-title="navSettings">⚙️</button>
       </div>
       <div class="activity-bottom">
         <button class="activity-btn" id="themeToggleBtn" title="Light/Dark Mode">🌓</button>
@@ -52,13 +50,18 @@
 
         <section class="config-section">
           <div class="section-label" data-i18n="secPresets">Presets</div>
-          <div class="scroll-list glass-card" id="presetList">
+          <div class="scroll-list glass-card" id="presetList"></div>
+          
+          <div style="margin-top:10px;">
+            <input type="text" id="presetNameInput" class="text-input glass-input" placeholder="Preset Name" autocomplete="off">
+            <div class="preset-actions">
+              <button class="btn-sm glass-btn" id="savePresetBtn" data-i18n="btnSavePreset">Save</button>
+              <button class="btn-sm glass-btn" id="exportPresetBtn" data-i18n="btnExport">Export</button>
+              <button class="btn-sm glass-btn" id="importPresetBtn" data-i18n="btnImport">Import</button>
+              <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
             </div>
-          <div class="preset-actions">
-            <button class="btn-sm glass-btn" id="savePresetBtn" data-i18n="btnSavePreset">Speichern</button>
-            <button class="btn-sm glass-btn" id="exportPresetBtn" data-i18n="btnExport">Export</button>
-            <button class="btn-sm glass-btn" id="importPresetBtn" data-i18n="btnImport">Import</button>
-            <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
+            <textarea id="presetYamlArea" class="yaml-area glass-input" placeholder="Paste YAML here..." rows="3" style="margin-top:8px; display:none;"></textarea>
+            <button class="btn-sm glass-btn" id="importYamlBtn" style="margin-top:4px; display:none;">Apply YAML</button>
           </div>
         </section>
 
@@ -77,6 +80,11 @@
             <div class="sli" data-profile="apple_imagewriter"><div class="sli-row"><span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span></div></div>
           </div>
           <div class="profile-meta" id="profileMeta"></div>
+          
+          <div class="checks" style="margin-top:12px">
+            <label class="check glass-card" data-flag="doubleStrike"><span class="box"></span><span data-i18n="lblDoubleStrike">Double-strike</span></label>
+            <label class="check glass-card" data-flag="condensed"><span class="box"></span><span data-i18n="lblCondensed">Condensed Mode</span></label>
+          </div>
         </section>
 
         <section class="config-section">
@@ -94,6 +102,16 @@
               <span class="name"><span>Gamma</span><b id="gammaVal">1.0</b></span>
               <input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0">
             </label>
+            <label class="field">
+              <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
+              <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+            </label>
+          </div>
+          
+          <div class="segmented glass-card" id="ditherBtns" style="margin-top:10px;">
+            <button data-dither="floyd_steinberg">Floyd</button>
+            <button data-dither="ordered">Ordered</button>
+            <button data-dither="threshold" class="active">Thresh</button>
           </div>
         </section>
 
@@ -115,6 +133,34 @@
                 <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section class="config-section">
+          <div class="section-label">Format & Output</div>
+          <div class="segmented glass-card" id="paperFormatBtns" style="margin-bottom:10px">
+            <button data-format="Original" class="active">Orig</button>
+            <button data-format="A4">A4</button>
+            <button data-format="A5">A5</button>
+            <button data-format="Letter">Letter</button>
+          </div>
+          <div class="segmented glass-card" id="orientationBtns" style="margin-bottom:10px">
+            <button data-orient="Portrait" class="active">Portrait</button>
+            <button data-orient="Landscape">Landscape</button>
+          </div>
+          <div class="glass-card padding-sm">
+            <label class="field">
+              <span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span>
+              <input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300">
+            </label>
+            <label class="field">
+              <span class="name"><span>Jitter</span><b id="jitterVal">1.0</b></span>
+              <input type="range" id="jitterSlider" min="0" max="30" value="10">
+            </label>
+            <label class="field">
+              <span class="name"><span>Banding</span><b id="bandingVal">1.0</b></span>
+              <input type="range" id="bandingSlider" min="0" max="20" value="10">
+            </label>
           </div>
         </section>
 
@@ -145,7 +191,7 @@
     <main class="main-view">
       <div class="editor-header glass-panel">
         <div class="tabs">
-          <div class="tab active" data-i18n="tabPreview">Vorschau</div>
+          <div class="tab active" data-i18n="tabPreview">Live Vorschau</div>
         </div>
         <div class="toolbar">
           <button class="tool-btn" id="zoomInBtn" title="Zoom In">🔍+</button>
@@ -157,8 +203,9 @@
       <div class="editor-content" id="editorViewport">
         <div class="canvas-wrap" id="canvasContainer">
           <canvas id="outCanvas" width="400" height="300"></canvas>
+          <pre id="ascii" class="ascii empty" style="display:none;"></pre>
         </div>
-        <div id="status" class="status-badge glass-card" data-i18n="statReady">Bereit.</div>
+        <div id="status" class="status-badge glass-card padding-sm" data-i18n="statReady">Bereit.</div>
       </div>
     </main>
 
