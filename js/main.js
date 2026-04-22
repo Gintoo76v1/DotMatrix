@@ -13,7 +13,8 @@ const translations = {
     createPresetTitle: "Preset Erstellen / Code", btnSavePreset: "Als Preset speichern", btnApplyYaml: "Aus Textfeld anwenden",
     errorsTitle: "Hardware Fehler", advancedTitle: "Erweiterte Render-Optionen", softBlur: "Weichzeichner (Blur)",
     systemTitle: "System Einstellungen", language: "Sprache", themeMode: "Theme Mode", themeAccent: "Theme Accent",
-    btnRender: "Rendern", previewTitle: "Live-Vorschau"
+    behaviorTitle: "Verhalten", uiSounds: "UI Click Sounds", autoRender: "Auto-Render (Live Vorschau)",
+    btnRender: "Manuell Rendern", previewTitle: "Live-Vorschau"
   },
   en: {
     sourceTitle: "Image Source", dropzoneBig: "Select Image",
@@ -25,19 +26,8 @@ const translations = {
     createPresetTitle: "Create / Code", btnSavePreset: "Save as Preset", btnApplyYaml: "Apply from Textbox",
     errorsTitle: "Hardware Errors", advancedTitle: "Advanced Options", softBlur: "Softening Blur",
     systemTitle: "System Settings", language: "Language", themeMode: "Theme Mode", themeAccent: "Theme Accent",
-    btnRender: "Render", previewTitle: "Live Preview"
-  },
-  fr: {
-    sourceTitle: "Source d'image", dropzoneBig: "Sélectionner",
-    profileTitle: "Profil", doubleStrike: "Double frappe", condensedMode: "Mode condensé",
-    adjustTitle: "Ajustements", brightness: "Luminosité", contrast: "Contraste", gamma: "Gamma", invert: "Inverser",
-    halftoneTitle: "Demi-teinte", paperFormatTitle: "Papier et Format",
-    inkTitle: "Encre", paperTitle: "Papier",
-    presetsTitle: "Préréglages", btnExport: "Exporter YAML", btnImport: "Importer YAML",
-    createPresetTitle: "Créer / Code", btnSavePreset: "Sauvegarder", btnApplyYaml: "Appliquer YAML",
-    errorsTitle: "Erreurs", advancedTitle: "Options avancées", softBlur: "Flou",
-    systemTitle: "Système", language: "Langue", themeMode: "Thème", themeAccent: "Accent",
-    btnRender: "Rendu", previewTitle: "Aperçu en direct"
+    behaviorTitle: "Behavior", uiSounds: "UI Click Sounds", autoRender: "Auto-Render (Live Preview)",
+    btnRender: "Manual Render", previewTitle: "Live Preview"
   }
 };
 
@@ -49,8 +39,39 @@ function applyLanguage(lang) {
   });
 }
 
-// ==================== INTERACTIVE ANIMATIONS ====================
+// ==================== STATE ERWEITERUNG (Für neue Optionen) ====================
+state.uiSounds = true;
+state.autoRender = true;
+// Reduziere Default MaxSize für bessere Live-Performance
+state.maxSize = 3000; 
+
+// ==================== CLICK SOUNDS (Web Audio API) ====================
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playClickSound() {
+  if (!state.uiSounds) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Leise
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.05);
+}
+
+// ==================== INTERACTIVE ANIMATIONS & SOUNDS ====================
 document.addEventListener('click', (e) => {
+  // Entsperre Audio Context beim ersten Klick
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // Spiele Sound wenn auf interaktive Elemente geklickt wird
+  const isInteractive = e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"]');
+  if (isInteractive) playClickSound();
+
   if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   const r = document.createElement('div');
   r.className = 'click-shockwave';
@@ -59,57 +80,67 @@ document.addEventListener('click', (e) => {
   setTimeout(() => r.remove(), 600);
 });
 
-document.addEventListener('keydown', (e) => {
-  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
-  if (['Shift','Control','Alt','Meta','CapsLock','Tab'].includes(e.key)) return;
-  const k = document.createElement('div');
-  k.className = 'key-echo';
-  k.textContent = e.key.length === 1 ? e.key.toUpperCase() : `[${e.key.toUpperCase()}]`;
-  k.style.left = (Math.random() * 80 + 10) + 'vw';
-  k.style.bottom = '15vh';
-  document.body.appendChild(k);
-  setTimeout(() => k.remove(), 1200);
-});
-
 // ==================== DPI & FILE HELPERS ====================
-function readJfifDpi(buf) {
-  const v = new DataView(buf);
-  if (v.byteLength < 18 || v.getUint16(0) !== 0xFFD8) return null;
-  if (v.getUint16(2) !== 0xFFE0) return null;
-  const sig = String.fromCharCode(v.getUint8(6),v.getUint8(7),v.getUint8(8),v.getUint8(9),v.getUint8(10));
-  if (sig !== 'JFIF\0') return null;
-  const units = v.getUint8(11); const xd = v.getUint16(12);
-  if (!xd) return null;
-  if (units === 1) return xd;
-  if (units === 2) return Math.round(xd * 2.54);
-  return null;
-}
-function readPngDpi(buf) {
-  const v = new DataView(buf);
-  if (v.byteLength < 30 || v.getUint32(0) !== 0x89504E47) return null;
-  let pos = 8;
-  while (pos + 12 <= v.byteLength) {
-    const len = v.getUint32(pos);
-    const type = String.fromCharCode(v.getUint8(pos+4),v.getUint8(pos+5),v.getUint8(pos+6),v.getUint8(pos+7));
-    if (type === 'pHYs' && len === 9 && pos + 21 <= v.byteLength) {
-      const ppuX = v.getUint32(pos + 8); const unit = v.getUint8(pos + 16);
-      if (unit === 1 && ppuX > 0) return Math.round(ppuX / 39.3701);
-    }
-    if (type === 'IDAT') break;
-    pos += 12 + len;
-  }
-  return null;
-}
-function snapDpi(dpi) { return Math.max(100, Math.min(1200, Math.round(dpi / 50) * 50)); }
-function estimateDpiFromImageSize(img) { return snapDpi(Math.round(Math.max(img.width, img.height) / (297 / 25.4))); }
+function estimateDpiFromImageSize(img) { return Math.max(100, Math.min(1200, Math.round((Math.max(img.width, img.height) / (297 / 25.4)) / 50) * 50)); }
 
 const statusEl = document.getElementById("status");
 function setStatus(text, working = false) {
   statusEl.textContent = text;
-  statusEl.style.color = working ? "var(--accent)" : "var(--ink-soft)";
+  statusEl.style.color = working ? "var(--accent)" : "inherit";
 }
 
-// ==================== DEBOUNCER FOR PERFORMANCE ====================
+// ==================== RENDERING & AUTO-RENDER LOGIC ====================
+let lastRenderedBlob = null;
+const renderBtn = document.getElementById("renderBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const outCanvas = document.getElementById("outCanvas");
+
+let isRendering = false;
+let renderQueued = false;
+
+async function performRender() {
+  if (!state.sourceImage) return;
+  if (isRendering) { renderQueued = true; return; }
+  
+  isRendering = true;
+  renderBtn.disabled = true;
+  setStatus("Rendern...", true);
+  
+  try {
+    const t0 = performance.now();
+    const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
+    
+    outCanvas.width = width; outCanvas.height = height;
+    outCanvas.getContext("2d").putImageData(imageData, 0, 0);
+    outCanvas.toBlob(blob => { 
+      lastRenderedBlob = blob; 
+      downloadBtn.disabled = false; 
+    }, "image/png");
+    
+    setStatus(`Live Vorschau (${width}×${height}) · ${((performance.now() - t0) / 1000).toFixed(2)}s`);
+  } catch (e) {
+    console.error(e); setStatus("Fehler: " + e.message);
+  } finally {
+    isRendering = false;
+    renderBtn.disabled = false;
+    if (renderQueued) {
+      renderQueued = false;
+      performRender(); // Abarbeiten des Queues
+    }
+  }
+}
+
+renderBtn.addEventListener("click", performRender);
+
+downloadBtn.addEventListener("click", () => {
+  if (!lastRenderedBlob) return;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(lastRenderedBlob);
+  a.download = `dotmatrix_${state.profile}_${Date.now()}.png`;
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+// Debouncer: Wartet bis der User fertig ist mit Slidern
 function debounce(func, wait) {
   let timeout;
   return function(...args) {
@@ -118,14 +149,22 @@ function debounce(func, wait) {
   };
 }
 
-const debouncedRefreshAscii = debounce(() => {
+// Haupt-Update Funktion: Triggert entweder echtes Rendering oder nur ASCII-Vorschau
+const triggerUpdate = debounce(() => {
   if (!state.sourceImage) return;
-  try {
-    const asciiEl = document.getElementById("ascii");
-    asciiEl.classList.remove("empty");
-    asciiEl.textContent = asciiPreview(state.sourceImage, 56);
-  } catch (e) { console.warn(e); }
-}, 150);
+  if (state.autoRender) {
+    performRender();
+  } else {
+    // Wenn Auto-Render aus ist, mach nur die schnelle ASCII Vorschau
+    try {
+      const asciiEl = document.getElementById("ascii");
+      asciiEl.classList.remove("empty");
+      asciiEl.style.display = "block";
+      asciiEl.textContent = asciiPreview(state.sourceImage, 56);
+      setStatus("Änderungen bereit. Klicke Rendern.");
+    } catch (e) { console.warn(e); }
+  }
+}, 300);
 
 // ==================== APP LAYOUT TABS (VS CODE STYLE) ====================
 document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => {
@@ -137,7 +176,7 @@ document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => {
   });
 });
 
-// ==================== SYSTEM (LANG & THEME) ====================
+// ==================== SYSTEM (LANG, THEME, BEHAVIOR) ====================
 document.getElementById('langSelector').addEventListener('change', (e) => applyLanguage(e.target.value));
 document.getElementById('themeModeSelector').addEventListener('change', (e) => {
   document.body.className = e.target.value === 'light' ? 'light-mode' : 'dark-mode';
@@ -146,12 +185,16 @@ document.getElementById('themeAccentSelector').addEventListener('change', (e) =>
   document.body.setAttribute('data-accent', e.target.value);
 });
 
+// Init Checkboxen für UI Sounds und Auto Render
+document.querySelector('[data-flag="uiSounds"]').classList.toggle('on', state.uiSounds);
+document.querySelector('[data-flag="autoRender"]').classList.toggle('on', state.autoRender);
+
 // ==================== ZOOM CONTROLS ====================
 let currentZoom = 1;
 const zoomContainer = document.getElementById('zoomContainer');
 const zoomLevelText = document.getElementById('zoomLevel');
 function setZoom(level) {
-  currentZoom = Math.max(0.5, Math.min(level, 3));
+  currentZoom = Math.max(0.2, Math.min(level, 5));
   zoomContainer.style.transform = `scale(${currentZoom})`;
   zoomLevelText.textContent = `${Math.round(currentZoom * 100)}%`;
 }
@@ -183,7 +226,7 @@ document.getElementById('profileList').addEventListener('click', (e) => {
   item.classList.add('active');
   state.profile = item.dataset.profile;
   updateProfileMeta();
-  debouncedRefreshAscii();
+  triggerUpdate();
 });
 
 function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
@@ -194,7 +237,7 @@ function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
     btn.classList.add("active");
     state[stateKey] = btn.dataset[attrKey];
     if (onChange) onChange();
-    debouncedRefreshAscii();
+    triggerUpdate();
   });
 }
 wireSegmented("ditherBtns", "dither", "dither", () => {
@@ -208,7 +251,7 @@ document.querySelectorAll(".check").forEach(el => {
     if (el.dataset.disabled === "true") return;
     el.classList.toggle("on");
     state[el.dataset.flag] = el.classList.contains("on");
-    debouncedRefreshAscii();
+    triggerUpdate();
   });
 });
 
@@ -216,13 +259,16 @@ function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v) {
   const s = document.getElementById(id);
   const v = document.getElementById(valId);
   const apply = () => {
-    if(!s) return;
     const raw = transform(s.value);
     state[stateKey] = raw;
     v.textContent = format(raw);
-    debouncedRefreshAscii();
+    triggerUpdate();
   };
-  if(s) { s.addEventListener("input", apply); apply(); }
+  s.addEventListener("input", apply);
+  // Do not trigger update on init
+  const rawInit = transform(s.value);
+  state[stateKey] = rawInit;
+  v.textContent = format(rawInit);
 }
 wireSlider("thresholdSlider", "thresholdVal", "threshold");
 wireSlider("brightnessSlider","brightnessVal","brightness");
@@ -234,7 +280,7 @@ wireSlider("bandingSlider",   "bandingVal",   "bandingScale", v => +v/10, v => (
 wireSlider("maxSizeSlider",   "maxSizeVal",   "maxSize");
 wireSlider("seedSlider",      "seedVal",      "seed");
 
-// ==================== COLORS, INK & ANALYSIS ====================
+// ==================== COLORS, INK ====================
 function wireSwatches(containerId, stateKey, attrKey) {
   const box = document.getElementById(containerId);
   box.addEventListener("click", (e) => {
@@ -243,7 +289,7 @@ function wireSwatches(containerId, stateKey, attrKey) {
     box.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
     sw.classList.add("active");
     state[stateKey] = sw.dataset[attrKey].split(",").map(Number);
-    debouncedRefreshAscii();
+    triggerUpdate();
   });
 }
 wireSwatches("inkSwatches", "ink", "ink");
@@ -264,7 +310,7 @@ function applyCustomInk(hex) {
   document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active'));
   swatch.classList.add('active');
   state.ink = rgb;
-  debouncedRefreshAscii();
+  triggerUpdate();
 }
 inkColorPicker.addEventListener('input', (e) => {
   inkHexInput.value = e.target.value;
@@ -312,9 +358,7 @@ function analyzeAndAdaptImage(img) {
     const ctx = c.getContext("2d"); ctx.drawImage(img, 0, 0, 160, 160);
     const { data } = ctx.getImageData(0, 0, 160, 160);
     const hist = new Uint32Array(256);
-    for (let i = 0; i < data.length; i += 4) {
-      hist[Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2])]++;
-    }
+    for (let i = 0; i < data.length; i += 4) { hist[Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2])]++; }
     const total = 160 * 160; let cumSum = 0, p2 = 0, p98 = 255;
     for (let i = 0; i < 256; i++) {
       cumSum += hist[i];
@@ -342,7 +386,7 @@ function analyzeAndAdaptImage(img) {
       document.getElementById("brightnessSlider").value = state.brightness; document.getElementById("brightnessVal").textContent = state.brightness;
       document.getElementById("contrastSlider").value = state.contrast; document.getElementById("contrastVal").textContent = state.contrast;
     }
-  } catch (e) { console.warn("Image analysis failed", e); }
+  } catch (e) { console.warn(e); }
 }
 
 // ==================== ERRORS / WEAR LAYERS ====================
@@ -352,7 +396,7 @@ function syncWearLayersFromUI() {
     const slider = el.querySelector('.er-slider');
     state.wearLayers.push({ pattern: el.dataset.pattern, strength: +slider.value });
   });
-  debouncedRefreshAscii();
+  triggerUpdate();
 }
 document.getElementById('errorList').addEventListener('click', (e) => {
   const head = e.target.closest('.er-head');
@@ -368,7 +412,7 @@ document.getElementById('errorList').addEventListener('input', (e) => {
   syncWearLayersFromUI();
 });
 
-// ==================== PRESET YAML SERIALIZER / PARSER ====================
+// ==================== PRESET SYSTEM ====================
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']);
   const lines = [];
@@ -426,7 +470,6 @@ function yamlToPreset(yaml) {
   return preset;
 }
 
-// ==================== PRESET SYSTEM ====================
 const STORAGE_KEY = 'dotmatrix_user_presets';
 function loadUserPresets() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
 function saveUserPresets(presets) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch {} }
@@ -493,11 +536,8 @@ function applyPreset(p) {
       const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
       if (el) { el.classList.add('on'); el.querySelector('.er-slider').value = layer.strength ?? 50; el.querySelector('.er-val').textContent = (layer.strength ?? 50) + '%'; }
     }
-  } else {
-    state.wearLayers = [];
-    document.querySelectorAll('#errorList .er').forEach(el => { el.classList.remove('on'); el.querySelector('.er-val').textContent = '0%'; });
   }
-  debouncedRefreshAscii();
+  triggerUpdate();
 }
 
 function renderPresetList() {
@@ -528,7 +568,6 @@ function renderPresetList() {
   });
 }
 
-// ==================== EXPORT / IMPORT (INKL. LEGACY REPAIR) ====================
 function downloadText(text, filename) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
   a.download = filename; document.body.appendChild(a); a.click(); a.remove();
@@ -567,20 +606,10 @@ document.getElementById('importYamlBtn').addEventListener('click', () => {
   if (!text) return alert('YAML einfügen!'); importFromText(text);
 });
 
-// Repariert alte Presets mit "wear: {cloudy: 30}" anstelle von "wearLayers: [...]"
-function normalizePreset(raw) {
-  if (raw.wear && !raw.wearLayers) {
-    const known = new Set(["cloudy", "ghosting", "misaligned", "pin_skip", "smudge", "ribbon_twist", "head_gap", "ink_starved", "paper_slip", "static_noise", "double_feed", "mechanical_resonance"]);
-    raw.wearLayers = Object.entries(raw.wear).filter(([k, v]) => known.has(k) && v > 0).map(([pattern, strength]) => ({ pattern, strength }));
-    delete raw.wear;
-  }
-  return raw;
-}
-
 function importFromText(text) {
   try {
     const stripped = text.trim();
-    let preset = stripped.startsWith('{') ? normalizePreset(JSON.parse(stripped)) : normalizePreset(yamlToPreset(stripped));
+    let preset = stripped.startsWith('{') ? JSON.parse(stripped) : yamlToPreset(stripped);
     if (!preset.name) preset.name = 'Imported';
     applyPreset(preset);
     setStatus(`Preset "${preset.name}" importiert.`);
@@ -598,26 +627,20 @@ const fileInput = document.getElementById("fileInput");
 dropzone.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
 dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.style.borderColor = "var(--accent)"; });
-dropzone.addEventListener("dragleave", () => dropzone.style.borderColor = "var(--glass-border)");
+dropzone.addEventListener("dragleave", () => dropzone.style.borderColor = "var(--glass-border-light)");
 dropzone.addEventListener("drop", (e) => {
-  e.preventDefault(); dropzone.style.borderColor = "var(--glass-border)";
+  e.preventDefault(); dropzone.style.borderColor = "var(--glass-border-light)";
   if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
 
 async function handleFile(file) {
   if (!file || !file.type.startsWith("image/")) return setStatus("Kein Bild.");
   setStatus("Lade Bild...");
-  let metaDpi = null;
-  try {
-    const buf = await file.slice(0, 256).arrayBuffer();
-    if (file.type === 'image/jpeg') metaDpi = readJfifDpi(buf);
-    else if (file.type === 'image/png') metaDpi = readPngDpi(buf);
-  } catch {}
 
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
-    state.dpi = (metaDpi && metaDpi > 96) ? snapDpi(metaDpi) : estimateDpiFromImageSize(img);
+    state.dpi = estimateDpiFromImageSize(img);
     document.getElementById("dpiSlider").value = state.dpi; document.getElementById("dpiVal").textContent = state.dpi;
     state.sourceImage = img;
     
@@ -632,25 +655,12 @@ async function handleFile(file) {
     outCanvas.width = Math.round(img.width * scale); outCanvas.height = Math.round(img.height * scale);
     outCanvas.getContext("2d").drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
     
-    document.getElementById("renderBtn").disabled = false;
-    setStatus("Bereit zum Rendern.");
-    debouncedRefreshAscii();
+    triggerUpdate();
   };
   img.src = url;
 }
 
-// ==================== RENDER ====================
-let lastRenderedBlob = null;
-const renderBtn = document.getElementById("renderBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-
-renderBtn.addEventListener("click", async () => {
-  if (!state.sourceImage) return;
-  renderBtn.disabled = true; downloadBtn.disabled = true;
-  setStatus("Rendern...", true);
-  try {
-    const t0 = performance.now();
-    const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
-    const outCanvas = document.getElementById("outCanvas");
-    outCanvas.width = width; outCanvas.height = height;
-    outCanvas.getContext("2d").putImageData(imageData, 0, 0);
+// ==================== INIT ====================
+applyLanguage('de');
+updateProfileMeta();
+renderPresetList();
