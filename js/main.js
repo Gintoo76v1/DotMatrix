@@ -383,7 +383,7 @@ renderBtn.addEventListener('click', async () => {
   if (!state.sourceImage) return;
   renderBtn.disabled = true; downloadBtn.disabled = true;
   setStatus(DICTIONARY[currentLang].statRendering);
-  document.getElementById('ascii').style.display = 'none'; // Verstecke ASCII während des Renderns
+  document.getElementById('ascii').style.display = 'none';
   
   try {
     const { imageData, width, height } = await render(state.sourceImage, setStatus);
