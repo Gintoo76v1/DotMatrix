@@ -24,13 +24,10 @@ body.light-mode {
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* FIX: Absolute Verankerung der Hauptseite. Safari KANN nicht mehr zoomen. */
 html, body { 
   position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; 
-  overflow: hidden; overscroll-behavior: none; 
-  touch-action: none; /* Blockt JEDEN nativen Touch! JS regelt den Rest */
-  -webkit-text-size-adjust: 100%; text-size-adjust: 100%; 
-  margin: 0; padding: 0;
+  overflow: hidden; overscroll-behavior: none; touch-action: none; 
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%; margin: 0; padding: 0;
 }
 
 body {
@@ -63,11 +60,9 @@ input[type="file"] { display: none; }
 
 .glass-panel { background: var(--glass-bg); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%); border: 1px solid var(--glass-border); border-top-color: var(--glass-highlight); border-left-color: var(--glass-highlight); box-shadow: var(--glass-shadow); border-radius: 20px; overflow: hidden; }
 
-/* NEUES APP LAYOUT (Mit Footer) */
 .app-layout { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 16px; gap: 16px; z-index: 1; position: relative; }
 .app-container { display: flex; flex: 1; width: 100%; gap: 16px; min-height: 0; }
 
-/* FOOTER BAR */
 .app-footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 24px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-soft); border-radius: 16px; }
 .footer-accent { color: var(--accent); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; }
 .footer-divider { margin: 0 10px; opacity: 0.3; }
@@ -76,8 +71,11 @@ input[type="file"] { display: none; }
 
 .activity-bar { width: 75px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 12px; }
 
-/* Erlaubt Klicken, blockiert Doppel-Tipp Zoom auf Buttons */
-button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-action: manipulation; user-select: none; }
+/* FIX: STRICT MANIPULATION AUF BUTTONS BLOCKIERT DOUBLE-TAP-ZOOM! */
+button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-controls button { 
+  touch-action: manipulation !important; 
+  user-select: none; 
+}
 
 .icon-btn { font-size: 24px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.4; transition: 0.3s; border-radius: 15px; background: transparent; border: 1px solid transparent; }
 .icon-btn:hover { opacity: 0.8; background: rgba(255,255,255,0.05); }
@@ -92,11 +90,11 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-
 .main-editor { flex-grow: 1; display: flex; flex-direction: column; position: relative; min-height: 0;}
 .toolbar { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); z-index: 10;}
 
-/* CANVAS WRAPPER (touch-action ist global none, JS kümmert sich ums zoomen) */
-.canvas-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; cursor: grab; padding: 30px; position: relative; }
+/* FIX: ALLES IM CANVAS HAT JETZT STRIKT TOUCH-ACTION: NONE! Browser bleibt draußen! */
+.canvas-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; touch-action: none; cursor: grab; padding: 30px; position: relative; }
 .canvas-wrapper:active { cursor: grabbing; }
-.zoom-container { transform-origin: center center; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radius: 8px; max-width: none; }
+.zoom-container { transform-origin: center center; display: flex; flex-direction: column; align-items: center; gap: 20px; touch-action: none; }
+canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radius: 8px; max-width: none; touch-action: none; }
 
 .floating-container { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 50; width: 100%; max-width: 420px; padding: 0 20px; pointer-events: none; }
 .status-panel { width: 100%; padding: 10px 16px; border-radius: 12px; pointer-events: auto; display: flex; justify-content: center; align-items: center; background: var(--paper-dark); border: 1px solid var(--glass-border); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
@@ -112,7 +110,7 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .dropzone .big { margin-bottom: 6px; }
 .dropzone .small { font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.1em; }
 
-.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
+.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
 .sli { padding: 14px 16px; border-bottom: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s; }
 .sli:last-child { border-bottom: 0; }
 .sli:hover { background: rgba(255,255,255,0.1); }
@@ -158,9 +156,9 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .btn-sm { padding: 10px 14px; border: 1px solid var(--glass-border); background: var(--paper-dark); color: var(--ink); cursor: pointer; border-radius: 8px; font-size: 12px; text-transform: uppercase; transition: 0.2s;}
 .btn-sm:hover { border-color: var(--accent); background: rgba(0,0,0,0.5);}
 
-.text-input, .color-picker, select, input[type="text"] { width: 100%; color: var(--ink); padding: 12px; font-size: 14px; transition: 0.2s; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
+.text-input, .color-picker, select, input[type="text"], textarea { width: 100%; color: var(--ink); padding: 12px; font-size: 16px !important; transition: 0.2s; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
 .text-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-soft);}
-.yaml-area { resize: vertical; font-size: 12px; }
+.yaml-area { resize: vertical; }
 
 label.field { display: block; margin-top: 16px; }
 label.field .name { font-size: 11px; font-weight: 500; text-transform: uppercase; display: flex; justify-content: space-between; margin-bottom: 8px; letter-spacing: 0.1em;}
