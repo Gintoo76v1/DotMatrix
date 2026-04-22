@@ -24,8 +24,8 @@ body.light-mode {
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body { position: fixed; inset: 0; z-index: 1; font-family: 'Outfit', system-ui, sans-serif; font-size: 13.5px; line-height: 1.45; background-color: var(--bg-color); color: var(--ink); transition: background-color 0.3s; }
+body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; margin: 0; padding: 0; height: 100dvh; width: 100vw; z-index: 1; font-family: 'Outfit', system-ui, sans-serif; font-size: 13.5px; line-height: 1.45; background-color: var(--bg-color); color: var(--ink); transition: background-color 0.3s; }
+
 h2, .btn, .dropzone .big, .status-large, .er-name, .sli-name, .header-fancy, .app-logo { font-family: 'Space Grotesk', sans-serif; font-weight: 500; }
 .dropzone .big { font-weight: 700; font-size: 26px; }
 .app-logo { font-size: 18px; font-weight: 700; letter-spacing: 0.05em; color: var(--ink); }
@@ -36,6 +36,7 @@ input[type="file"] { display: none; }
 .app-bg .orb { position: absolute; border-radius: 50%; opacity: 0.3; mix-blend-mode: screen; will-change: transform; }
 .app-bg .orb-1 { width: 70vw; height: 70vw; background: radial-gradient(circle at center, var(--accent) 0%, transparent 65%); top: -20%; left: -20%; }
 .app-bg .orb-2 { width: 60vw; height: 60vw; background: radial-gradient(circle at center, var(--accent-alt) 0%, transparent 65%); bottom: -20%; right: -20%; }
+
 .app-bg[data-anim="drift"] .orb-1 { animation: drift1 20s infinite alternate ease-in-out; }
 .app-bg[data-anim="drift"] .orb-2 { animation: drift2 25s infinite alternate ease-in-out; }
 @keyframes drift1 { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(15vw, 15vh, 0); } }
@@ -53,7 +54,6 @@ input[type="file"] { display: none; }
 
 .app-container { display: flex; height: 100%; width: 100%; gap: 16px; padding: 16px; min-height: 0; z-index: 1;}
 .activity-bar { width: 75px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 12px; }
-button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-action: manipulation; user-select: none; }
 
 .icon-btn { font-size: 24px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.4; transition: 0.3s; border-radius: 15px; background: transparent; border: 1px solid transparent; }
 .icon-btn:hover { opacity: 0.8; background: rgba(255,255,255,0.05); }
@@ -61,7 +61,7 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-
 .spacer { flex-grow: 1; }
 
 .sidebar { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; }
-.sidebar-scrollable { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; padding-bottom: 30px; overscroll-behavior: contain; touch-action: pan-y; }
+.sidebar-scrollable { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; padding-bottom: 30px; overscroll-behavior: contain; }
 .tab-content { display: none; padding: 24px; }
 .tab-content.active { display: block; }
 
@@ -81,7 +81,6 @@ canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radiu
 h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 14px; color: var(--ink-soft); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .dropzone { flex-shrink: 0; min-height: 120px; display: flex; flex-direction: column; justify-content: center; background: var(--paper-dark); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-.text-input, .segmented { background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px; }
 .dropzone:hover { border-color: var(--accent); background: rgba(0,0,0,0.5); }
 .dropzone .big { margin-bottom: 6px; }
 .dropzone .small { font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.1em; }
@@ -132,9 +131,10 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .btn-sm { padding: 10px 14px; border: 1px solid var(--glass-border); background: var(--paper-dark); color: var(--ink); cursor: pointer; border-radius: 8px; font-size: 12px; text-transform: uppercase; transition: 0.2s;}
 .btn-sm:hover { border-color: var(--accent); background: rgba(0,0,0,0.5);}
 
-.text-input, .color-picker, select, input[type="text"] { width: 100%; color: var(--ink); padding: 12px; font-size: 16px !important; transition: 0.2s; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
+/* Originale Font-Sizes für Inputs (kein 16px Zwang mehr) */
+.text-input, .color-picker, select, input[type="text"] { width: 100%; color: var(--ink); padding: 12px; font-size: 12px; transition: 0.2s; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
 .text-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-soft);}
-.yaml-area { resize: vertical; font-size: 16px !important; }
+.yaml-area { resize: vertical; font-size: 11px; }
 
 label.field { display: block; margin-top: 16px; }
 label.field .name { font-size: 11px; font-weight: 500; text-transform: uppercase; display: flex; justify-content: space-between; margin-bottom: 8px; letter-spacing: 0.1em;}
