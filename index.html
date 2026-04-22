@@ -2,10 +2,9 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <title>DotMatrix Studio</title>
 
-entfernen und Pfad anpassen) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -175,7 +174,7 @@ entfernen und Pfad anpassen) -->
           </label>
 
           <label class="field" id="bgAnimStyleField" style="margin-top:20px;">
-            <span class="name">Background Animation</span>
+            <span class="name">Background Animation Style</span>
             <select id="bgAnimSelector" class="text-input">
               <option value="drift">Drift (Smooth)</option>
               <option value="breathe">Breathe (Pulse)</option>
@@ -186,7 +185,7 @@ entfernen und Pfad anpassen) -->
           <div class="checks" style="margin-top:32px;">
             <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
             <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
-            <label class="check" data-flag="bgAnim"><span class="box"></span><span>Background Glow Anim</span></label>
+            <label class="check" data-flag="bgAnim"><span class="box"></span><span>Background Glow Animation</span></label>
           </div>
         </div>
       </div>
@@ -214,15 +213,14 @@ entfernen und Pfad anpassen) -->
         </div>
       </div>
       
-      <div class="floating-container">
-        <div class="status-panel glass-panel" id="statusPanel">
-          <span id="status" class="status-large">Warte auf Bild...</span>
-        </div>
-        <div class="floating-actions glass-panel">
-          <div class="action-buttons">
-            <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
-            <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
-          </div>
+      <div class="status-panel glass-panel" id="statusPanel">
+        <span id="status" class="status-large">Warte auf Bild...</span>
+      </div>
+
+      <div class="floating-actions glass-panel">
+        <div class="action-buttons">
+          <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
+          <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
         </div>
       </div>
     </main>
