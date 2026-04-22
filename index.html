@@ -18,18 +18,16 @@
   </div>
 
   <div class="app-container">
-    
     <nav class="activity-bar glass-panel">
-      <div class="icon-btn active" data-tab="tab-source" title="Quelle & Print">🖨️</div>
-      <div class="icon-btn" data-tab="tab-presets" title="Presets & YAML">📂</div>
-      <div class="icon-btn" data-tab="tab-errors" title="Hardware & Erweitert">🔧</div>
+      <div class="icon-btn active" data-tab="tab-source" title="Quelle">🖨️</div>
+      <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
+      <div class="icon-btn" data-tab="tab-errors" title="Hardware">🔧</div>
       <div class="spacer"></div>
       <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
     </nav>
 
     <aside class="sidebar glass-panel">
       <div class="sidebar-scrollable">
-        
         <div class="tab-content active" id="tab-source">
           <h2 data-i18n="sourceTitle">Bildquelle</h2>
           <div id="dropzone" class="dropzone">
@@ -94,7 +92,6 @@
                 <div class="swatch active" style="background:#19191e" data-ink="25,25,30"></div>
                 <div class="swatch" style="background:#142d82" data-ink="20,45,130"></div>
                 <div class="swatch" style="background:#a01e23" data-ink="160,30,35"></div>
-                <div class="swatch" style="background:#5a286e" data-ink="90,40,110"></div>
                 <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e"></div>
               </div>
               <div class="custom-ink-row" style="margin-top:10px;">
@@ -109,7 +106,6 @@
                 <div class="swatch active" style="background:#ffffff" data-paper="255,255,255"></div>
                 <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
                 <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160"></div>
-                <div class="swatch" style="background:#f0d9cf" data-paper="240,217,207"></div>
               </div>
             </div>
           </div>
@@ -121,15 +117,13 @@
           <div style="display:flex; gap:8px; margin-top:12px;">
             <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport" style="flex:1;">Export YAML</button>
             <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport" style="flex:1;">Import YAML</button>
+            <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
           </div>
           <h2 style="margin-top:32px;" data-i18n="createPresetTitle">Preset Erstellen</h2>
           <input type="text" id="presetNameInput" class="text-input" placeholder="Name">
-          <div style="display:flex; gap:8px; margin-top:10px;">
-            <button class="btn-sm" id="savePresetBtn" style="flex:1;" data-i18n="btnSavePreset">Speichern</button>
-            <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">Als YAML exportieren</button>
-          </div>
+          <button class="btn-sm" id="savePresetBtn" style="width:100%; margin-top:8px;" data-i18n="btnSavePreset">Speichern</button>
           <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code..." rows="10" style="margin-top:16px;"></textarea>
-          <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:10px;">Aus Textfeld anwenden</button>
+          <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:10px;">Anwenden</button>
         </div>
 
         <div class="tab-content" id="tab-errors">
@@ -148,14 +142,14 @@
             <div class="er" data-pattern="double_feed"><div class="er-head"><span class="er-check"></span><span class="er-name">Double Feed</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="mechanical_resonance"><div class="er-head"><span class="er-check"></span><span class="er-name">Resonance</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
           </div>
-          <h2 style="margin-top:32px;" data-i18n="advancedTitle">Erweiterte Optionen</h2>
+          <h2 style="margin-top:32px;">Erweitert</h2>
           <label class="field"><span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span><input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300"></label>
           <label class="field"><span class="name"><span>Max Size</span><b id="maxSizeVal">3000</b></span><input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="3000"></label>
-          <div class="checks" style="margin-top:16px;"><label class="check" data-flag="softBlur"><span class="box"></span><span data-i18n="softBlur">Softening Blur</span></label></div>
+          <div class="checks" style="margin-top:16px;"><label class="check" data-flag="softBlur"><span class="box"></span><span>Softening Blur</span></label></div>
         </div>
 
         <div class="tab-content" id="tab-system">
-          <h2 data-i18n="systemTitle">System</h2>
+          <h2 data-i18n="systemTitle">System Settings</h2>
           <label class="field"><span class="name">Sprache</span><select id="langSelector" class="text-input"><option value="de">🇩🇪 Deutsch</option><option value="en">🇺🇸 English</option></select></label>
           <label class="field" style="margin-top:20px;"><span class="name">Theme Accent</span><select id="themeAccentSelector" class="text-input"><option value="amber" selected>🟠 Amber</option><option value="toxic">🟢 Toxic Green</option><option value="cyan">🔵 Cyan</option></select></label>
           <div class="checks" style="margin-top:32px;">
@@ -167,22 +161,11 @@
     </aside>
 
     <main class="main-editor glass-panel">
-      <div class="toolbar">
-        <span data-i18n="previewTitle" style="font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Live-Vorschau</span>
-        <div class="zoom-controls"><button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button></div>
-      </div>
-      <div class="canvas-wrapper" id="canvasWrapper">
-        <div class="zoom-container" id="zoomContainer">
-          <canvas id="outCanvas" width="400" height="300"></canvas>
-          <pre id="ascii" class="ascii empty">// Bild laden //</pre>
-        </div>
-      </div>
+      <div class="toolbar"><span style="font-weight:bold; text-transform:uppercase;">Live-Vorschau</span><div class="zoom-controls"><button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button></div></div>
+      <div class="canvas-wrapper"><div class="zoom-container"><canvas id="outCanvas"></canvas><pre id="ascii" class="ascii empty">// Bild laden //</pre></div></div>
       <div class="floating-actions glass-panel">
         <div id="status" class="status-large">Warte auf Bild...</div>
-        <div class="action-buttons">
-          <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
-          <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
-        </div>
+        <div class="action-buttons"><button class="btn primary" id="renderBtn" disabled>Rendern</button><button class="btn" id="downloadBtn" disabled>PNG Speichern</button></div>
       </div>
     </main>
   </div>
