@@ -2,33 +2,35 @@
 :root {
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   
-  /* Dark Mode Defaults (Base) */
-  --bg-base: #0d1117;
-  --text-main: #e6edf3;
-  --text-muted: #7d8590;
+  /* Dark Mode Defaults */
+  --bg-base: #0f1115;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
   --accent: #38bdf8;
   --accent-hover: #0284c7;
   
-  /* Glass Variables (Dein genauer Code + kleine Anpassungen fürs Layout) */
-  --glass-bg: rgba(255, 255, 255, 0.05);
+  /* Glassmorphism Variables (Based on your exact CSS) */
+  --glass-bg: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --glass-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --glass-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.3);
   --glass-highlight-bot: inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  --glass-blur: 16px;
 }
 
 [data-theme="light"] {
-  --bg-base: #f0f4f8;
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
+  --bg-base: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
   --accent: #0ea5e9;
   --accent-hover: #0284c7;
   
   --glass-bg: rgba(255, 255, 255, 0.5);
-  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.6);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-  --glass-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 1);
-  --glass-highlight-bot: inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+  --glass-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --glass-highlight-bot: inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  --glass-blur: 20px;
 }
 
 /* ==================== RESET & AMBIENT BG ==================== */
@@ -37,11 +39,10 @@ body {
   font-family: var(--font-mono);
   background-color: var(--bg-base);
   color: var(--text-main);
-  overflow: hidden; /* VS Code Layout ist 100vh fixiert */
+  overflow: hidden; /* Prevent body scroll, layout handles it */
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* Atmosphärischer Hintergrund, damit das Glas bricht */
 .ambient-bg {
   position: fixed; inset: 0; z-index: -1; overflow: hidden;
   background: radial-gradient(circle at 50% 50%, var(--bg-base) 0%, #000 100%);
@@ -49,64 +50,62 @@ body {
 [data-theme="light"] .ambient-bg { background: var(--bg-base); }
 
 .blob {
-  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.6;
+  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5;
   animation: float 20s infinite ease-in-out alternate;
 }
-.blob-1 { width: 40vw; height: 40vw; background: #0284c7; top: -10%; left: -10%; }
+.blob-1 { width: 40vw; height: 40vw; background: #0ea5e9; top: -10%; left: -10%; }
 .blob-2 { width: 35vw; height: 35vw; background: #4f46e5; bottom: -10%; right: -5%; animation-delay: -5s; }
-.blob-3 { width: 30vw; height: 30vw; background: #0ea5e9; top: 40%; left: 40%; animation-delay: -10s; }
-[data-theme="light"] .blob { opacity: 0.3; }
+.blob-3 { width: 30vw; height: 30vw; background: #38bdf8; top: 40%; left: 40%; animation-delay: -10s; }
+[data-theme="light"] .blob { opacity: 0.25; }
 
 @keyframes float {
   0% { transform: translate(0, 0) scale(1); }
   100% { transform: translate(50px, 50px) scale(1.1); }
 }
 
-/* ==================== GLASSMORPHISM CORE (Deine Vorgabe) ==================== */
+/* ==================== GLASSMORPHISM CORE ==================== */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 .glass-card {
-  background: var(--glass-bg);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 12px;
   border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow), var(--glass-highlight-top), var(--glass-highlight-bot);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    var(--glass-highlight-top),
+    var(--glass-highlight-bot);
   position: relative;
   overflow: hidden;
 }
-/* Dekorative Highlights */
+[data-theme="light"] .glass-card { background: rgba(255, 255, 255, 0.4); }
+
+/* Ästhetische Linien nach deiner Vorgabe */
 .glass-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
 }
 .glass-card::after {
   content: ''; position: absolute; top: 0; left: 0; width: 1px; height: 100%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent, rgba(255, 255, 255, 0.1));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent, rgba(255, 255, 255, 0.1));
 }
 
 .padding-sm { padding: 12px; }
 
 /* ==================== VS CODE LAYOUT ==================== */
-.vscode-layout {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-}
+.vscode-layout { display: flex; height: 100vh; width: 100vw; }
 
 /* 1. Activity Bar */
 .activity-bar {
-  width: 50px;
-  border-right: 1px solid var(--glass-border);
-  display: flex; flex-direction: column;
-  justify-content: space-between; align-items: center;
-  padding: 15px 0; z-index: 50;
+  width: 50px; border-right: 1px solid var(--glass-border); display: flex; flex-direction: column;
+  justify-content: space-between; align-items: center; padding: 15px 0; z-index: 50;
 }
-.brand { font-family: "VT323", monospace; font-size: 22px; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 10px var(--accent); }
+.brand { font-family: "VT323", monospace; font-size: 22px; color: var(--accent); margin-bottom: 20px; }
 .activity-btn {
   background: none; border: none; color: var(--text-muted); font-size: 18px;
   cursor: pointer; padding: 10px; border-radius: 8px; transition: 0.2s; margin-bottom: 8px;
@@ -114,10 +113,7 @@ body {
 .activity-btn:hover, .activity-btn.active { color: var(--text-main); background: rgba(255,255,255,0.1); }
 
 /* 2. Sidebar */
-.sidebar {
-  width: 320px; display: flex; flex-direction: column;
-  border-right: 1px solid var(--glass-border); z-index: 40;
-}
+.sidebar { width: 340px; display: flex; flex-direction: column; border-right: 1px solid var(--glass-border); z-index: 40; }
 .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--glass-border); }
 .sidebar-header h1 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-main); }
 
@@ -125,18 +121,14 @@ body {
 .sidebar-content::-webkit-scrollbar { width: 6px; }
 .sidebar-content::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 3px; }
 
-/* 3. Sidebar Actions (Fixiert den Render/PNG Bug) */
-.sidebar-actions {
-  padding: 16px 20px; border-top: 1px solid var(--glass-border);
-  display: flex; gap: 10px; flex-shrink: 0;
-}
+/* 3. Sidebar Actions (Fixed at bottom) */
+.sidebar-actions { padding: 16px 20px; border-top: 1px solid var(--glass-border); display: flex; gap: 10px; flex-shrink: 0; }
 
 /* 4. Main View */
-.main-view { flex: 1; display: flex; flex-direction: column; position: relative; }
-.editor-header {
-  height: 40px; border-bottom: 1px solid var(--glass-border);
-  display: flex; justify-content: space-between; align-items: center; padding: 0 16px;
-}
+.main-view { flex: 1; display: flex; flex-direction: column; position: relative; background: rgba(0,0,0,0.2); }
+[data-theme="light"] .main-view { background: rgba(255,255,255,0.2); }
+
+.editor-header { height: 40px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; padding: 0 16px; }
 .tabs { display: flex; height: 100%; }
 .tab { padding: 0 16px; display: flex; align-items: center; font-size: 12px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
 .tab.active { color: var(--text-main); border-bottom-color: var(--accent); }
@@ -144,7 +136,7 @@ body {
 .toolbar .tool-btn:hover { color: var(--text-main); }
 
 .editor-content { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
-.canvas-wrap { transition: transform 0.1s cubic-bezier(0.2, 0, 0.2, 1); transform-origin: center center; }
+.canvas-wrap { transition: transform 0.1s cubic-bezier(0.2, 0, 0.2, 1); transform-origin: center center; position: relative; }
 canvas { background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.5); max-width: 90vw; max-height: 80vh; object-fit: contain; }
 
 /* ==================== UI COMPONENTS ==================== */
@@ -156,34 +148,43 @@ canvas { background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.5); max-width: 9
 
 /* Buttons */
 .glass-btn {
-  background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: var(--text-main);
   border-radius: 6px; cursor: pointer; transition: all 0.2s; font-family: var(--font-mono);
-  box-shadow: var(--glass-highlight-top);
+  box-shadow: var(--glass-highlight-top); position: relative; z-index: 2;
 }
 .glass-btn:hover { background: rgba(255, 255, 255, 0.15); }
-.glass-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.glass-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 .glass-btn.primary:hover { background: var(--accent-hover); }
 .glass-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn { padding: 12px; flex: 1; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
 .btn-sm { padding: 6px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
 
+/* Inputs */
+.text-input, .yaml-area { width: 100%; border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-main); font-family: var(--font-mono); font-size: 11px; padding: 8px 10px; outline: none; background: rgba(0,0,0,0.2); }
+.text-input:focus, .yaml-area:focus { border-color: var(--accent); }
+.yaml-area { resize: vertical; }
+
+/* Segmented Buttons */
+.segmented { display: flex; border-radius: 8px; overflow: hidden; }
+.segmented button { flex: 1; background: transparent; border: none; border-right: 1px solid var(--glass-border); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; padding: 8px 4px; cursor: pointer; color: var(--text-main); position: relative; z-index: 2; }
+.segmented button:last-child { border-right: none; }
+.segmented button.active { background: var(--accent); color: #fff; }
+
 /* Dropzone */
 .dropzone { text-align: center; cursor: pointer; transition: 0.2s; padding: 24px 12px; }
-.dropzone:hover { border-color: var(--accent); }
-.dropzone .big { font-family: "VT323", monospace; font-size: 22px; color: var(--text-main); }
-.dropzone .small { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
-input[type=file] { display: none; } /* Nativer Button versteckt */
+.dropzone:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
+.dropzone .big { font-family: "VT323", monospace; font-size: 22px; color: var(--text-main); position: relative; z-index: 2; }
+.dropzone .small { font-size: 10px; color: var(--text-muted); margin-top: 4px; position: relative; z-index: 2; }
 
 /* Sliders */
-label.field { display: block; margin-bottom: 12px; }
+label.field { display: block; margin-bottom: 12px; position: relative; z-index: 2; }
 label.field:last-child { margin-bottom: 0; }
 label.field .name { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-label.field .name b { color: var(--accent); }
+label.field .name b { color: var(--text-main); }
 input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; margin-top: 4px; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; transition: 0.1s; border: 2px solid var(--bg-base); }
-input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg-base); }
 
-/* Scroll Lists (Profile & Presets) */
+/* Scroll Lists */
 .scroll-list { max-height: 200px; overflow-y: auto; }
 .scroll-list::-webkit-scrollbar { width: 4px; }
 .scroll-list::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 2px; }
@@ -194,17 +195,24 @@ input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
 .sli-row { display: flex; justify-content: space-between; align-items: center; }
 .sli-name { font-size: 11px; font-weight: 600; }
 .sli-badge { font-size: 8px; padding: 2px 4px; border: 1px solid currentColor; border-radius: 3px; opacity: 0.8; }
-.preset-actions { display: flex; gap: 6px; margin-top: 8px; }
+.preset-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Checkboxes */
+.checks { display: flex; flex-direction: column; gap: 6px; }
+.check { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.check .box { width: 14px; height: 14px; border: 1px solid var(--glass-border); border-radius: 3px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; }
+.check.on .box { background: var(--accent); border-color: var(--accent); }
+.check.on .box::after { content: "×"; color: #fff; font-size: 14px; line-height: 1; font-family: "VT323"; margin-top: -2px; }
 
 /* Color Picker & Swatches */
 .color-picker-wrap { display: flex; align-items: center; gap: 10px; padding: 6px 10px; }
-input[type=color] { -webkit-appearance: none; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; background: none; padding: 0; }
+input[type=color] { -webkit-appearance: none; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; background: none; padding: 0; position: relative; z-index: 2; }
 input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
 input[type=color]::-webkit-color-swatch { border: 1px solid var(--glass-border); border-radius: 4px; }
-.hex-display { font-size: 11px; color: var(--text-main); font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.hex-display { font-size: 11px; color: var(--text-main); font-variant-numeric: tabular-nums; text-transform: uppercase; position: relative; z-index: 2; }
 
-.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
-.swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--glass-border); cursor: pointer; position: relative; }
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; padding: 4px; }
+.swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--glass-border); cursor: pointer; position: relative; z-index: 2; }
 .swatch.active::after { content: ""; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 8px; }
 
 /* Errors (Collapsible) */
@@ -215,10 +223,16 @@ input[type=color]::-webkit-color-swatch { border: 1px solid var(--glass-border);
 .er-check { width: 14px; height: 14px; border: 1px solid var(--glass-border); border-radius: 3px; display: flex; align-items: center; justify-content: center; }
 .er.on .er-check { background: var(--accent); border-color: var(--accent); }
 .er.on .er-check::after { content: "×"; color: #fff; font-size: 14px; line-height: 1; font-family: "VT323"; margin-top: -2px; }
-.er-name { flex: 1; font-weight: 600; }
+.er-name { flex: 1; font-weight: 600; text-transform: uppercase; }
 .er-val { color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 .er.on .er-val { color: var(--accent); }
 .er-body { display: none; padding: 0 12px 12px; }
 .er.on .er-body { display: block; }
 
-.status-badge { position: absolute; bottom: 20px; right: 20px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; z-index: 100; padding: 6px 12px; }
+.status-badge { position: absolute; bottom: 20px; right: 20px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; z-index: 100; font-weight: 600; }
+.profile-meta { font-size: 10px; color: var(--text-muted); margin-top: 6px; text-align: center; }
+
+.ascii {
+  position: absolute; top: 0; left: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 8px; line-height: 0.9;
+  white-space: pre; background: rgba(0,0,0,0.8); color: var(--accent); border-radius: 4px; padding: 10px;
+}
