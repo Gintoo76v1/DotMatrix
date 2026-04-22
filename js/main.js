@@ -6,20 +6,29 @@ function showError(msg) {
   const pop = document.getElementById('errorPopup');
   const txt = document.getElementById('errorText');
   if(pop && txt) {
-    txt.textContent = msg; pop.classList.add('show'); setTimeout(() => pop.classList.remove('show'), 7000); 
-  } else console.error(msg); 
+    txt.textContent = msg;
+    pop.classList.add('show');
+    setTimeout(() => pop.classList.remove('show'), 7000); 
+  } else {
+    console.error(msg); 
+  }
 }
 
 const errorCloseBtn = document.getElementById('errorCloseBtn');
-if (errorCloseBtn) errorCloseBtn.onclick = () => document.getElementById('errorPopup').classList.remove('show');
+if (errorCloseBtn) {
+  errorCloseBtn.onclick = () => { document.getElementById('errorPopup').classList.remove('show'); };
+}
 
-window.onerror = function(message, source, lineno, colno, error) { showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; };
-window.addEventListener('unhandledrejection', function(event) { showError(`[Promise Fehler]: ${event.reason}`); });
+window.onerror = function(message, source, lineno, colno, error) {
+  showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; 
+};
+window.addEventListener('unhandledrejection', function(event) {
+  showError(`[Promise Fehler]: ${event.reason}`);
+});
 
 // ==================== STRICT TOUCH ZONE LOCK ====================
-// Tötet den gesamten nativen Safari Auto-Zoom / Scroll (Außer auf Listen!)
+// Blockiert alles Wischen/Zoomen auf der restlichen Website
 document.addEventListener('touchmove', function(e) {
-  // Wenn der Finger NICHT auf einer Liste ist -> Blockieren!
   if (!e.target.closest('.scroll-list, .sidebar-scrollable, .yaml-area')) {
     e.preventDefault();
   }
@@ -62,6 +71,7 @@ function playClickSound() {
   } catch(e) {} 
 }
 
+// ==================== SCHOCKWELLEN EFFEKT ====================
 let isDragging = false;
 document.addEventListener('pointerup', (e) => {
   if (isDragging) return; 
@@ -75,14 +85,20 @@ document.addEventListener('pointerup', (e) => {
   document.body.appendChild(r); setTimeout(() => r.remove(), 600); 
 });
 
-// ==================== PAN & ZOOM SYSTEM ====================
+// ==================== 🛠️ BUGFIX: PAN & ZOOM SYSTEM (ROBUST & TELEPORT-FREE) ====================
 const zoomContainer = document.getElementById('zoomContainer');
 const canvasWrapper = document.getElementById('canvasWrapper');
 const zoomLevelText = document.getElementById('zoomLevel');
 const outCanvas = document.getElementById('outCanvas');
 
-let currentZoom = 1; let panX = 0, panY = 0;
-let startX, startY; let pointers = [];
+let currentZoom = 1; 
+let panX = 0, panY = 0;
+let pointers = [];
+
+// Hilfsvariablen für sauberes Tracking
+let startX = 0, startY = 0; 
+let prevDiff = -1;
+let prevCenterX = 0, prevCenterY = 0;
 
 function updateTransform(smooth = false) {
   if (!zoomContainer || !zoomLevelText) return;
@@ -99,9 +115,17 @@ if (canvasWrapper) {
   canvasWrapper.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; 
     pointers.push(e);
+    canvasWrapper.setPointerCapture(e.pointerId);
+
     if (pointers.length === 1) {
-      isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY;
-      canvasWrapper.setPointerCapture(e.pointerId);
+      isDragging = true;
+      startX = e.clientX - panX; 
+      startY = e.clientY - panY;
+    } else if (pointers.length === 2) {
+      // Zwei Finger: Merke dir die Mitte (Centroid) und den Abstand
+      prevCenterX = (pointers[0].clientX + pointers[1].clientX) / 2;
+      prevCenterY = (pointers[0].clientY + pointers[1].clientY) / 2;
+      prevDiff = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
     }
   });
 
@@ -110,22 +134,54 @@ if (canvasWrapper) {
     if (index !== -1) pointers[index] = e;
 
     if (pointers.length === 1 && isDragging) {
-      panX = e.clientX - startX; panY = e.clientY - startY; updateTransform(false);
+      // Normales 1-Finger Verschieben
+      panX = pointers[0].clientX - startX; 
+      panY = pointers[0].clientY - startY; 
+      updateTransform(false);
+      
     } else if (pointers.length === 2) {
-      const dist = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
-      if (!canvasWrapper.lastDist) { canvasWrapper.lastDist = dist; return; }
-      currentZoom = Math.max(0.2, Math.min(currentZoom + (dist - canvasWrapper.lastDist) * 0.01, 5));
-      updateTransform(false); canvasWrapper.lastDist = dist;
+      // 2-Finger Zoom UND Verschieben (Pan)
+      const curCenterX = (pointers[0].clientX + pointers[1].clientX) / 2;
+      const curCenterY = (pointers[0].clientY + pointers[1].clientY) / 2;
+      const curDiff = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
+
+      // Zwei-Finger-Pan anwenden (verhindert das Zittern)
+      panX += curCenterX - prevCenterX;
+      panY += curCenterY - prevCenterY;
+
+      // Zwei-Finger-Zoom anwenden
+      if (prevDiff > 0) {
+        currentZoom = Math.max(0.2, Math.min(currentZoom + (curDiff - prevDiff) * 0.01, 5));
+      }
+
+      updateTransform(false);
+
+      // Zustand für nächsten Frame speichern
+      prevCenterX = curCenterX;
+      prevCenterY = curCenterY;
+      prevDiff = curDiff;
     }
   });
 
+  // TELEPORT-FIX: Sauberes Loslassen der Finger
   const pointerUp = (e) => {
     pointers = pointers.filter(p => p.pointerId !== e.pointerId);
-    if (pointers.length < 2) canvasWrapper.lastDist = null;
-    if (pointers.length === 0) { setTimeout(() => { isDragging = false; }, 50); canvasWrapper.releasePointerCapture(e.pointerId); }
+    canvasWrapper.releasePointerCapture(e.pointerId);
+    
+    if (pointers.length === 1) {
+      // Wenn man von 2 Fingern auf 1 Finger wechselt -> Soft Reset!
+      // Berechnet den Startpunkt für den verbleibenden Finger neu, damit das Bild nicht springt.
+      startX = pointers[0].clientX - panX;
+      startY = pointers[0].clientY - panY;
+    } else if (pointers.length === 0) {
+      isDragging = false;
+      prevDiff = -1;
+    }
   };
+  
   canvasWrapper.addEventListener('pointerup', pointerUp);
   canvasWrapper.addEventListener('pointercancel', pointerUp);
+  canvasWrapper.addEventListener('pointerout', pointerUp);
 
   canvasWrapper.addEventListener('wheel', (e) => {
     e.preventDefault(); 
