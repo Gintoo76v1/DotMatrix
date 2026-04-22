@@ -6,25 +6,24 @@ function showError(msg) {
   const pop = document.getElementById('errorPopup');
   const txt = document.getElementById('errorText');
   if(pop && txt) {
-    txt.textContent = msg;
-    pop.classList.add('show');
-    setTimeout(() => pop.classList.remove('show'), 7000); 
-  } else {
-    console.error(msg); 
-  }
+    txt.textContent = msg; pop.classList.add('show'); setTimeout(() => pop.classList.remove('show'), 7000); 
+  } else console.error(msg); 
 }
 
 const errorCloseBtn = document.getElementById('errorCloseBtn');
-if (errorCloseBtn) {
-  errorCloseBtn.onclick = () => { document.getElementById('errorPopup').classList.remove('show'); };
-}
+if (errorCloseBtn) errorCloseBtn.onclick = () => document.getElementById('errorPopup').classList.remove('show');
 
-window.onerror = function(message, source, lineno, colno, error) {
-  showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; 
-};
-window.addEventListener('unhandledrejection', function(event) {
-  showError(`[Promise Fehler]: ${event.reason}`);
-});
+window.onerror = function(message, source, lineno, colno, error) { showError(`[JS Fehler]: ${message} (Zeile ${lineno})`); return false; };
+window.addEventListener('unhandledrejection', function(event) { showError(`[Promise Fehler]: ${event.reason}`); });
+
+// ==================== STRICT TOUCH ZONE LOCK ====================
+// Tötet den gesamten nativen Safari Auto-Zoom / Scroll (Außer auf Listen!)
+document.addEventListener('touchmove', function(e) {
+  // Wenn der Finger NICHT auf einer Liste ist -> Blockieren!
+  if (!e.target.closest('.scroll-list, .sidebar-scrollable, .yaml-area')) {
+    e.preventDefault();
+  }
+}, { passive: false });
 
 // ==================== LANGUAGE ====================
 const translations = {
@@ -94,10 +93,8 @@ function updateTransform(smooth = false) {
 
 if (canvasWrapper) {
   
-  // Nativer Blocker: Verbietet Safari, das Canvas beim Draggen wie eine Webseite zu verschieben
-  canvasWrapper.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-  }, { passive: false });
+  // Nativer Touch-Schutz auf dem Canvas
+  canvasWrapper.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
   canvasWrapper.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; 
@@ -312,12 +309,24 @@ function renderPresetList() {
 }
 
 function downloadText(text, filename) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
-document.getElementById('exportPresetBtn').addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
-document.getElementById('exportCurrentBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); document.getElementById('presetYamlArea').value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
-document.getElementById('importPresetBtn').addEventListener('click', () => document.getElementById('presetFileInput').click());
-document.getElementById('presetFileInput').addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
-document.getElementById('savePresetBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return showError('Name für das Preset ist erforderlich.'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
-document.getElementById('importYamlBtn').addEventListener('click', () => { const text = document.getElementById('presetYamlArea').value.trim(); if (!text) return showError('Bitte füge YAML Code in das Textfeld ein!'); importFromText(text); });
+
+const expBtn = document.getElementById('exportPresetBtn');
+if (expBtn) expBtn.addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+
+const expCurBtn = document.getElementById('exportCurrentBtn');
+if (expCurBtn) expCurBtn.addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); const area = document.getElementById('presetYamlArea'); if(area) area.value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+
+const impBtn = document.getElementById('importPresetBtn');
+if (impBtn) impBtn.addEventListener('click', () => { const fi = document.getElementById('presetFileInput'); if(fi) fi.click(); });
+
+const preFile = document.getElementById('presetFileInput');
+if (preFile) preFile.addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
+
+const saveBtn = document.getElementById('savePresetBtn');
+if (saveBtn) saveBtn.addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return showError('Name für das Preset ist erforderlich.'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
+
+const impYamlBtn = document.getElementById('importYamlBtn');
+if (impYamlBtn) impYamlBtn.addEventListener('click', () => { const area = document.getElementById('presetYamlArea'); if(!area || !area.value.trim()) return showError('Bitte füge YAML Code in das Textfeld ein!'); importFromText(area.value.trim()); });
 
 function importFromText(text) {
   try {
