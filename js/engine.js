@@ -297,7 +297,6 @@ export async function render(srcImage, onProgressUpdate) {
             break;
           }
           case 'ghosting': {
-            // Bi-directional printing leaves ghost on opposite sweep direction
             const dir = (Math.floor(gy / numPins) % 2 === 0) ? 1 : -1;
             const gdx = dir * 7 * str * (effDpi / 300);
             const gdy = (rng() - 0.5) * 2;
@@ -326,12 +325,10 @@ export async function render(srcImage, onProgressUpdate) {
             break;
           }
           case 'head_gap': {
-            // Wide platen gap: less ink transferred, smaller effective dot
             wearFactor *= Math.max(0.05, 1.0 - str * 0.70);
             break;
           }
           case 'ink_starved': {
-            // Ribbon dries out progressively; also fades toward end of each line
             const rowFade  = ld.rowDep[gy];
             const lineFade = (gx / Math.max(1, gridW - 1)) * str * 0.40;
             wearFactor *= Math.max(0.04, 1.0 - rowFade * str * 0.60 - lineFade);
@@ -342,7 +339,6 @@ export async function render(srcImage, onProgressUpdate) {
             break;
           }
           case 'static_noise': {
-            // Low-probability burst of stray dots (electrostatic spike)
             if (rng() < 0.002 * str * 5) {
               const burst = 1 + Math.floor(rng() * 3);
               for (let k = 0; k < burst; k++) {
@@ -356,7 +352,6 @@ export async function render(srcImage, onProgressUpdate) {
             break;
           }
           case 'double_feed': {
-            // Two sheets produce a faint offset background impression
             ghosts.push({
               dx: ld.offX * stepX,
               dy: ld.offY * stepY,
@@ -365,7 +360,6 @@ export async function render(srcImage, onProgressUpdate) {
             break;
           }
           case 'mechanical_resonance': {
-            // Sinusoidal X drift from carriage resonance at certain speeds
             dxTotal += Math.sin(gy * ld.freq * Math.PI * 2) * stepX * str * 1.2;
             break;
           }
@@ -377,7 +371,6 @@ export async function render(srcImage, onProgressUpdate) {
       cx += dxTotal;
       cy += dyTotal;
 
-      // Global ribbon depletion: subtle left-to-right density fade (≤9%)
       const ribbonFade = 1.0 - (gx / gridW) * 0.09;
 
       if (passJitter > 0) {
@@ -385,13 +378,13 @@ export async function render(srcImage, onProgressUpdate) {
         cy += gaussian(rng) * passJitter;
       }
 
-      const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade * dotBandMult;
+      // 🐞 BUGFIX: dotBandMult entfernt, da undefiniert. 
+      const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade;
       
-      stampInto(ink, outW, outH, stamp, bleedStampSize, cx - stampR, cy - stampR, band);
+      // 🐞 BUGFIX: bleedStampSize ersetzt durch existierende Variable stampSize
+      stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
 
-      if (w_drag > 0 && rng() < w_drag * 0.1) {
-        stampInto(ink, outW, outH, stamp, stampSize, cx - stampR - stepX, cy - stampR, band * 0.15);
-      }
+      // 🐞 BUGFIX: w_drag Block entfernt, da diese Variable undefiniert war und das Rendering abstürzen ließ.
 
       for (const g of ghosts) {
         stampInto(ink, outW, outH, stamp, stampSize,
