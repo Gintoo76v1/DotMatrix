@@ -2,11 +2,10 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <title>DotMatrix Studio</title>
 
 <link rel="icon" type="image/png" href="favicon.png">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -199,7 +198,6 @@
         <div style="display:flex; align-items:center; gap: 20px;">
           <div class="zoom-controls">
             <button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button>
-            <button id="loupeToggle" title="Lupe aktivieren" style="margin-left:8px; font-size:12px;">🔍</button>
           </div>
           <div class="app-logo">DotMatrix<span style="color:var(--accent)">.</span></div>
         </div>
@@ -209,9 +207,6 @@
         <div class="zoom-container" id="zoomContainer">
           <canvas id="outCanvas" width="400" height="300"></canvas>
           <pre id="ascii" class="ascii empty">// Bild laden //</pre>
-        </div>
-        <div id="loupe" class="glass-panel">
-          <canvas id="loupeCanvas" width="160" height="160"></canvas>
         </div>
       </div>
       
