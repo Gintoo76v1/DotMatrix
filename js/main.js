@@ -596,13 +596,25 @@ function applyPreset(preset) {
     }
   }
 
-  // Paper swatch (null = keep auto-detected)
-  if (preset.paper) {
-    state.paper = preset.paper;
-    const paperStr = preset.paper.join(',');
-    document.querySelectorAll('#paperSwatches .swatch').forEach(s => {
-      s.classList.toggle('active', s.dataset.paper === paperStr);
-    });
+  // 🐞 BUGFIX: Wenn preset.paper === null ist, darf das nicht ignoriert werden!
+  // Wir erkennen die Papierfarbe neu oder setzen sie auf Standard-Weiß.
+  if (preset.paper !== undefined) {
+    if (preset.paper === null) {
+      if (state.sourceImage) {
+        detectAndSetPaperColor(state.sourceImage);
+      } else {
+        state.paper = [255, 255, 255]; // Standard-Fallback
+        document.querySelectorAll('#paperSwatches .swatch').forEach(s => {
+          s.classList.toggle('active', s.dataset.paper === "255,255,255");
+        });
+      }
+    } else {
+      state.paper = preset.paper;
+      const paperStr = preset.paper.join(',');
+      document.querySelectorAll('#paperSwatches .swatch').forEach(s => {
+        s.classList.toggle('active', s.dataset.paper === paperStr);
+      });
+    }
   }
 
   // Checkboxes (doubleStrike, condensed, softBlur, invert)
