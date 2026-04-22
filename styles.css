@@ -1,4 +1,4 @@
-/* ==================== THEME VARIABLES & DYNAMIC ACCENTS ==================== */
+/* ==================== THEME VARIABLES & MINIMAL ACCENTS ==================== */
 :root {
   --accent: #f5a623; 
   --accent-soft: rgba(245, 166, 35, 0.2);
@@ -35,9 +35,14 @@ body.light-mode {
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+/* FIX: DER ULTIMATIVE SCHUTZ GEGEN SAFARI AUTO-ZOOM! */
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  overflow: hidden; overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%; /* Verhindert Text-Gigantismus */
+}
+
 body {
-  position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none;
-  margin: 0; padding: 0; height: 100dvh; width: 100vw; z-index: 1;
   font-family: 'Outfit', system-ui, sans-serif; 
   font-size: 13.5px; line-height: 1.45;
   background-color: var(--bg-color); color: var(--ink); transition: background-color 0.3s;
@@ -83,9 +88,10 @@ input[type="file"] { display: none; }
 }
 
 /* APP LAYOUT */
-.app-container { display: flex; height: 100dvh; width: 100vw; gap: 16px; padding: 16px; min-height: 0; z-index: 1;}
+.app-container { display: flex; height: 100%; width: 100%; gap: 16px; padding: 16px; min-height: 0; z-index: 1;}
 .activity-bar { width: 75px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 12px; }
 
+/* Erlaubt Klicken, blockiert Doppel-Tipp Zoom */
 button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-action: manipulation; user-select: none; }
 
 .icon-btn { font-size: 24px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.4; transition: 0.3s; border-radius: 15px; background: transparent; border: 1px solid transparent; }
@@ -94,7 +100,7 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-
 .spacer { flex-grow: 1; }
 
 .sidebar { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; }
-.sidebar-scrollable { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; padding-bottom: 30px; overscroll-behavior: contain; touch-action: pan-y; }
+.sidebar-scrollable { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; padding-bottom: 30px; overscroll-behavior: contain;}
 .tab-content { display: none; padding: 24px; }
 .tab-content.active { display: block; }
 
@@ -106,27 +112,23 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-
 .zoom-container { transform-origin: center center; display: flex; flex-direction: column; align-items: center; gap: 20px; }
 canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radius: 8px; max-width: none; }
 
-/* FIX: GESTAPELTE FLOATING BOXEN (Buttons oben, Status unten) */
+/* FIX: PERFEKT GESTAPELTE BOXEN (Unten Rechts) */
 .floating-container {
   position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 50;
-  width: 100%; max-width: 420px; padding: 0 20px; pointer-events: none; /* Klicks auf Lücken durchlassen */
+  width: 100%; max-width: 420px; padding: 0 20px; pointer-events: none;
 }
-
-.floating-actions {
-  width: 100%; padding: 16px; border-radius: 16px; pointer-events: auto;
-  /* Glass Panel Klasse übernimmt das Styling */
-}
-
-.action-buttons { display: flex; gap: 12px; width: 100%; }
-
 .status-panel {
   width: 100%; padding: 10px 16px; border-radius: 12px; pointer-events: auto;
   display: flex; justify-content: center; align-items: center;
   background: var(--paper-dark); border: 1px solid var(--glass-border);
   backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
 }
-.status-large { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent); text-align: center; font-weight: 700; }
+.status-large { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent); font-weight: 700; }
+.floating-actions {
+  width: 100%; padding: 16px; border-radius: 16px; pointer-events: auto;
+}
+.action-buttons { display: flex; gap: 12px; width: 100%; }
 
 /* Lupe */
 #loupe { position: absolute; width: 160px; height: 160px; border-radius: 50%; pointer-events: none; display: none; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,255,0.2); border: 2px solid var(--accent); overflow: hidden; background: var(--paper-dark); }
@@ -136,13 +138,11 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 .dropzone { flex-shrink: 0; min-height: 120px; display: flex; flex-direction: column; justify-content: center; background: var(--paper-dark); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-.text-input, .segmented { background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px; }
-
 .dropzone:hover { border-color: var(--accent); background: rgba(0,0,0,0.5); }
 .dropzone .big { margin-bottom: 6px; }
 .dropzone .small { font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.1em; }
 
-.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
+.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
 .sli { padding: 14px 16px; border-bottom: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s; }
 .sli:last-child { border-bottom: 0; }
 .sli:hover { background: rgba(255,255,255,0.1); }
@@ -157,12 +157,7 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .check .box { width: 22px; height: 22px; border: 1.5px solid var(--glass-border); border-radius: 7px; position: relative; background: rgba(0,0,0,0.2); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .check:hover .box { border-color: var(--accent); background: rgba(255,255,255,0.05); }
 .check.on .box { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px var(--accent-soft), inset 0 0 5px rgba(255,255,255,0.3); transform: scale(1.05); }
-.check .box::after, .er-check::after {
-  content: ""; position: absolute; top: 45%; left: 50%; width: 5px; height: 10px;
-  border: solid #000; border-width: 0 2.5px 2.5px 0;
-  transform: translate(-50%, -50%) rotate(45deg) scale(0);
-  opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
+.check .box::after, .er-check::after { content: ""; position: absolute; top: 45%; left: 50%; width: 5px; height: 10px; border: solid #000; border-width: 0 2.5px 2.5px 0; transform: translate(-50%, -50%) rotate(45deg) scale(0); opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 .check.on .box::after, .er.on .er-check::after { transform: translate(-50%, -50%) rotate(45deg) scale(1); opacity: 1; }
 .check span:not(.box) { letter-spacing: 0.1em; color: var(--ink-soft); transition: 0.2s ease; }
 .check.on span:not(.box) { color: var(--ink); font-weight: 700; }
@@ -172,10 +167,8 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .er:last-child { border-bottom: none; }
 .er-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; transition: background 0.2s; }
 .er-head:hover { background: rgba(255,255,255,0.05); }
-
 .er-check { width: 18px; height: 18px; border: 1.5px solid var(--glass-border); border-radius: 5px; position: relative; background: rgba(0,0,0,0.2); transition: all 0.3s; }
 .er.on .er-check { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--accent-soft); }
-
 .er-name { font-size: 12px; text-transform: uppercase; flex-grow: 1; letter-spacing: 0.05em; color: var(--ink); transition: 0.3s; }
 .er-val { font-size: 11px; color: var(--ink-soft); }
 .er.on .er-val { color: var(--accent); font-weight: 700; }
@@ -196,7 +189,8 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .btn-sm { padding: 10px 14px; border: 1px solid var(--glass-border); background: var(--paper-dark); color: var(--ink); cursor: pointer; border-radius: 8px; font-size: 12px; text-transform: uppercase; transition: 0.2s;}
 .btn-sm:hover { border-color: var(--accent); background: rgba(0,0,0,0.5);}
 
-.text-input, .color-picker { width: 100%; color: var(--ink); padding: 12px; font-size: 16px !important; /* VERHINDERT SAFARI AUTO-ZOOM! */ transition: 0.2s; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
+/* FIX: Verhindert den automatischen Safari Zoom bei Klicks auf Eingabefelder! */
+.text-input, .color-picker, select, input[type="text"] { width: 100%; color: var(--ink); padding: 12px; font-size: 16px !important; transition: 0.2s; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
 .text-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-soft);}
 .yaml-area { resize: vertical; font-size: 16px !important; }
 
@@ -215,7 +209,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .color-picker { width: 36px; height: 36px; padding: 0; cursor: pointer; }
 
 .segmented { overflow: hidden; display: flex; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
-.segmented.scrollable { overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x; }
+.segmented.scrollable { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .segmented button { flex: 1; background: transparent; border: none; border-right: 1px solid var(--glass-border); color: var(--ink); padding: 12px 4px; cursor: pointer; font-size: 11px; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; min-width: 65px; transition: 0.2s;}
 .segmented button:last-child { border-right: none; }
 .segmented button.active { background: var(--accent); color: #000; font-weight: bold;}
@@ -227,10 +221,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .zoom-controls button:hover, .zoom-controls button.active { background: var(--accent-soft); border-color: var(--accent);}
 .zoom-controls span { font-size: 12px; display: inline-block; width: 45px; text-align: center; }
 
+/* PORTRAIT MODE (iPAD) */
 @media (orientation: portrait), (max-width: 900px) {
   .app-container { flex-direction: column; padding: 12px; gap: 12px; }
   .activity-bar { width: 100%; height: auto; flex-direction: row; justify-content: center; padding: 10px; gap: 20px; order: 1; }
   .main-editor { width: 100%; flex: 1 1 45%; order: 2; min-height: 400px; }
   .sidebar { width: 100%; flex: 1 1 55%; order: 3; }
-  .floating-container { bottom: 12px; padding: 0 12px; max-width: 100%; width: calc(100% - 24px); }
+  .floating-container { padding: 0 12px; max-width: 100%; width: calc(100% - 24px); bottom: 12px; }
 }
