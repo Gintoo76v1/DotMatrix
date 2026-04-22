@@ -132,7 +132,7 @@
 
         <div class="tab-content" id="tab-errors">
           <h2 data-i18n="errorsTitle">Hardware Fehler</h2>
-          <div class="error-container" id="errorList">
+          <div class="error-container scroll-list" id="errorList">
             <div class="er" data-pattern="cloudy"><div class="er-head"><span class="er-check"></span><span class="er-name">Cloudy</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="ghosting"><div class="er-head"><span class="er-check"></span><span class="er-name">Ghosting</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="misaligned"><div class="er-head"><span class="er-check"></span><span class="er-name">Wobble</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
@@ -179,16 +179,26 @@
     <main class="main-editor glass-panel">
       <div class="toolbar">
         <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
-        <div class="zoom-controls"><button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button></div>
+        <div class="zoom-controls">
+          <button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button>
+          <button id="loupeToggle" title="Lupe aktivieren" style="margin-left:12px; font-size:14px;">🔍</button>
+        </div>
       </div>
       <div class="canvas-wrapper" id="canvasWrapper">
         <div class="zoom-container" id="zoomContainer">
           <canvas id="outCanvas" width="400" height="300"></canvas>
           <pre id="ascii" class="ascii empty">// Bild laden //</pre>
         </div>
+        <div id="loupe" class="glass-panel">
+          <canvas id="loupeCanvas" width="160" height="160"></canvas>
+        </div>
       </div>
+      
+      <div class="status-panel glass-panel" id="statusPanel">
+        <span id="status" class="status-large">Warte auf Bild...</span>
+      </div>
+
       <div class="floating-actions glass-panel">
-        <div id="status" class="status-large">Warte auf Bild...</div>
         <div class="action-buttons">
           <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
           <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
