@@ -1,7 +1,7 @@
 import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render } from './engine.js';
 
-// ==================== GLOBAL ERROR CATCHER (FANCY POPUP) ====================
+// ==================== GLOBAL ERROR CATCHER ====================
 function showError(msg) {
   const pop = document.getElementById('errorPopup');
   const txt = document.getElementById('errorText');
@@ -93,6 +93,12 @@ function updateTransform(smooth = false) {
 }
 
 if (canvasWrapper) {
+  
+  // Nativer Blocker: Verbietet Safari, das Canvas beim Draggen wie eine Webseite zu verschieben
+  canvasWrapper.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+  }, { passive: false });
+
   canvasWrapper.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return; 
     pointers.push(e);
