@@ -17,8 +17,8 @@ const initAudio = () => {
   if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
   if (audioCtx.state === 'suspended') { audioCtx.resume(); }
 };
-document.addEventListener('touchstart', initAudio, { once: true, passive: true });
-document.addEventListener('mousedown', initAudio, { once: true, passive: true });
+// Browser verlangen einen Klick/Touch zum Freischalten von Audio
+document.addEventListener('pointerdown', initAudio, { once: true, passive: true });
 
 function playClickSound() {
   if (!state.uiSounds || !audioCtx) return;
@@ -32,16 +32,20 @@ function playClickSound() {
   osc.start(); osc.stop(audioCtx.currentTime + 0.03);
 }
 
-// Schöne Shockwaves bei Standard-Klicks
-document.addEventListener('click', (e) => {
+// Schöne Shockwaves bei Standard-Klicks (NICHT beim Draggen)
+document.addEventListener('pointerup', (e) => {
+  if (isDragging) return;
   if (!audioCtx) initAudio(); else if (audioCtx.state === 'suspended') audioCtx.resume();
-  if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) playClickSound();
+  
+  if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) {
+    playClickSound();
+  }
   
   if (['BUTTON','INPUT','SELECT'].includes(e.target.tagName)) return;
   
   const r = document.createElement('div'); r.className = 'click-shockwave';
   r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
-  document.body.appendChild(r); setTimeout(() => r.remove(), 600); 
+  document.body.appendChild(r); setTimeout(() => r.remove(), 600);
 });
 
 // ==================== PAN, ZOOM & LOUPE SYSTEM ====================
@@ -149,7 +153,7 @@ async function performRender() {
   isRendering = false; renderBtn.disabled = false;
 }
 
-// ==================== PRESET SYSTEM (RESTORED) ====================
+// ==================== PRESET SYSTEM (Wieder aus original Datei integriert!) ====================
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']); const lines = [];
   for (const [k, v] of Object.entries(preset)) {
@@ -204,7 +208,7 @@ function applyPreset(p) {
   if (p.gamma !== undefined) setS('gammaSlider', 'gammaVal', p.gamma);
   if (p.threshold !== undefined) setS('thresholdSlider', 'thresholdVal', p.threshold);
   if (p.dpi !== undefined) setS('dpiSlider', 'dpiVal', p.dpi);
-  if (p.jitterScale !== undefined) setS('jitterSlider', 'jitterVal', p.jitterScale * 10); // UI uses x10
+  if (p.jitterScale !== undefined) setS('jitterSlider', 'jitterVal', p.jitterScale * 10);
   if (p.bandingScale !== undefined) setS('bandingSlider', 'bandingVal', p.bandingScale * 10);
   if (p.maxSize !== undefined) setS('maxSizeSlider', 'maxSizeVal', p.maxSize);
   
@@ -248,41 +252,27 @@ function updateUIFromState() {
   document.querySelectorAll('.check').forEach(c => c.classList.toggle('on', state[c.dataset.flag]));
 }
 
+// Lade Presets aus config.js UND LocalStorage
 function renderPresetList() {
   const list = document.getElementById('presetList');
+  if(!list) return;
   list.innerHTML = '';
-  // Combines SYSTEM_PRESETS from config.js and user presets from LocalStorage
-  const allPresets = [...SYSTEM_PRESETS, ...loadUserPresets()];
-  
+  // Sicherstellen, dass SYSTEM_PRESETS geladen wurden
+  const allPresets = [...(SYSTEM_PRESETS || []), ...loadUserPresets()];
   allPresets.forEach(p => {
-    const el = document.createElement('div');
-    el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
-    
-    if(p.system) {
-      el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><span class="sli-badge">SYS</span></div>`;
-    } else {
-      el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><div><span class="sli-badge" style="margin-right:5px;">USR</span><button class="sli-del" title="Löschen">×</button></div></div>`;
-      el.querySelector('.sli-del').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if(confirm(`Preset "${p.name}" löschen?`)) { if(activePresetId === p.id) activePresetId = null; deleteUserPreset(p.id); }
-      });
+    const el = document.createElement('div'); el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
+    if(p.system) { 
+      el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><span class="sli-badge">SYS</span></div>`; 
+    } else { 
+      el.innerHTML = `<div class="sli-row" style="width:100%;"><span class="sli-name">${p.name}</span><div><span class="sli-badge" style="margin-right:5px;">USR</span><button class="sli-del" title="Löschen">×</button></div></div>`; 
+      el.querySelector('.sli-del').addEventListener('click', (e) => { e.stopPropagation(); if(confirm(`Preset "${p.name}" löschen?`)) { if(activePresetId === p.id) activePresetId = null; deleteUserPreset(p.id); }}); 
     }
-
-    el.addEventListener('click', () => {
-      activePresetId = p.id;
-      document.querySelectorAll('#presetList .sli').forEach(s => s.classList.remove('active'));
-      el.classList.add('active');
-      applyPreset(p);
-    });
+    el.addEventListener('click', () => { activePresetId = p.id; document.querySelectorAll('#presetList .sli').forEach(s => s.classList.remove('active')); el.classList.add('active'); applyPreset(p); });
     list.appendChild(el);
   });
 }
 
-function downloadText(text, filename) {
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
-  a.download = filename; document.body.appendChild(a); a.click(); a.remove();
-}
-
+function downloadText(text, filename) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
 document.getElementById('exportPresetBtn').addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
 document.getElementById('exportCurrentBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); document.getElementById('presetYamlArea').value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
 document.getElementById('importPresetBtn').addEventListener('click', () => document.getElementById('presetFileInput').click());
@@ -295,8 +285,7 @@ function importFromText(text) {
     const stripped = text.trim();
     let preset = stripped.startsWith('{') ? JSON.parse(stripped) : yamlToPreset(stripped);
     if (!preset.name) preset.name = 'Imported';
-    applyPreset(preset);
-    setStatus(`Importiert.`);
+    applyPreset(preset); setStatus(`Importiert.`);
     if (preset.name !== 'Imported') { preset.id = 'usr_' + Date.now(); preset.system = false; const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); }
   } catch (err) { alert('Import fehlgeschlagen: ' + err.message); }
 }
@@ -426,17 +415,40 @@ document.querySelectorAll('#errorList .er').forEach(er => {
   };
 });
 
-document.querySelectorAll('.check').forEach(el => el.onclick = () => { el.classList.toggle('on'); state[el.dataset.flag] = el.classList.contains('on'); triggerUpdate(); });
+document.querySelectorAll('.check').forEach(el => el.onclick = () => { 
+  if(el.dataset.flag === "bgAnim") {
+    state.bgAnim = el.classList.toggle('on');
+    updateBgAnim();
+  } else {
+    el.classList.toggle('on'); state[el.dataset.flag] = el.classList.contains('on'); triggerUpdate(); 
+  }
+});
+
+function updateBgAnim() {
+  const bg = document.getElementById('appBg');
+  const sel = document.getElementById('bgAnimStyleField');
+  if(state.bgAnim) {
+    bg.style.opacity = '1'; sel.style.opacity = '1'; document.getElementById('bgAnimSelector').disabled = false;
+  } else {
+    bg.style.opacity = '0'; sel.style.opacity = '0.4'; document.getElementById('bgAnimSelector').disabled = true;
+  }
+}
+
 document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => btn.onclick = () => {
   document.querySelectorAll('.activity-bar .icon-btn, .tab-content').forEach(el => el.classList.remove('active'));
   btn.classList.add('active'); document.getElementById(btn.dataset.tab).classList.add('active');
 });
+
 document.getElementById('themeAccentSelector').addEventListener('change', e => document.body.setAttribute('data-accent', e.target.value));
 document.getElementById('themeModeSelector').addEventListener('change', e => document.body.className = e.target.value === 'light' ? 'light-mode' : 'dark-mode');
 document.getElementById('langSelector').addEventListener('change', (e) => applyLanguage(e.target.value));
 
+document.getElementById('bgAnimSelector').addEventListener('change', e => {
+  document.getElementById('appBg').setAttribute('data-anim', e.target.value);
+});
+
 function updateProfileMeta() { const p = PROFILES[state.profile]; document.getElementById("profileMeta").textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi`; }
 
-// Init
-state.autoRender = true; state.uiSounds = true; state.wearLayers = []; 
+// ==================== INIT ====================
+state.autoRender = true; state.uiSounds = true; state.wearLayers = []; state.bgAnim = true;
 applyLanguage('de'); updateProfileMeta(); renderPresetList();
