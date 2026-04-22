@@ -1,73 +1,44 @@
 <!doctype html>
-<html lang="de" data-theme="dark">
+<html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="color-scheme" content="light dark">
-  <title>DotMatrix — Studio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>DotMatrix Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="dark-mode" data-accent="amber">
 
-  <div class="ambient-bg">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
+  <div class="app-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
   </div>
 
-  <div class="vscode-layout">
+  <div class="app-container">
     
     <nav class="activity-bar glass-panel">
-      <div class="activity-top">
-        <div class="brand" title="DotMatrix">DM</div>
-        <button class="activity-btn active" title="Einstellungen" data-i18n-title="navSettings">⚙️</button>
-      </div>
-      <div class="activity-bottom">
-        <button class="activity-btn" id="themeToggleBtn" title="Light/Dark Mode">🌓</button>
-        <button class="activity-btn" id="langDeBtn" title="Deutsch">🇩🇪</button>
-        <button class="activity-btn" id="langEnBtn" title="English">🇬🇧</button>
-      </div>
+      <div class="icon-btn active" data-tab="tab-source" title="Quelle">🖨️</div>
+      <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
+      <div class="icon-btn" data-tab="tab-errors" title="Hardware">🔧</div>
+      <div class="spacer"></div>
+      <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
     </nav>
 
     <aside class="sidebar glass-panel">
-      <header class="sidebar-header">
-        <h1 data-i18n="appTitle">DotMatrix Studio</h1>
-      </header>
-      
-      <div class="sidebar-content scrollable">
+      <div class="sidebar-scrollable">
         
-        <section class="config-section">
-          <div class="section-label" data-i18n="secSource">Quelle</div>
-          <div id="dropzone" class="dropzone glass-card">
-            <div class="big" id="dzBig" data-i18n="dzTap">Bild wählen</div>
+        <div class="tab-content active" id="tab-source">
+          <h2 data-i18n="sourceTitle">Bildquelle</h2>
+          <div id="dropzone" class="dropzone">
+            <div class="big" id="dzBig" data-i18n="dropzoneBig">Bild auswählen</div>
             <div class="small" id="dzSmall">PNG · JPG · HEIC · WebP</div>
             <input type="file" id="fileInput" accept="image/*">
           </div>
-        </section>
 
-        <section class="config-section">
-          <div class="section-label" data-i18n="secPresets">Presets</div>
-          <div class="scroll-list glass-card" id="presetList"></div>
-          
-          <div style="margin-top:10px;">
-            <input type="text" id="presetNameInput" class="text-input glass-input" placeholder="Preset Name" autocomplete="off">
-            <div class="preset-actions">
-              <button class="btn-sm glass-btn" id="savePresetBtn" data-i18n="btnSavePreset">Save</button>
-              <button class="btn-sm glass-btn" id="exportPresetBtn" data-i18n="btnExport">Export</button>
-              <button class="btn-sm glass-btn" id="importPresetBtn" data-i18n="btnImport">Import</button>
-              <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
-            </div>
-            <textarea id="presetYamlArea" class="yaml-area glass-input" placeholder="Paste YAML here..." rows="3" style="margin-top:8px; display:none;"></textarea>
-            <button class="btn-sm glass-btn" id="importYamlBtn" style="margin-top:4px; display:none;">Apply YAML</button>
-          </div>
-        </section>
-
-        <section class="config-section">
-          <div class="section-label" data-i18n="secProfile">Drucker Profil</div>
-          <div class="scroll-list glass-card" id="profileList">
+          <h2 data-i18n="profileTitle" style="margin-top:24px;">Druckerprofil</h2>
+          <div class="scroll-list" id="profileList">
             <div class="sli" data-profile="epson_fx"><div class="sli-row"><span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span></div></div>
             <div class="sli" data-profile="epson_lq"><div class="sli-row"><span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span></div></div>
             <div class="sli" data-profile="ibm_proprinter"><div class="sli-row"><span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span></div></div>
@@ -80,93 +51,88 @@
             <div class="sli" data-profile="apple_imagewriter"><div class="sli-row"><span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span></div></div>
           </div>
           <div class="profile-meta" id="profileMeta"></div>
-          
           <div class="checks" style="margin-top:12px">
-            <label class="check glass-card" data-flag="doubleStrike"><span class="box"></span><span data-i18n="lblDoubleStrike">Double-strike</span></label>
-            <label class="check glass-card" data-flag="condensed"><span class="box"></span><span data-i18n="lblCondensed">Condensed Mode</span></label>
+            <label class="check" data-flag="doubleStrike"><span class="box"></span><span data-i18n="doubleStrike">Double-strike</span></label>
+            <label class="check" data-flag="condensed"><span class="box"></span><span data-i18n="condensedMode">Condensed Mode</span></label>
           </div>
-        </section>
 
-        <section class="config-section">
-          <div class="section-label" data-i18n="secAdjustments">Bildanpassung</div>
-          <div class="glass-card padding-sm">
-            <label class="field">
-              <span class="name"><span data-i18n="lblBrightness">Helligkeit</span><b id="brightnessVal">0</b></span>
-              <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
-            </label>
-            <label class="field">
-              <span class="name"><span data-i18n="lblContrast">Kontrast</span><b id="contrastVal">20</b></span>
-              <input type="range" id="contrastSlider" min="-100" max="100" value="20">
-            </label>
-            <label class="field">
-              <span class="name"><span>Gamma</span><b id="gammaVal">1.0</b></span>
-              <input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0">
-            </label>
-            <label class="field">
-              <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
-              <input type="range" id="thresholdSlider" min="0" max="255" value="128">
-            </label>
-          </div>
-          
-          <div class="segmented glass-card" id="ditherBtns" style="margin-top:10px;">
-            <button data-dither="floyd_steinberg">Floyd</button>
+          <h2 data-i18n="adjustTitle" style="margin-top:24px;">Bildanpassung</h2>
+          <label class="field"><span class="name"><span data-i18n="brightness">Helligkeit</span><b id="brightnessVal">0</b></span><input type="range" id="brightnessSlider" min="-100" max="100" value="0"></label>
+          <label class="field"><span class="name"><span data-i18n="contrast">Kontrast</span><b id="contrastVal">20</b></span><input type="range" id="contrastSlider" min="-100" max="100" value="20"></label>
+          <label class="field"><span class="name"><span data-i18n="gamma">Gamma</span><b id="gammaVal">1.0</b></span><input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0"></label>
+          <div class="checks" style="margin-top:12px;"><label class="check" data-flag="invert"><span class="box"></span><span data-i18n="invert">Invert Image</span></label></div>
+
+          <h2 data-i18n="halftoneTitle" style="margin-top:24px;">Halftone</h2>
+          <div class="segmented" id="ditherBtns">
+            <button data-dither="floyd_steinberg">Floyd-S</button>
             <button data-dither="ordered">Ordered</button>
             <button data-dither="threshold" class="active">Thresh</button>
           </div>
-        </section>
+          <label class="field" id="thresholdField" style="display:block; margin-top:12px;">
+            <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
+            <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+          </label>
 
-        <section class="config-section">
-          <div class="section-label" data-i18n="secMedia">Tinte & Papier</div>
-          <div class="grid-2">
-            <div>
-              <div class="sub-label" data-i18n="lblInk">Tinte</div>
-              <div class="color-picker-wrap glass-card">
-                <input type="color" id="inkColorPicker" value="#19191e">
-                <span id="inkHexDisplay" class="hex-display">#19191e</span>
-              </div>
-            </div>
-            <div>
-              <div class="sub-label" data-i18n="lblPaper">Papier</div>
-              <div class="swatches" id="paperSwatches">
-                <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232"></div>
-                <div class="swatch active" style="background:#ffffff" data-paper="255,255,255"></div>
-                <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="config-section">
-          <div class="section-label">Format & Output</div>
-          <div class="segmented glass-card" id="paperFormatBtns" style="margin-bottom:10px">
+          <h2 data-i18n="paperFormatTitle" style="margin-top:24px;">Paper & Format</h2>
+          <div class="segmented scrollable" id="paperFormatBtns" style="margin-bottom:12px">
             <button data-format="Original" class="active">Orig</button>
+            <button data-format="Fit">Auto</button>
             <button data-format="A4">A4</button>
             <button data-format="A5">A5</button>
             <button data-format="Letter">Letter</button>
           </div>
-          <div class="segmented glass-card" id="orientationBtns" style="margin-bottom:10px">
+          <div class="segmented" id="orientationBtns">
             <button data-orient="Portrait" class="active">Portrait</button>
             <button data-orient="Landscape">Landscape</button>
           </div>
-          <div class="glass-card padding-sm">
-            <label class="field">
-              <span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span>
-              <input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300">
-            </label>
-            <label class="field">
-              <span class="name"><span>Jitter</span><b id="jitterVal">1.0</b></span>
-              <input type="range" id="jitterSlider" min="0" max="30" value="10">
-            </label>
-            <label class="field">
-              <span class="name"><span>Banding</span><b id="bandingVal">1.0</b></span>
-              <input type="range" id="bandingSlider" min="0" max="20" value="10">
-            </label>
-          </div>
-        </section>
 
-        <section class="config-section">
-          <div class="section-label" data-i18n="secErrors">Hardware Fehler</div>
-          <div class="scroll-list glass-card" id="errorList">
+          <div class="grid-2" style="margin-top:24px;">
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;margin-bottom:8px; font-weight:600;" data-i18n="inkTitle">Tinte</div>
+              <div class="swatches" id="inkSwatches">
+                <div class="swatch active" style="background:#19191e" data-ink="25,25,30"></div>
+                <div class="swatch" style="background:#142d82" data-ink="20,45,130"></div>
+                <div class="swatch" style="background:#a01e23" data-ink="160,30,35"></div>
+                <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e"></div>
+              </div>
+              <div class="custom-ink-row" style="margin-top:10px;">
+                <input type="color" id="inkColorPicker" class="color-picker" value="#19191e">
+                <input type="text" id="inkHexInput" class="hex-input text-input" value="#19191e" maxlength="7" spellcheck="false">
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;margin-bottom:8px; font-weight:600;" data-i18n="paperTitle">Papier</div>
+              <div class="swatches" id="paperSwatches">
+                <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232"></div>
+                <div class="swatch active" style="background:#ffffff" data-paper="255,255,255"></div>
+                <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
+                <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-presets">
+          <h2 data-i18n="presetsTitle">Presets</h2>
+          <div class="scroll-list" id="presetList"></div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport" style="flex:1;">Export YAML</button>
+            <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport" style="flex:1;">Import YAML</button>
+            <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
+          </div>
+          <h2 style="margin-top:32px;" data-i18n="createPresetTitle">Preset Erstellen</h2>
+          <input type="text" id="presetNameInput" class="text-input" placeholder="Name">
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="btn-sm" id="savePresetBtn" style="flex:1;" data-i18n="btnSavePreset">Speichern</button>
+            <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">Als YAML exportieren</button>
+          </div>
+          <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code..." rows="10" style="margin-top:16px;"></textarea>
+          <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:10px;">Aus Textfeld anwenden</button>
+        </div>
+
+        <div class="tab-content" id="tab-errors">
+          <h2 data-i18n="errorsTitle">Hardware Fehler</h2>
+          <div class="error-container" id="errorList">
             <div class="er" data-pattern="cloudy"><div class="er-head"><span class="er-check"></span><span class="er-name">Cloudy</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="ghosting"><div class="er-head"><span class="er-check"></span><span class="er-name">Ghosting</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="misaligned"><div class="er-head"><span class="er-check"></span><span class="er-name">Wobble</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
@@ -180,37 +146,56 @@
             <div class="er" data-pattern="double_feed"><div class="er-head"><span class="er-check"></span><span class="er-name">Double Feed</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
             <div class="er" data-pattern="mechanical_resonance"><div class="er-head"><span class="er-check"></span><span class="er-name">Resonance</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
           </div>
-        </section>
 
-      </div> <footer class="sidebar-actions glass-panel">
-        <button class="btn primary glass-btn" id="renderBtn" disabled data-i18n="btnRender">Drucken</button>
-        <button class="btn glass-btn" id="downloadBtn" disabled data-i18n="btnDownload">PNG</button>
-      </footer>
+          <h2 style="margin-top:32px;">Erweiterte Optionen</h2>
+          <label class="field"><span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span><input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300"></label>
+          <label class="field"><span class="name"><span>Jitter Scale</span><b id="jitterVal">1.0</b></span><input type="range" id="jitterSlider" min="0" max="30" value="10"></label>
+          <label class="field"><span class="name"><span>Banding Scale</span><b id="bandingVal">1.0</b></span><input type="range" id="bandingSlider" min="0" max="20" value="10"></label>
+          <label class="field"><span class="name"><span>Max Size</span><b id="maxSizeVal">3000</b></span><input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="3000"></label>
+          <label class="field"><span class="name"><span>Seed</span><b id="seedVal">0</b></span><input type="range" id="seedSlider" min="0" max="9999" value="0"></label>
+          <div class="checks" style="margin-top:16px;"><label class="check" data-flag="softBlur"><span class="box"></span><span>Softening Blur</span></label></div>
+        </div>
+
+        <div class="tab-content" id="tab-system">
+          <h2 data-i18n="systemTitle">System Settings</h2>
+          <label class="field"><span class="name">Sprache</span><select id="langSelector" class="text-input"><option value="de">🇩🇪 Deutsch</option><option value="en">🇺🇸 English</option></select></label>
+          <label class="field" style="margin-top:20px;"><span class="name">Theme Accent</span>
+            <select id="themeAccentSelector" class="text-input">
+              <option value="amber" selected>🟠 Amber</option>
+              <option value="toxic">🟢 Toxic Green</option>
+              <option value="cyan">🔵 Cyan</option>
+              <option value="vapor">🟣 Vaporwave</option>
+              <option value="classic">🟤 Classic</option>
+            </select>
+          </label>
+          <div class="checks" style="margin-top:32px;">
+            <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
+            <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
+          </div>
+        </div>
+      </div>
     </aside>
 
-    <main class="main-view">
-      <div class="editor-header glass-panel">
-        <div class="tabs">
-          <div class="tab active" data-i18n="tabPreview">Live Vorschau</div>
-        </div>
-        <div class="toolbar">
-          <button class="tool-btn" id="zoomInBtn" title="Zoom In">🔍+</button>
-          <button class="tool-btn" id="zoomOutBtn" title="Zoom Out">🔍-</button>
-          <button class="tool-btn" id="zoomResetBtn" title="Reset Zoom">🔄</button>
+    <main class="main-editor glass-panel">
+      <div class="toolbar">
+        <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
+        <div class="zoom-controls"><button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button></div>
+      </div>
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <div class="zoom-container" id="zoomContainer">
+          <canvas id="outCanvas" width="400" height="300"></canvas>
+          <pre id="ascii" class="ascii empty">// Bild laden //</pre>
         </div>
       </div>
-      
-      <div class="editor-content" id="editorViewport">
-        <div class="canvas-wrap" id="canvasContainer">
-          <canvas id="outCanvas" width="400" height="300"></canvas>
-          <pre id="ascii" class="ascii empty" style="display:none;"></pre>
+      <div class="floating-actions glass-panel">
+        <div id="status" class="status-large">Warte auf Bild...</div>
+        <div class="action-buttons">
+          <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
+          <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
         </div>
-        <div id="status" class="status-badge glass-card padding-sm" data-i18n="statReady">Bereit.</div>
       </div>
     </main>
-
   </div>
-
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
