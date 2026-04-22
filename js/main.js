@@ -1,7 +1,7 @@
 import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render } from './engine.js';
 
-// ==================== GLOBAL ERROR CATCHER ====================
+// ==================== GLOBAL ERROR CATCHER (FANCY POPUP) ====================
 function showError(msg) {
   const pop = document.getElementById('errorPopup');
   const txt = document.getElementById('errorText');
@@ -306,24 +306,12 @@ function renderPresetList() {
 }
 
 function downloadText(text, filename) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
-
-const expBtn = document.getElementById('exportPresetBtn');
-if (expBtn) expBtn.addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
-
-const expCurBtn = document.getElementById('exportCurrentBtn');
-if (expCurBtn) expCurBtn.addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); const area = document.getElementById('presetYamlArea'); if(area) area.value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
-
-const impBtn = document.getElementById('importPresetBtn');
-if (impBtn) impBtn.addEventListener('click', () => { const fi = document.getElementById('presetFileInput'); if(fi) fi.click(); });
-
-const preFile = document.getElementById('presetFileInput');
-if (preFile) preFile.addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
-
-const saveBtn = document.getElementById('savePresetBtn');
-if (saveBtn) saveBtn.addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return showError('Name für das Preset ist erforderlich.'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
-
-const impYamlBtn = document.getElementById('importYamlBtn');
-if (impYamlBtn) impYamlBtn.addEventListener('click', () => { const area = document.getElementById('presetYamlArea'); if(!area || !area.value.trim()) return showError('Bitte füge YAML Code in das Textfeld ein!'); importFromText(area.value.trim()); });
+document.getElementById('exportPresetBtn').addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+document.getElementById('exportCurrentBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); document.getElementById('presetYamlArea').value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+document.getElementById('importPresetBtn').addEventListener('click', () => document.getElementById('presetFileInput').click());
+document.getElementById('presetFileInput').addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
+document.getElementById('savePresetBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return showError('Name für das Preset ist erforderlich.'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
+document.getElementById('importYamlBtn').addEventListener('click', () => { const text = document.getElementById('presetYamlArea').value.trim(); if (!text) return showError('Bitte füge YAML Code in das Textfeld ein!'); importFromText(text); });
 
 function importFromText(text) {
   try {
@@ -519,11 +507,7 @@ if(langSel) langSel.addEventListener('change', (e) => applyLanguage(e.target.val
 const bgAnimSel = document.getElementById('bgAnimSelector');
 if(bgAnimSel) bgAnimSel.addEventListener('change', e => { const bg = document.getElementById('appBg'); if(bg) bg.setAttribute('data-anim', e.target.value); });
 
-function updateProfileMeta() { 
-  const p = PROFILES[state.profile]; 
-  const pm = document.getElementById("profileMeta");
-  if(p && pm) pm.textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi`; 
-}
+function updateProfileMeta() { const p = PROFILES[state.profile]; const pm = document.getElementById("profileMeta"); if(p && pm) pm.textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi`; }
 
 // ==================== INIT ====================
 try {
