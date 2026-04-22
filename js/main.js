@@ -1,5 +1,5 @@
-import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
-import { render, asciiPreview } from './engine.js';
+import { state, PROFILES, SYSTEM_PRESETS } from './config.js';
+import { render } from './engine.js';
 
 // ==================== IOS SAFARI ANTI-ZOOM FIX ====================
 document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
@@ -49,23 +49,14 @@ document.addEventListener('pointerup', (e) => {
   document.body.appendChild(r); setTimeout(() => r.remove(), 600); 
 });
 
-// ==================== PAN, ZOOM & LOUPE SYSTEM ====================
+// ==================== PAN & ZOOM SYSTEM ====================
 const zoomContainer = document.getElementById('zoomContainer');
 const canvasWrapper = document.getElementById('canvasWrapper');
 const zoomLevelText = document.getElementById('zoomLevel');
-const loupe = document.getElementById('loupe');
-const loupeCanvas = document.getElementById('loupeCanvas');
 const outCanvas = document.getElementById('outCanvas');
 
 let currentZoom = 1; let panX = 0, panY = 0;
 let isDragging = false; let startX, startY; let pointers = [];
-let isLoupeActive = false;
-
-document.getElementById('loupeToggle').onclick = (e) => {
-  isLoupeActive = !isLoupeActive;
-  e.currentTarget.classList.toggle('active', isLoupeActive);
-  loupe.style.display = isLoupeActive ? 'block' : 'none';
-};
 
 function updateTransform(smooth = false) {
   zoomContainer.style.transition = smooth ? 'transform 0.2s ease-out' : 'none';
@@ -83,17 +74,6 @@ canvasWrapper.addEventListener('pointerdown', (e) => {
 });
 
 canvasWrapper.addEventListener('pointermove', (e) => {
-  if (isLoupeActive && state.sourceImage && outCanvas.width > 0) {
-    const rect = outCanvas.getBoundingClientRect();
-    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-      loupe.style.left = (e.clientX - 80) + 'px'; loupe.style.top = (e.clientY - 80) + 'px';
-      const scaleX = outCanvas.width / rect.width; const scaleY = outCanvas.height / rect.height;
-      const x = (e.clientX - rect.left) * scaleX; const y = (e.clientY - rect.top) * scaleY;
-      const lctx = loupeCanvas.getContext('2d'); lctx.clearRect(0,0,160,160);
-      const sSize = 160 / 3; 
-      lctx.drawImage(outCanvas, x - sSize/2, y - sSize/2, sSize, sSize, 0, 0, 160, 160);
-    }
-  }
   const index = pointers.findIndex(p => p.pointerId === e.pointerId);
   if (index !== -1) pointers[index] = e;
 
@@ -125,7 +105,7 @@ canvasWrapper.addEventListener('wheel', (e) => {
 document.getElementById('zoomIn').addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.25, 5); updateTransform(true); });
 document.getElementById('zoomOut').addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.25, 0.2); updateTransform(true); });
 
-// ==================== RENDERING & AUTO-RENDER ====================
+// ==================== RENDERING ====================
 let lastRenderedBlob = null;
 const renderBtn = document.getElementById("renderBtn"); 
 const downloadBtn = document.getElementById("downloadBtn"); 
