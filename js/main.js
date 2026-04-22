@@ -4,14 +4,22 @@ import { render } from './engine.js';
 // ==================== GLOBAL ERROR CATCHER (FANCY POPUP) ====================
 function showError(msg) {
   const pop = document.getElementById('errorPopup');
-  document.getElementById('errorText').textContent = msg;
-  pop.classList.add('show');
-  setTimeout(() => pop.classList.remove('show'), 7000); 
+  const txt = document.getElementById('errorText');
+  if(pop && txt) {
+    txt.textContent = msg;
+    pop.classList.add('show');
+    setTimeout(() => pop.classList.remove('show'), 7000); 
+  } else {
+    console.error(msg); // Fallback falls UI fehlt
+  }
 }
 
-document.getElementById('errorCloseBtn').onclick = () => {
-  document.getElementById('errorPopup').classList.remove('show');
-};
+const errorCloseBtn = document.getElementById('errorCloseBtn');
+if (errorCloseBtn) {
+  errorCloseBtn.onclick = () => {
+    document.getElementById('errorPopup').classList.remove('show');
+  };
+}
 
 window.onerror = function(message, source, lineno, colno, error) {
   showError(`[JS Fehler]: ${message} (Zeile ${lineno})`);
@@ -20,6 +28,11 @@ window.onerror = function(message, source, lineno, colno, error) {
 window.addEventListener('unhandledrejection', function(event) {
   showError(`[Promise Fehler]: ${event.reason}`);
 });
+
+// ==================== IOS SAFARI ANTI-ZOOM FIX ====================
+document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
 // ==================== LANGUAGE ====================
 const translations = {
@@ -58,6 +71,7 @@ function playClickSound() {
   } catch(e) {} 
 }
 
+let isDragging = false;
 document.addEventListener('pointerup', (e) => {
   if (isDragging) return; 
   if (!audioCtx) initAudio(); else if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -77,54 +91,59 @@ const zoomLevelText = document.getElementById('zoomLevel');
 const outCanvas = document.getElementById('outCanvas');
 
 let currentZoom = 1; let panX = 0, panY = 0;
-let isDragging = false; let startX, startY; let pointers = [];
+let startX, startY; let pointers = [];
 
 function updateTransform(smooth = false) {
+  if (!zoomContainer || !zoomLevelText) return;
   zoomContainer.style.transition = smooth ? 'transform 0.2s ease-out' : 'none';
   zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
   zoomLevelText.textContent = `${Math.round(currentZoom * 100)}%`;
 }
 
-canvasWrapper.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('button')) return; 
-  pointers.push(e);
-  if (pointers.length === 1) {
-    isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY;
-    canvasWrapper.setPointerCapture(e.pointerId);
-  }
-});
+if (canvasWrapper) {
+  canvasWrapper.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return; 
+    pointers.push(e);
+    if (pointers.length === 1) {
+      isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY;
+      canvasWrapper.setPointerCapture(e.pointerId);
+    }
+  });
 
-canvasWrapper.addEventListener('pointermove', (e) => {
-  const index = pointers.findIndex(p => p.pointerId === e.pointerId);
-  if (index !== -1) pointers[index] = e;
+  canvasWrapper.addEventListener('pointermove', (e) => {
+    const index = pointers.findIndex(p => p.pointerId === e.pointerId);
+    if (index !== -1) pointers[index] = e;
 
-  if (pointers.length === 1 && isDragging) {
-    panX = e.clientX - startX; panY = e.clientY - startY; updateTransform(false);
-  } else if (pointers.length === 2) {
-    const dist = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
-    if (!canvasWrapper.lastDist) { canvasWrapper.lastDist = dist; return; }
-    currentZoom = Math.max(0.2, Math.min(currentZoom + (dist - canvasWrapper.lastDist) * 0.01, 5));
-    updateTransform(false); canvasWrapper.lastDist = dist;
-  }
-});
+    if (pointers.length === 1 && isDragging) {
+      panX = e.clientX - startX; panY = e.clientY - startY; updateTransform(false);
+    } else if (pointers.length === 2) {
+      const dist = Math.hypot(pointers[0].clientX - pointers[1].clientX, pointers[0].clientY - pointers[1].clientY);
+      if (!canvasWrapper.lastDist) { canvasWrapper.lastDist = dist; return; }
+      currentZoom = Math.max(0.2, Math.min(currentZoom + (dist - canvasWrapper.lastDist) * 0.01, 5));
+      updateTransform(false); canvasWrapper.lastDist = dist;
+    }
+  });
 
-const pointerUp = (e) => {
-  pointers = pointers.filter(p => p.pointerId !== e.pointerId);
-  if (pointers.length < 2) canvasWrapper.lastDist = null;
-  if (pointers.length === 0) { setTimeout(() => { isDragging = false; }, 50); canvasWrapper.releasePointerCapture(e.pointerId); }
-};
-canvasWrapper.addEventListener('pointerup', pointerUp);
-canvasWrapper.addEventListener('pointercancel', pointerUp);
+  const pointerUp = (e) => {
+    pointers = pointers.filter(p => p.pointerId !== e.pointerId);
+    if (pointers.length < 2) canvasWrapper.lastDist = null;
+    if (pointers.length === 0) { setTimeout(() => { isDragging = false; }, 50); canvasWrapper.releasePointerCapture(e.pointerId); }
+  };
+  canvasWrapper.addEventListener('pointerup', pointerUp);
+  canvasWrapper.addEventListener('pointercancel', pointerUp);
 
-canvasWrapper.addEventListener('wheel', (e) => {
-  e.preventDefault(); 
-  if (e.ctrlKey || e.metaKey) { currentZoom = Math.max(0.2, Math.min(currentZoom - (e.deltaY > 0 ? 0.1 : -0.1), 5)); } 
-  else { panX -= e.deltaX; panY -= e.deltaY; }
-  updateTransform(false);
-}, {passive: false});
+  canvasWrapper.addEventListener('wheel', (e) => {
+    e.preventDefault(); 
+    if (e.ctrlKey || e.metaKey) { currentZoom = Math.max(0.2, Math.min(currentZoom - (e.deltaY > 0 ? 0.1 : -0.1), 5)); } 
+    else { panX -= e.deltaX; panY -= e.deltaY; }
+    updateTransform(false);
+  }, {passive: false});
+}
 
-document.getElementById('zoomIn').addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.25, 5); updateTransform(true); });
-document.getElementById('zoomOut').addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.25, 0.2); updateTransform(true); });
+const zoomInBtn = document.getElementById('zoomIn');
+const zoomOutBtn = document.getElementById('zoomOut');
+if (zoomInBtn) zoomInBtn.addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.25, 5); updateTransform(true); });
+if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.25, 0.2); updateTransform(true); });
 
 // ==================== RENDERING ====================
 let lastRenderedBlob = null;
@@ -134,8 +153,10 @@ let isRendering = false;
 
 const statusEl = document.getElementById("status");
 function setStatus(text, working = false) {
-  statusEl.textContent = text;
-  statusEl.style.color = working ? "var(--ink)" : "var(--accent)";
+  if (statusEl) {
+    statusEl.textContent = text;
+    statusEl.style.color = working ? "var(--ink)" : "var(--accent)";
+  }
 }
 
 const triggerUpdate = (function() {
@@ -148,19 +169,24 @@ async function performRender() {
   if (!state.sourceImage || isRendering) return; 
   try {
     isRendering = true;
-    renderBtn.disabled = true; setStatus("Rendern...", true);
+    if (renderBtn) renderBtn.disabled = true; 
+    setStatus("Rendern...", true);
     
     const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
-    outCanvas.width = width; outCanvas.height = height; 
-    outCanvas.getContext("2d").putImageData(imageData, 0, 0);
-    outCanvas.toBlob(blob => { lastRenderedBlob = blob; downloadBtn.disabled = false; }, "image/png");
+    
+    if (outCanvas) {
+      outCanvas.width = width; outCanvas.height = height; 
+      outCanvas.getContext("2d").putImageData(imageData, 0, 0);
+      outCanvas.toBlob(blob => { lastRenderedBlob = blob; if(downloadBtn) downloadBtn.disabled = false; }, "image/png");
+    }
     
     setStatus(`${width}×${height} px ready`);
   } catch (e) { 
     showError(`[Render Engine Absturz]: ${e.message}`);
     setStatus("Render Error");
   } finally {
-    isRendering = false; renderBtn.disabled = false;
+    isRendering = false; 
+    if (renderBtn) renderBtn.disabled = false;
   }
 }
 
@@ -224,7 +250,7 @@ function applyPreset(p) {
     if (p.bandingScale !== undefined) setS('bandingSlider', 'bandingVal', p.bandingScale * 10);
     if (p.maxSize !== undefined) setS('maxSizeSlider', 'maxSizeVal', p.maxSize);
     
-    if (p.dither) { state.dither = p.dither; document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === p.dither)); document.getElementById('thresholdField').style.display = p.dither === 'threshold'?'block':'none'; }
+    if (p.dither) { state.dither = p.dither; document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === p.dither)); const tf = document.getElementById('thresholdField'); if(tf) tf.style.display = p.dither === 'threshold'?'block':'none'; }
     if (p.paperFormat) { state.paperFormat = p.paperFormat; document.querySelectorAll('#paperFormatBtns button').forEach(b => b.classList.toggle('active', b.dataset.format === p.paperFormat)); }
     if (p.orientation) { state.orientation = p.orientation; document.querySelectorAll('#orientationBtns button').forEach(b => b.classList.toggle('active', b.dataset.orient === p.orientation)); }
     
@@ -232,7 +258,9 @@ function applyPreset(p) {
       state.ink = p.ink; const inkStr = p.ink.join(','); let found = false;
       document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach(s => { const m = s.dataset.ink === inkStr; s.classList.toggle('active', m); if (m) found = true; });
       const custom = document.getElementById('customInkSwatch');
-      if (!found && custom) { const hex = "#" + p.ink.map(x => x.toString(16).padStart(2, '0')).join(''); custom.dataset.ink = inkStr; custom.style.background = hex; custom.classList.add('active'); document.getElementById('inkColorPicker').value = hex; document.getElementById('inkHexInput').value = hex; }
+      const pick = document.getElementById('inkColorPicker');
+      const hexIn = document.getElementById('inkHexInput');
+      if (!found && custom && pick && hexIn) { const hex = "#" + p.ink.map(x => x.toString(16).padStart(2, '0')).join(''); custom.dataset.ink = inkStr; custom.style.background = hex; custom.classList.add('active'); pick.value = hex; hexIn.value = hex; }
       else if (custom) custom.classList.remove('active');
     }
     
@@ -250,10 +278,10 @@ function applyPreset(p) {
     
     if (p.wearLayers !== undefined) {
       state.wearLayers = p.wearLayers.map(l => ({ ...l }));
-      document.querySelectorAll('#errorList .er').forEach(el => { el.classList.remove('on'); el.querySelector('.er-val').textContent = '0%'; });
+      document.querySelectorAll('#errorList .er').forEach(el => { el.classList.remove('on'); const valEl = el.querySelector('.er-val'); if(valEl) valEl.textContent = '0%'; });
       for (const layer of p.wearLayers) {
         const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
-        if (el) { el.classList.add('on'); el.querySelector('.er-slider').value = layer.strength ?? 50; el.querySelector('.er-val').textContent = (layer.strength ?? 50) + '%'; }
+        if (el) { el.classList.add('on'); const s = el.querySelector('.er-slider'); const v = el.querySelector('.er-val'); if(s) s.value = layer.strength ?? 50; if(v) v.textContent = (layer.strength ?? 50) + '%'; }
       }
     }
     updateUIFromState(); updateProfileMeta(); triggerUpdate();
@@ -286,12 +314,24 @@ function renderPresetList() {
 }
 
 function downloadText(text, filename) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
-document.getElementById('exportPresetBtn').addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
-document.getElementById('exportCurrentBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); document.getElementById('presetYamlArea').value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
-document.getElementById('importPresetBtn').addEventListener('click', () => document.getElementById('presetFileInput').click());
-document.getElementById('presetFileInput').addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
-document.getElementById('savePresetBtn').addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return showError('Name für das Preset ist erforderlich.'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
-document.getElementById('importYamlBtn').addEventListener('click', () => { const text = document.getElementById('presetYamlArea').value.trim(); if (!text) return showError('Bitte füge YAML Code in das Textfeld ein!'); importFromText(text); });
+
+const expBtn = document.getElementById('exportPresetBtn');
+if (expBtn) expBtn.addEventListener('click', () => { let name = document.getElementById('presetNameInput').value.trim(); if (!name) { name = prompt('Preset Name:', 'My Preset'); if (!name) return; document.getElementById('presetNameInput').value = name; } downloadText(presetToYaml(captureCurrentPreset(name)), `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+
+const expCurBtn = document.getElementById('exportCurrentBtn');
+if (expCurBtn) expCurBtn.addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim() || 'my-preset'; const yaml = presetToYaml(captureCurrentPreset(name)); const area = document.getElementById('presetYamlArea'); if(area) area.value = yaml; downloadText(yaml, `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.yaml`); });
+
+const impBtn = document.getElementById('importPresetBtn');
+if (impBtn) impBtn.addEventListener('click', () => { const fi = document.getElementById('presetFileInput'); if(fi) fi.click(); });
+
+const preFile = document.getElementById('presetFileInput');
+if (preFile) preFile.addEventListener('change', async (e) => { const file = e.target.files[0]; if (!file) return; importFromText(await file.text()); e.target.value = ''; });
+
+const saveBtn = document.getElementById('savePresetBtn');
+if (saveBtn) saveBtn.addEventListener('click', () => { const name = document.getElementById('presetNameInput').value.trim(); if (!name) return showError('Name für das Preset ist erforderlich.'); const preset = captureCurrentPreset(name); preset.id = 'usr_'+Date.now(); const presets = loadUserPresets(); presets.push(preset); saveUserPresets(presets); activePresetId = preset.id; renderPresetList(); setStatus(`Gespeichert.`); });
+
+const impYamlBtn = document.getElementById('importYamlBtn');
+if (impYamlBtn) impYamlBtn.addEventListener('click', () => { const area = document.getElementById('presetYamlArea'); if(!area || !area.value.trim()) return showError('Bitte füge YAML Code in das Textfeld ein!'); importFromText(area.value.trim()); });
 
 function importFromText(text) {
   try {
@@ -342,7 +382,7 @@ function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
     if (onChange) onChange(); triggerUpdate();
   });
 }
-wireSegmented("ditherBtns", "dither", "dither", () => { document.getElementById("thresholdField").style.display = state.dither === "threshold" ? "block" : "none"; });
+wireSegmented("ditherBtns", "dither", "dither", () => { const tf = document.getElementById("thresholdField"); if(tf) tf.style.display = state.dither === "threshold" ? "block" : "none"; });
 wireSegmented("paperFormatBtns", "paperFormat", "format");
 wireSegmented("orientationBtns", "orientation", "orient");
 
@@ -377,19 +417,22 @@ const inkColorPicker = document.getElementById('inkColorPicker'); const inkHexIn
 function applyCustomInk(hex) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); if (!m) return;
   const rgb = [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
-  const swatch = document.getElementById('customInkSwatch'); swatch.dataset.ink = rgb.join(','); swatch.style.background = hex;
-  document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active')); swatch.classList.add('active');
+  const swatch = document.getElementById('customInkSwatch'); if(swatch) { swatch.dataset.ink = rgb.join(','); swatch.style.background = hex; document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active')); swatch.classList.add('active'); }
   state.ink = rgb; triggerUpdate();
 }
-inkColorPicker.addEventListener('input', (e) => { inkHexInput.value = e.target.value; applyCustomInk(e.target.value); });
-inkHexInput.addEventListener('input', (e) => { const hex = e.target.value.trim(); if (/^#[0-9a-f]{6}$/i.test(hex)) { inkColorPicker.value = hex; applyCustomInk(hex); }});
+if(inkColorPicker && inkHexInput) {
+  inkColorPicker.addEventListener('input', (e) => { inkHexInput.value = e.target.value; applyCustomInk(e.target.value); });
+  inkHexInput.addEventListener('input', (e) => { const hex = e.target.value.trim(); if (/^#[0-9a-f]{6}$/i.test(hex)) { inkColorPicker.value = hex; applyCustomInk(hex); }});
+}
 
 const dropzone = document.getElementById("dropzone"); const fileInput = document.getElementById("fileInput");
-dropzone.addEventListener("click", () => fileInput.click());
-fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
-dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.style.borderColor = "var(--accent)"; });
-dropzone.addEventListener("dragleave", () => dropzone.style.borderColor = "var(--glass-border-light)");
-dropzone.addEventListener("drop", (e) => { e.preventDefault(); dropzone.style.borderColor = "var(--glass-border-light)"; if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+if (dropzone && fileInput) {
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+  dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.style.borderColor = "var(--accent)"; });
+  dropzone.addEventListener("dragleave", () => dropzone.style.borderColor = "var(--glass-border-light)");
+  dropzone.addEventListener("drop", (e) => { e.preventDefault(); dropzone.style.borderColor = "var(--glass-border-light)"; if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+}
 
 function estimateDpiFromImageSize(img) { return Math.max(100, Math.min(1200, Math.round((Math.max(img.width, img.height) / (297 / 25.4)) / 50) * 50)); }
 
@@ -400,72 +443,95 @@ async function handleFile(file) {
     const url = URL.createObjectURL(file); const img = new Image();
     img.onload = () => {
       state.dpi = estimateDpiFromImageSize(img);
-      document.getElementById("dpiSlider").value = state.dpi; document.getElementById("dpiVal").textContent = state.dpi;
+      const ds = document.getElementById("dpiSlider"); const dv = document.getElementById("dpiVal");
+      if(ds) ds.value = state.dpi; if(dv) dv.textContent = state.dpi;
       state.sourceImage = img; detectAndSetPaperColor(img); analyzeAndAdaptImage(img);
-      document.getElementById("dzBig").textContent = file.name; document.getElementById("dzSmall").textContent = `${img.width} × ${img.height}`;
+      const b = document.getElementById("dzBig"); const s = document.getElementById("dzSmall");
+      if(b) b.textContent = file.name; if(s) s.textContent = `${img.width} × ${img.height}`;
       const scale = Math.min(1, 800 / Math.max(img.width, img.height));
-      outCanvas.width = Math.round(img.width * scale); outCanvas.height = Math.round(img.height * scale);
-      outCanvas.getContext("2d").drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
-      renderBtn.disabled = false; triggerUpdate();
+      if(outCanvas) {
+        outCanvas.width = Math.round(img.width * scale); outCanvas.height = Math.round(img.height * scale);
+        outCanvas.getContext("2d").drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
+      }
+      if(renderBtn) renderBtn.disabled = false; triggerUpdate();
     };
     img.onerror = () => showError("[Bild Fehler]: Das Bild konnte nicht gelesen werden.");
     img.src = url;
   } catch(e) { showError(`[Upload Fehler]: ${e.message}`); }
 }
 
-document.getElementById('profileList').addEventListener('click', (e) => {
-  const item = e.target.closest('.sli'); if (!item) return;
-  document.querySelectorAll('#profileList .sli').forEach(s => s.classList.remove('active'));
-  item.classList.add('active'); state.profile = item.dataset.profile;
-  updateProfileMeta(); triggerUpdate();
-});
+const profileList = document.getElementById('profileList');
+if (profileList) {
+  profileList.addEventListener('click', (e) => {
+    const item = e.target.closest('.sli'); if (!item) return;
+    document.querySelectorAll('#profileList .sli').forEach(s => s.classList.remove('active'));
+    item.classList.add('active'); state.profile = item.dataset.profile;
+    updateProfileMeta(); triggerUpdate();
+  });
+}
 
 document.querySelectorAll('#errorList .er').forEach(er => {
-  er.querySelector('.er-head').onclick = () => {
-    er.classList.toggle('on'); er.querySelector('.er-val').textContent = er.classList.contains('on') ? er.querySelector('.er-slider').value + '%' : '0%';
-    state.wearLayers = Array.from(document.querySelectorAll('#errorList .er.on')).map(el => ({ pattern: el.dataset.pattern, strength: +el.querySelector('.er-slider').value }));
-    triggerUpdate();
-  };
-  er.querySelector('.er-slider').oninput = (e) => {
-    er.querySelector('.er-val').textContent = e.target.value + '%';
-    state.wearLayers = Array.from(document.querySelectorAll('#errorList .er.on')).map(el => ({ pattern: el.dataset.pattern, strength: +e.target.value }));
-    triggerUpdate();
-  };
+  const head = er.querySelector('.er-head');
+  const slider = er.querySelector('.er-slider');
+  if(head) {
+    head.onclick = () => {
+      er.classList.toggle('on'); const valEl = er.querySelector('.er-val');
+      if(valEl && slider) valEl.textContent = er.classList.contains('on') ? slider.value + '%' : '0%';
+      state.wearLayers = Array.from(document.querySelectorAll('#errorList .er.on')).map(el => {
+        const s = el.querySelector('.er-slider'); return { pattern: el.dataset.pattern, strength: s ? +s.value : 50 };
+      });
+      triggerUpdate();
+    };
+  }
+  if(slider) {
+    slider.oninput = (e) => {
+      const valEl = er.querySelector('.er-val'); if(valEl) valEl.textContent = e.target.value + '%';
+      state.wearLayers = Array.from(document.querySelectorAll('#errorList .er.on')).map(el => {
+        const s = el.querySelector('.er-slider'); return { pattern: el.dataset.pattern, strength: s ? +s.value : 50 };
+      });
+      triggerUpdate();
+    };
+  }
 });
 
-document.querySelectorAll('.check').forEach(el => el.onclick = () => { 
-  if(el.dataset.flag === "bgAnim") {
-    state.bgAnim = el.classList.toggle('on');
-    updateBgAnim();
-  } else {
-    el.classList.toggle('on'); state[el.dataset.flag] = el.classList.contains('on'); triggerUpdate(); 
+document.querySelectorAll('.check').forEach(el => {
+  el.onclick = () => { 
+    if(el.dataset.flag === "bgAnim") { state.bgAnim = el.classList.toggle('on'); updateBgAnim(); } 
+    else { el.classList.toggle('on'); state[el.dataset.flag] = el.classList.contains('on'); triggerUpdate(); }
   }
 });
 
 function updateBgAnim() {
-  const bg = document.getElementById('appBg');
-  const sel = document.getElementById('bgAnimStyleField');
-  if(state.bgAnim) {
-    bg.style.opacity = '1'; sel.style.opacity = '1'; document.getElementById('bgAnimSelector').disabled = false;
-  } else {
-    bg.style.opacity = '0'; sel.style.opacity = '0.4'; document.getElementById('bgAnimSelector').disabled = true;
-  }
+  const bg = document.getElementById('appBg'); const sel = document.getElementById('bgAnimStyleField'); const selIn = document.getElementById('bgAnimSelector');
+  if (!bg || !sel || !selIn) return;
+  if(state.bgAnim) { bg.style.opacity = '1'; sel.style.opacity = '1'; selIn.disabled = false; } 
+  else { bg.style.opacity = '0'; sel.style.opacity = '0.4'; selIn.disabled = true; }
 }
 
-document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => btn.onclick = () => {
-  document.querySelectorAll('.activity-bar .icon-btn, .tab-content').forEach(el => el.classList.remove('active'));
-  btn.classList.add('active'); document.getElementById(btn.dataset.tab).classList.add('active');
+document.querySelectorAll('.activity-bar .icon-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.activity-bar .icon-btn, .tab-content').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active'); const tab = document.getElementById(btn.dataset.tab); if(tab) tab.classList.add('active');
+  }
 });
 
-document.getElementById('themeAccentSelector').addEventListener('change', e => document.body.setAttribute('data-accent', e.target.value));
-document.getElementById('themeModeSelector').addEventListener('change', e => document.body.className = e.target.value === 'light' ? 'light-mode' : 'dark-mode');
-document.getElementById('langSelector').addEventListener('change', (e) => applyLanguage(e.target.value));
+const themeAcc = document.getElementById('themeAccentSelector');
+if(themeAcc) themeAcc.addEventListener('change', e => document.body.setAttribute('data-accent', e.target.value));
 
-document.getElementById('bgAnimSelector').addEventListener('change', e => {
-  document.getElementById('appBg').setAttribute('data-anim', e.target.value);
-});
+const themeMode = document.getElementById('themeModeSelector');
+if(themeMode) themeMode.addEventListener('change', e => document.body.className = e.target.value === 'light' ? 'light-mode' : 'dark-mode');
 
-function updateProfileMeta() { const p = PROFILES[state.profile]; document.getElementById("profileMeta").textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi`; }
+const langSel = document.getElementById('langSelector');
+if(langSel) langSel.addEventListener('change', (e) => applyLanguage(e.target.value));
+
+const bgAnimSel = document.getElementById('bgAnimSelector');
+if(bgAnimSel) bgAnimSel.addEventListener('change', e => { const bg = document.getElementById('appBg'); if(bg) bg.setAttribute('data-anim', e.target.value); });
+
+function updateProfileMeta() { 
+  const p = PROFILES[state.profile]; 
+  const pm = document.getElementById("profileMeta");
+  if(p && pm) pm.textContent = `${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi`; 
+}
 
 // ==================== INIT ====================
 try {
@@ -475,6 +541,10 @@ try {
   if (typeof SYSTEM_PRESETS !== 'undefined') {
     renderPresetList();
   }
+  
+  if (renderBtn) renderBtn.onclick = performRender;
+  if (downloadBtn) downloadBtn.onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(lastRenderedBlob); a.download = `print_${Date.now()}.png`; a.click(); };
+  
 } catch(e) {
   showError(`[Initialisierungsfehler]: System konnte nicht geladen werden. ${e.message}`);
 }
