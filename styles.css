@@ -1,6 +1,6 @@
 /* ==================== THEME VARIABLES & ACCENTS ==================== */
 :root {
-  --accent: #ffdb73; /* Amber ist jetzt Standard */
+  --accent: #ffdb73; /* Amber ist Standard */
   --accent-soft: rgba(255, 219, 115, 0.2);
 }
 
@@ -79,17 +79,25 @@ body {
 }
 
 .activity-bar {
-  width: 65px; flex-shrink: 0;
+  width: 75px; flex-shrink: 0;
   display: flex; flex-direction: column; align-items: center;
-  padding-top: 15px; padding-bottom: 15px; /* FIX: Verhindert, dass das Icon unten am Rand klebt */
+  padding: 16px 0; gap: 10px; /* Saubere Abstände zwischen den Icons */
   z-index: 100; 
 }
 .icon-btn {
-  font-size: 24px; padding: 14px 0; width: 100%; text-align: center;
-  cursor: pointer; opacity: 0.4; transition: 0.3s; border-left: 3px solid transparent;
+  font-size: 22px; width: 48px; height: 48px;
+  display: flex; justify-content: center; align-items: center;
+  cursor: pointer; opacity: 0.4; transition: 0.3s; 
+  border-radius: 14px; /* NEU: Weich abgerundete Ecken */
+  background: transparent;
 }
-.icon-btn:hover { opacity: 0.8; }
-.icon-btn.active { opacity: 1; border-left-color: var(--accent); background: rgba(0,0,0,0.2); }
+.icon-btn:hover { opacity: 0.8; background: rgba(255,255,255,0.05); }
+.icon-btn.active { 
+  opacity: 1; 
+  background: rgba(0,0,0,0.25); /* NEU: Runder, glasiger Hintergrund */
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.05);
+}
 .spacer { flex-grow: 1; }
 
 .sidebar {
@@ -146,8 +154,7 @@ canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); max-width: 1
 h2 { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 14px; color: var(--ink-soft); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-/* WICHTIGER FIX: .er hier aus der Liste entfernt, damit Box-in-Box verschwindet! */
-.dropzone, .scroll-list, .text-input, .color-picker, .segmented {
+.dropzone, .scroll-list, .text-input, .color-picker, .segmented, .er {
   background: var(--paper-dark);
   border: 1px solid var(--glass-border);
   border-radius: 12px; 
@@ -215,8 +222,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .check.on .box { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-soft);}
 .check.on .box::after { content: "×"; color: #000; font-family: "VT323", monospace; font-size: 22px; margin-top: -2px; }
 
-/* FIX: Hardware Errors sehen jetzt wie saubere Zeilen aus */
-.er { border-bottom: 1px solid var(--glass-border); transition: 0.2s; }
+.er { transition: 0.2s;}
 .er:last-child { border-bottom: none; }
 .er-head { display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer; min-height: 48px;}
 .er-head:hover { background: rgba(255,255,255,0.08); }
@@ -234,14 +240,43 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .zoom-controls button:hover { background: var(--accent-soft); border-color: var(--accent);}
 .zoom-controls span { font-size: 11px; display: inline-block; width: 45px; text-align: center; }
 
-/* Responsive adjustments for iPads / Mobile */
-@media (max-width: 820px) {
-  .app-container { padding: 0; gap: 0; flex-direction: column; }
-  .glass-panel { border-radius: 0; border-left: none; border-right: none; }
-  .activity-bar { width: 100%; flex-direction: row; justify-content: center; padding: 0; border-bottom: 1px solid var(--glass-border); }
-  .icon-btn { padding: 15px; width: auto; border-left: none; border-bottom: 3px solid transparent; }
-  .icon-btn.active { border-bottom-color: var(--accent); border-left: none; }
-  .sidebar { width: 100%; flex: 1; min-height: 0; }
-  .main-editor { flex: 1; min-height: 0; }
-  .floating-actions { border-radius: 12px 12px 0 0; bottom: 0; border-bottom: none; width: 100%; max-width: 100%; }
+/* ==================== HOCHFORMAT (PORTRAIT MODE) ==================== */
+/* Das Layout ändert sich dynamisch, wenn das iPad/Tablet vertikal gehalten wird */
+@media (orientation: portrait), (max-width: 900px) {
+  .app-container { 
+    flex-direction: column; 
+    padding: 12px; 
+    gap: 12px; 
+  }
+  
+  /* Icons wandern nach oben */
+  .activity-bar { 
+    width: 100%; height: auto; 
+    flex-direction: row; justify-content: center; 
+    padding: 10px 12px; gap: 12px; 
+    order: 1; 
+  }
+  .icon-btn { width: 48px; height: 48px; }
+  
+  /* Live-Vorschau wandert in die Mitte (direkt unter die Icons) */
+  .main-editor { 
+    width: 100%; 
+    flex: 1 1 45%; 
+    order: 2; 
+    min-height: 380px; 
+  }
+  
+  /* Einstellungen wandern nach unten (daumenfreundlich!) */
+  .sidebar { 
+    width: 100%; 
+    flex: 1 1 55%; 
+    order: 3; 
+  }
+  
+  .floating-actions { 
+    width: calc(100% - 40px); 
+    bottom: 12px; 
+    padding: 16px; 
+  }
+  .canvas-wrapper { padding: 10px 10px 120px; }
 }
