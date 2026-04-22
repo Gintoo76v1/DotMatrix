@@ -35,48 +35,48 @@ body.light-mode {
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* ==================== FANCY TYPOGRAPHY & FIXED BODY ==================== */
+/* FIX: Body ist fest, aber ohne globale Klick-Sperre! */
 body {
   position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none;
-  margin: 0; padding: 0; height: 100dvh; width: 100vw;
+  margin: 0; padding: 0; height: 100dvh; width: 100vw; z-index: 1;
   font-family: 'Outfit', system-ui, sans-serif; 
   font-size: 13.5px; line-height: 1.45;
   background-color: var(--bg-color); color: var(--ink); transition: background-color 0.3s;
 }
 
-h2, .btn, .dropzone .big, .status-large, .er-name, .sli-name, .header-fancy {
+h2, .btn, .dropzone .big, .status-large, .er-name, .sli-name, .header-fancy, .app-logo {
   font-family: 'Space Grotesk', sans-serif; font-weight: 500;
 }
 .dropzone .big { font-weight: 700; font-size: 26px; }
+.app-logo { font-size: 18px; font-weight: 700; letter-spacing: 0.05em; color: var(--ink); }
 
 .ascii, .yaml-area, .text-input, .profile-meta, .er-val, .hex-input {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Verstecke den System-File-Input! */
 input[type="file"] { display: none; }
 
-/* ==================== HIGH PERFORMANCE ANIMATED BACKGROUND ==================== */
-.app-bg { position: absolute; inset: 0; z-index: -1; background: var(--bg-color); overflow: hidden; pointer-events: none; }
-.app-bg .orb { position: absolute; border-radius: 50%; opacity: 0.4; }
+/* HIGH PERFORMANCE BACKGROUND */
+.app-bg { position: absolute; inset: 0; z-index: -2; background: var(--bg-color); overflow: hidden; pointer-events: none; }
+.app-bg .orb { position: absolute; border-radius: 50%; opacity: 0.3; }
 .app-bg .orb-1 { width: 70vw; height: 70vw; background: radial-gradient(circle, var(--accent) 0%, transparent 60%); top: -20%; left: -20%; animation: orbDrift1 20s ease-in-out infinite alternate; }
 .app-bg .orb-2 { width: 60vw; height: 60vw; background: radial-gradient(circle, var(--accent-alt) 0%, transparent 60%); bottom: -20%; right: -20%; animation: orbDrift2 25s ease-in-out infinite alternate; }
 
 @keyframes orbDrift1 { 0% { transform: translate(0, 0); } 100% { transform: translate(15vw, 15vh); } }
 @keyframes orbDrift2 { 0% { transform: translate(0, 0); } 100% { transform: translate(-15vw, -10vh); } }
 
-/* ==================== GLASS PANEL CORE ==================== */
+/* GLASS PANEL CORE */
 .glass-panel {
   background: var(--glass-bg); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
   border: 1px solid var(--glass-border); border-top-color: var(--glass-highlight); border-left-color: var(--glass-highlight);
   box-shadow: var(--glass-shadow); border-radius: 20px; overflow: hidden;
 }
 
-/* ==================== APP LAYOUT ==================== */
-.app-container { display: flex; height: 100%; width: 100%; gap: 16px; padding: 16px; min-height: 0; }
+/* APP LAYOUT */
+.app-container { display: flex; height: 100%; width: 100%; gap: 16px; padding: 16px; min-height: 0; z-index: 1;}
 .activity-bar { width: 75px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 12px; }
 
-/* FIX: Touch-Action Manipulation verhindert Double-Tap Zoom */
+/* Verhindert Doppel-Klick Zoom */
 button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-action: manipulation; user-select: none; }
 
 .icon-btn { font-size: 24px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.4; transition: 0.3s; border-radius: 15px; background: transparent; border: 1px solid transparent; }
@@ -85,28 +85,32 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"] { touch-
 .spacer { flex-grow: 1; }
 
 .sidebar { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; }
-/* FIX: Erlaubt sauberes Scrollen in der Seitenleiste */
-.sidebar-scrollable { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; padding-bottom: 30px; overscroll-behavior: contain; touch-action: pan-y; }
+.sidebar-scrollable { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; padding-bottom: 30px; }
 .tab-content { display: none; padding: 24px; }
 .tab-content.active { display: block; }
 
 .main-editor { flex-grow: 1; display: flex; flex-direction: column; position: relative; min-height: 0;}
 .toolbar { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); z-index: 10;}
 
-/* FIX: Panning Area ist geschützt */
+/* FIX: Touch-Action None sitzt nur auf dem Panning-Bereich, damit Sidebar klickbar bleibt! */
 .canvas-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; touch-action: none; cursor: grab; padding: 30px; position: relative; }
 .canvas-wrapper:active { cursor: grabbing; }
 .zoom-container { transform-origin: center center; display: flex; flex-direction: column; align-items: center; gap: 20px; }
 canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radius: 8px; max-width: none; }
 
-/* Status Text Box (Rechts Unten verschoben) */
-.status-panel {
-  position: absolute; bottom: 105px; right: 30px; padding: 10px 20px; border-radius: 12px; z-index: 60; 
-  background: var(--paper-dark); border: 1px solid var(--glass-highlight); box-shadow: var(--glass-shadow);
+/* FIX: Floating Container für Status und Buttons (Sauber gestapelt, ein Stück nach oben gerückt) */
+.floating-container {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 50;
+  width: 100%; max-width: 420px; padding: 0 20px; pointer-events: none; /* Klicks durchlassen */
 }
-.status-large { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent); text-align: center; font-weight: 700; }
-
-.floating-actions { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); width: 420px; max-width: calc(100% - 40px); padding: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 50; }
+.status-panel {
+  align-self: flex-end; padding: 8px 16px; border-radius: 12px; pointer-events: auto;
+}
+.status-large { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent); font-weight: 700; }
+.floating-actions {
+  width: 100%; padding: 16px; border-radius: 16px; pointer-events: auto;
+}
 .action-buttons { display: flex; gap: 12px; }
 
 /* Lupe */
@@ -116,7 +120,7 @@ canvas { background: #fff; box-shadow: 0 10px 50px rgba(0,0,0,0.6); border-radiu
 h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 14px; color: var(--ink-soft); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-/* FIX: Dropzone schrumpft nicht mehr */
+/* FIX: Dropzone schrumpft nicht */
 .dropzone { flex-shrink: 0; min-height: 120px; display: flex; flex-direction: column; justify-content: center; background: var(--paper-dark); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: 0.3s; }
 .text-input, .segmented { background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px; }
 
@@ -125,7 +129,7 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .dropzone .small { font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.1em; }
 
 /* Listen */
-.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
+.scroll-list { max-height: 280px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--paper-dark);}
 .sli { padding: 14px 16px; border-bottom: 1px solid var(--glass-border); cursor: pointer; transition: 0.2s; }
 .sli:last-child { border-bottom: 0; }
 .sli:hover { background: rgba(255,255,255,0.1); }
@@ -200,7 +204,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .custom-ink-row { display: flex; gap: 8px; align-items: center; margin-top: 10px;}
 .color-picker { width: 36px; height: 36px; padding: 0; cursor: pointer; }
 
-.segmented { overflow: hidden; display: flex; }
+.segmented { overflow: hidden; display: flex; background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px;}
 .segmented.scrollable { overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x; }
 .segmented button { flex: 1; background: transparent; border: none; border-right: 1px solid var(--glass-border); color: var(--ink); padding: 12px 4px; cursor: pointer; font-size: 11px; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; min-width: 65px; transition: 0.2s;}
 .segmented button:last-child { border-right: none; }
@@ -213,11 +217,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px
 .zoom-controls button:hover, .zoom-controls button.active { background: var(--accent-soft); border-color: var(--accent);}
 .zoom-controls span { font-size: 12px; display: inline-block; width: 45px; text-align: center; }
 
+/* FIX: Portrait Layout (Status und Buttons getrennt) */
 @media (orientation: portrait), (max-width: 900px) {
   .app-container { flex-direction: column; padding: 12px; gap: 12px; }
   .activity-bar { width: 100%; height: auto; flex-direction: row; justify-content: center; padding: 10px; gap: 20px; order: 1; }
   .main-editor { width: 100%; flex: 1 1 45%; order: 2; min-height: 400px; }
   .sidebar { width: 100%; flex: 1 1 55%; order: 3; }
-  .status-panel { bottom: 100px; right: 12px; }
-  .floating-actions { width: calc(100% - 24px); bottom: 12px; }
+  .floating-container { bottom: 12px; }
 }
