@@ -1,16 +1,6 @@
 import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
 import { render, asciiPreview } from './engine.js';
 
-// ==================== DEBOUNCE UTILITY ====================
-// Verhindert das Einfrieren der Seite, indem es Berechnungen verzögert
-function debounce(func, wait) {
-  let timeout;
-  return function(...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
-
 // ==================== JFIF / PNG DPI DETECTION ====================
 
 function readJfifDpi(buf) {
@@ -183,17 +173,12 @@ function analyzeAndAdaptImage(img) {
   } catch (e) { console.warn("Image analysis failed", e); }
 }
 
-// Debounced version of refreshAscii
-const debouncedRefreshAscii = debounce(() => {
+function refreshAscii() {
   if (!state.sourceImage) return;
   try {
     asciiEl.classList.remove("empty");
     asciiEl.textContent = asciiPreview(state.sourceImage, 56);
   } catch (e) { console.warn(e); }
-}, 200); // Wartet 200ms nach der letzten Eingabe
-
-function refreshAscii() {
-  debouncedRefreshAscii(); // Verwendet jetzt die Debounce-Funktion
 }
 
 function updateProfileMeta() {
@@ -315,7 +300,6 @@ function wireSwatches(containerId, stateKey, attrKey) {
     sw.classList.add("active");
     state[stateKey] = sw.dataset[attrKey].split(",").map(Number);
     markModified();
-    refreshAscii(); // Update Preview immediately
   });
 }
 wireSwatches("inkSwatches",   "ink",   "ink");
@@ -343,7 +327,6 @@ function applyCustomInk(hex) {
   swatch.classList.add('active');
   state.ink = rgb;
   markModified();
-  refreshAscii(); // <--- DIES HAT VORHER GEFEHLT, DARUM HAT ES SICH NICHT AKTUALISIERT
 }
 
 const inkColorPicker = document.getElementById('inkColorPicker');
@@ -385,7 +368,7 @@ function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, l
     state[stateKey] = raw;
     v.textContent = format(raw);
     if (fromUser) markModified();
-    if (liveRefresh && fromUser) refreshAscii(); // nutzt intern debounce
+    if (liveRefresh) refreshAscii();
   };
   s.addEventListener("input", () => apply(true));
   apply(false);
@@ -401,7 +384,6 @@ wireSlider("maxSizeSlider",   "maxSizeVal",   "maxSize",   v => +v, v => v);
 wireSlider("seedSlider",      "seedVal",      "seed",      v => +v, v => v);
 
 // ==================== PRESET YAML SERIALIZER / PARSER ====================
-// ... (Hier bleibt dein ganzer restlicher Original-Code exakt so wie er war!)
 
 function presetToYaml(preset) {
   const SKIP = new Set(['id', 'system']);
@@ -505,6 +487,7 @@ function deleteUserPreset(id) {
   renderPresetBar();
 }
 
+// Capture the full current UI state into a plain preset object
 function captureCurrentPreset(name) {
   return {
     name:         name || 'Unnamed',
@@ -532,10 +515,12 @@ function captureCurrentPreset(name) {
   };
 }
 
+// Apply a preset object to the full UI + state
 function applyPreset(preset) {
   if (!preset) return;
   clearModified();
 
+  // Profile
   if (preset.profile && PROFILES[preset.profile]) {
     state.profile = preset.profile;
     document.querySelectorAll('#profileList .sli').forEach(s => {
@@ -544,6 +529,7 @@ function applyPreset(preset) {
     updateProfileMeta();
   }
 
+  // Image adjustments
   const setSlider = (id, valId, val, fmt = v => v) => {
     const el = document.getElementById(id);
     const ve = document.getElementById(valId);
@@ -562,6 +548,7 @@ function applyPreset(preset) {
   if (preset.maxSize    !== undefined) { state.maxSize    = preset.maxSize;    setSlider('maxSizeSlider',   'maxSizeVal',    preset.maxSize); }
   if (preset.seed       !== undefined) { state.seed       = preset.seed;       setSlider('seedSlider',      'seedVal',       preset.seed); }
 
+  // Dither
   if (preset.dither) {
     state.dither = preset.dither;
     document.querySelectorAll('#ditherBtns button').forEach(b =>
@@ -571,6 +558,7 @@ function applyPreset(preset) {
       preset.dither === 'threshold' ? 'block' : 'none';
   }
 
+  // Paper format / orientation
   if (preset.paperFormat) {
     state.paperFormat = preset.paperFormat;
     document.querySelectorAll('#paperFormatBtns button').forEach(b =>
@@ -584,6 +572,7 @@ function applyPreset(preset) {
     );
   }
 
+  // Ink swatch
   if (preset.ink) {
     state.ink = preset.ink;
     const inkStr = preset.ink.join(',');
@@ -593,6 +582,7 @@ function applyPreset(preset) {
       s.classList.toggle('active', match);
       if (match) found = true;
     });
+    // If no preset swatch matched, show in custom swatch
     const customSwatch = document.getElementById('customInkSwatch');
     if (!found && customSwatch) {
       const hex = rgbToHex(...preset.ink);
@@ -606,6 +596,7 @@ function applyPreset(preset) {
     }
   }
 
+  // Paper swatch (null = keep auto-detected)
   if (preset.paper) {
     state.paper = preset.paper;
     const paperStr = preset.paper.join(',');
@@ -614,6 +605,7 @@ function applyPreset(preset) {
     });
   }
 
+  // Checkboxes (doubleStrike, condensed, softBlur, invert)
   const setBool = (flag, val) => {
     if (val === undefined) return;
     state[flag] = val;
@@ -624,8 +616,9 @@ function applyPreset(preset) {
   setBool('condensed',    preset.condensed);
   setBool('softBlur',     preset.softBlur);
   setBool('invert',       preset.invert);
-  updateProfileMeta(); 
+  updateProfileMeta(); // re-check condensed support
 
+  // Wear layers
   if (preset.wearLayers !== undefined) {
     state.wearLayers = preset.wearLayers.map(l => ({ ...l }));
     applyWearLayersToUI(state.wearLayers);
@@ -634,12 +627,15 @@ function applyPreset(preset) {
   refreshAscii();
 }
 
+// Update the error list UI to match a given wearLayers array
 function applyWearLayersToUI(layers) {
+  // First clear all
   document.querySelectorAll('#errorList .er').forEach(el => {
     el.classList.remove('on');
     const valEl = el.querySelector('.er-val');
     if (valEl) valEl.textContent = '0%';
   });
+  // Then activate the relevant ones
   for (const layer of layers) {
     const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
     if (!el) continue;
@@ -695,6 +691,7 @@ function renderPresetBar() {
     });
     bar.appendChild(pill);
 
+    // Delete button for user presets
     if (!preset.system) {
       const del = document.createElement('button');
       del.className   = 'preset-pill delete-btn';
@@ -749,10 +746,12 @@ document.getElementById('presetFileInput').addEventListener('change', async (e) 
   e.target.value = '';
 });
 
+// Preset Creator buttons
 document.getElementById('exportCurrentBtn').addEventListener('click', () => {
   const name   = document.getElementById('presetNameInput').value.trim() || 'my-preset';
   const preset = captureCurrentPreset(name);
   const yaml   = presetToYaml(preset);
+  // Also fill the textarea so user can copy
   document.getElementById('presetYamlArea').value = yaml;
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   downloadText(yaml, `${slug}.yaml`);
@@ -778,6 +777,7 @@ document.getElementById('importYamlBtn').addEventListener('click', () => {
   importFromText(text);
 });
 
+// Convert legacy JSON wear object {pattern: strength, ...} to wearLayers array
 function normalizePreset(raw) {
   if (raw.wear && !raw.wearLayers) {
     const known = new Set(Object.keys(
