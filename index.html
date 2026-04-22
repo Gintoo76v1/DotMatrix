@@ -2,8 +2,10 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>DotMatrix Studio</title>
+
+<link rel="icon" type="image/png" href="favicon.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -214,16 +216,17 @@
       </div>
       
       <div class="floating-container">
+        <div class="status-panel glass-panel" id="statusPanel">
+          <span id="status" class="status-large">Warte auf Bild...</span>
+        </div>
         <div class="floating-actions glass-panel">
           <div class="action-buttons">
             <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
             <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
           </div>
         </div>
-        <div class="status-panel glass-panel" id="statusPanel">
-          <span id="status" class="status-large">Warte auf Bild...</span>
-        </div>
       </div>
+
     </main>
   </div>
   <script type="module" src="js/main.js"></script>
