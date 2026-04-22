@@ -1,223 +1,802 @@
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>dotmatrix — retro printer renderer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
+import { state, PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS } from './config.js';
+import { render, asciiPreview } from './engine.js';
 
-<div class="app-container">
-  <nav class="sidebar-nav">
-    <div class="nav-item active" title="Drucker & Effekte">🖨️</div>
-    <div class="nav-item" title="System UI Theme (Bald verfügbar)">🌗</div>
-    <div class="nav-item" title="Sprache: Deutsch">🇩🇪</div>
-  </nav>
+// ==================== UTILITIES & DEBOUNCE (Schützt vor Freezes) ====================
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => { clearTimeout(timeout); func(...args); };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
-  <aside class="sidebar-panel">
-    <header class="panel-header">
-      <h1>dotmatrix<span class="dot">.</span></h1>
-      <div class="tag">retro printer aesthetic</div>
-    </header>
+const debouncedRefreshAscii = debounce(refreshAscii, 150);
 
-    <div class="panel-scroll-area">
-      <div class="glass-card">
-        <div class="section-label">Presets & Bibliothek</div>
-        <div class="scroll-list" id="presetList">
-          </div>
-        <div class="btn-group" style="margin-top:12px;">
-          <button class="btn-sm" id="savePresetBtn">+ Speichern</button>
-          <button class="btn-sm" id="exportCurrentBtn">↑ Export</button>
-          <button class="btn-sm" id="importPresetBtn">↓ Import</button>
-        </div>
-        <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
-      </div>
+// ==================== JFIF / PNG DPI DETECTION ====================
+function readJfifDpi(buf) {
+  const v = new DataView(buf);
+  if (v.byteLength < 18 || v.getUint16(0) !== 0xFFD8) return null;
+  if (v.getUint16(2) !== 0xFFE0) return null;
+  const sig = String.fromCharCode(v.getUint8(6),v.getUint8(7),v.getUint8(8),v.getUint8(9),v.getUint8(10));
+  if (sig !== 'JFIF\0') return null;
+  const units = v.getUint8(11);
+  const xd    = v.getUint16(12);
+  if (!xd) return null;
+  if (units === 1) return xd;
+  if (units === 2) return Math.round(xd * 2.54);
+  return null;
+}
 
-      <div class="glass-card">
-        <div class="section-label">Drucker Profil</div>
-        <div class="scroll-list" id="profileList">
-          <div class="sli" data-profile="epson_fx"><div class="sli-row"><span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">120×72 dpi · ⌀0.35mm</div></div>
-          <div class="sli" data-profile="epson_lq"><div class="sli-row"><span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span></div><div class="sli-meta">180×180 dpi · ⌀0.20mm</div></div>
-          <div class="sli" data-profile="ibm_proprinter"><div class="sli-row"><span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">120×72 dpi · ⌀0.38mm</div></div>
-          <div class="sli active" data-profile="oki_microline"><div class="sli-row"><span class="sli-name">OKI Microline</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144×72 dpi · ⌀0.33mm</div></div>
-          <div class="sli" data-profile="star_nx1000"><div class="sli-row"><span class="sli-name">Star NX-1000</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144×144 dpi · ⌀0.32mm</div></div>
-          <div class="sli" data-profile="panasonic_kx"><div class="sli-row"><span class="sli-name">Panasonic KX-P</span><span class="sli-badge">24-PIN</span></div><div class="sli-meta">360×180 dpi · ⌀0.22mm</div></div>
-          <div class="sli" data-profile="dec_la75"><div class="sli-row"><span class="sli-name">DEC LA75</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144×144 dpi · ⌀0.35mm</div></div>
-          <div class="sli" data-profile="nec_p6"><div class="sli-row"><span class="sli-name">NEC P6</span><span class="sli-badge">24-PIN</span></div><div class="sli-meta">360×360 dpi · ⌀0.15mm</div></div>
-          <div class="sli" data-profile="commodore_mps"><div class="sli-row"><span class="sli-name">MPS-803</span><span class="sli-badge">7-PIN</span></div><div class="sli-meta">60×72 dpi · ⌀0.45mm</div></div>
-          <div class="sli" data-profile="apple_imagewriter"><div class="sli-row"><span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144×72 dpi · ⌀0.35mm</div></div>
-        </div>
-        <div class="profile-meta" id="profileMeta"></div>
-        <div class="checks" style="margin-top:12px">
-          <label class="check" data-flag="doubleStrike"><span class="box"></span><span>Double-strike</span></label>
-          <label class="check" data-flag="condensed"><span class="box"></span><span>Condensed Mode</span></label>
-        </div>
-      </div>
+function readPngDpi(buf) {
+  const v = new DataView(buf);
+  if (v.byteLength < 30 || v.getUint32(0) !== 0x89504E47) return null;
+  let pos = 8;
+  while (pos + 12 <= v.byteLength) {
+    const len  = v.getUint32(pos);
+    const type = String.fromCharCode(v.getUint8(pos+4),v.getUint8(pos+5),v.getUint8(pos+6),v.getUint8(pos+7));
+    if (type === 'pHYs' && len === 9 && pos + 21 <= v.byteLength) {
+      const ppuX = v.getUint32(pos + 8);
+      const unit = v.getUint8(pos + 16);
+      if (unit === 1 && ppuX > 0) return Math.round(ppuX / 39.3701);
+    }
+    if (type === 'IDAT') break;
+    pos += 12 + len;
+  }
+  return null;
+}
 
-      <div class="glass-card">
-        <div class="section-label">Bildanpassung</div>
-        <label class="field">
-          <span class="name"><span>Helligkeit</span><b id="brightnessVal">0</b></span>
-          <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
-        </label>
-        <label class="field">
-          <span class="name"><span>Kontrast</span><b id="contrastVal">20</b></span>
-          <input type="range" id="contrastSlider" min="-100" max="100" value="20">
-        </label>
-        <label class="field">
-          <span class="name"><span>Gamma</span><b id="gammaVal">1.0</b></span>
-          <input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0">
-        </label>
-        <div class="checks" style="margin-top:14px">
-          <label class="check" data-flag="invert"><span class="box"></span><span>Bild invertieren</span></label>
-        </div>
-      </div>
+function snapDpi(dpi) { return Math.max(100, Math.min(1200, Math.round(dpi / 50) * 50)); }
+function estimateDpiFromImageSize(img) {
+  const longPx   = Math.max(img.width, img.height);
+  const a4LongIn = 297 / 25.4;
+  return snapDpi(Math.round(longPx / a4LongIn));
+}
 
-      <div class="glass-card">
-        <div class="section-label">Halbton / Dithering</div>
-        <div class="segmented" id="ditherBtns">
-          <button data-dither="floyd_steinberg">Floyd-S</button>
-          <button data-dither="ordered">Ordered</button>
-          <button data-dither="threshold" class="active">Thresh</button>
-        </div>
-        <label class="field" id="thresholdField" style="display:block; margin-top:10px;">
-          <span class="name"><span>Schwellenwert</span><b id="thresholdVal">128</b></span>
-          <input type="range" id="thresholdSlider" min="0" max="255" value="128">
-        </label>
-      </div>
+// ==================== DOM ELEMENTS (Mit Sicherheits-Checks) ====================
+const dropzone    = document.getElementById("dropzone");
+const fileInput   = document.getElementById("fileInput");
+const outCanvas   = document.getElementById("outCanvas");
+const outCtx      = outCanvas ? outCanvas.getContext("2d") : null;
+const outSection  = document.getElementById("outputSection");
+const asciiEl     = document.getElementById("ascii");
+const statusEl    = document.getElementById("status");
+const renderBtn   = document.getElementById("renderBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const profileMeta = document.getElementById("profileMeta");
 
-      <div class="glass-card">
-        <div class="section-label">Papier & Format</div>
-        <div class="sub-label">Format</div>
-        <div class="segmented scrollable" id="paperFormatBtns" style="margin-bottom:12px">
-          <button data-format="Original" class="active">1:1 Orig</button>
-          <button data-format="Fit">Auto</button>
-          <button data-format="A4">A4</button>
-          <button data-format="A5">A5</button>
-          <button data-format="A6">A6</button>
-          <button data-format="Letter">Letter</button>
-        </div>
-        <div class="sub-label">Ausrichtung</div>
-        <div class="segmented" id="orientationBtns">
-          <button data-orient="Portrait" class="active">Hochformat</button>
-          <button data-orient="Landscape">Querformat</button>
-        </div>
-      </div>
+let lastRenderedBlob = null;
 
-      <div class="glass-card">
-        <div class="section-label">Farbband & Medien</div>
-        <div class="grid-2">
-          <div>
-            <div class="sub-label">Tinte</div>
-            <div class="swatches" id="inkSwatches">
-              <div class="swatch active" style="background:#19191e" data-ink="25,25,30" title="schwarz"></div>
-              <div class="swatch" style="background:#142d82" data-ink="20,45,130" title="blau"></div>
-              <div class="swatch" style="background:#a01e23" data-ink="160,30,35" title="rot"></div>
-              <div class="swatch" style="background:#5a286e" data-ink="90,40,110" title="lila"></div>
-              <div class="swatch" style="background:#2e5f36" data-ink="46,95,54" title="grün"></div>
-              <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e" title="benutzerdefiniert"></div>
-            </div>
-            <div class="custom-ink-row">
-              <input type="color" id="inkColorPicker" class="color-picker" value="#19191e" title="Eigene Farbe wählen">
-              <button class="btn-sm" id="applyCustomInkBtn">Anwenden</button>
-            </div>
-          </div>
-          <div>
-            <div class="sub-label">Papier (Auto)</div>
-            <div class="swatches" id="paperSwatches">
-              <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232" title="creme"></div>
-              <div class="swatch active" style="background:#ffffff" data-paper="255,255,255" title="weiß"></div>
-              <div class="swatch" style="background:#eadfb8" data-paper="234,223,184" title="gealtert"></div>
-              <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160" title="kraftpapier"></div>
-              <div class="swatch" style="background:#f0d9cf" data-paper="240,217,207" title="rosa formular"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+// ==================== HELPERS ====================
+function setStatus(text, working = false) {
+  if(!statusEl) return;
+  statusEl.textContent = text;
+  statusEl.className = "status" + (working ? " working" : "");
+}
 
-      <div class="glass-card">
-        <div class="section-label">Hardware Fehler</div>
-        <div class="scroll-list" id="errorList">
-          <div class="er" data-pattern="cloudy"><div class="er-head"><span class="er-check"></span><span class="er-name">Wolkig</span><span class="er-desc">Fleckige Dichte, Farbband-Sättigung</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="ghosting"><div class="er-head"><span class="er-check"></span><span class="er-name">Ghosting</span><span class="er-desc">Schatten durch bidirektionalen Druck</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="misaligned"><div class="er-head"><span class="er-check"></span><span class="er-name">Wackeln</span><span class="er-desc">Zeilenverschiebung, abgenutzte Schienen</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="pin_skip"><div class="er-head"><span class="er-check"></span><span class="er-name">Nadel-Skip</span><span class="er-desc">Tote Nadel hinterlässt leere Linien</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="smudge"><div class="er-head"><span class="er-check"></span><span class="er-name">Verschmieren</span><span class="er-desc">Papierkontakt schleift in Bändern</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="ribbon_twist"><div class="er-head"><span class="er-check"></span><span class="er-name">Farbband</span><span class="er-desc">Verdrehtes Band, variierende Spaltendichte</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="head_gap"><div class="er-head"><span class="er-check"></span><span class="er-name">Kopflücke</span><span class="er-desc">Walze zu breit, Punkte zu hell</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="ink_starved"><div class="er-head"><span class="er-check"></span><span class="er-name">Tinte leer</span><span class="er-desc">Dichte verblasst Zeile für Zeile</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="paper_slip"><div class="er-head"><span class="er-check"></span><span class="er-name">Papierschlupf</span><span class="er-desc">Walze rutscht, unregelmäßiger Abstand</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="static_noise"><div class="er-head"><span class="er-check"></span><span class="er-name">Rauschen</span><span class="er-desc">Statische Entladung, irregeleitete Punkte</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="double_feed"><div class="er-head"><span class="er-check"></span><span class="er-name">Doppeleinzug</span><span class="er-desc">Zwei Blätter, schwache Schattenkopie</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-          <div class="er" data-pattern="mechanical_resonance"><div class="er-head"><span class="er-check"></span><span class="er-name">Resonanz</span><span class="er-desc">Vibrationen erzeugen wellige Spuren</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-        </div>
-      </div>
+function detectAndSetPaperColor(img) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 64;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, 64, 64);
+    const data = ctx.getImageData(0, 0, 64, 64).data;
+    let r = 0, g = 0, b = 0, count = 0;
+    for (let y = 0; y < 64; y++) {
+      for (let x = 0; x < 64; x++) {
+        if (x < 4 || x > 59 || y < 4 || y > 59) {
+          const idx = (y * 64 + x) * 4;
+          r += data[idx]; g += data[idx+1]; b += data[idx+2]; count++;
+        }
+      }
+    }
+    r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
+    let bestSwatch = null, minDist = Infinity;
+    document.querySelectorAll('#paperSwatches .swatch').forEach(sw => {
+      const rgb  = sw.dataset.paper.split(",").map(Number);
+      const dist = (r-rgb[0])**2 + (g-rgb[1])**2 + (b-rgb[2])**2;
+      if (dist < minDist) { minDist = dist; bestSwatch = sw; }
+    });
+    if (bestSwatch) {
+      document.querySelectorAll('#paperSwatches .swatch').forEach(s => s.classList.remove("active"));
+      bestSwatch.classList.add("active");
+      state.paper = bestSwatch.dataset.paper.split(",").map(Number);
+    }
+  } catch (e) { console.warn("Paper auto-detect failed", e); }
+}
 
-      <div class="glass-card">
-        <details>
-          <summary>Erweiterte Einstellungen</summary>
-          <label class="field">
-            <span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span>
-            <input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300">
-          </label>
-          <label class="field">
-            <span class="name"><span>Jitter-Skalierung</span><b id="jitterVal">1.0</b></span>
-            <input type="range" id="jitterSlider" min="0" max="30" value="10">
-          </label>
-          <label class="field">
-            <span class="name"><span>Banding-Skalierung</span><b id="bandingVal">1.0</b></span>
-            <input type="range" id="bandingSlider" min="0" max="20" value="10">
-          </label>
-          <label class="field">
-            <span class="name"><span>Max. Output-Größe (px)</span><b id="maxSizeVal">8000</b></span>
-            <input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="8000">
-          </label>
-          <label class="field">
-            <span class="name"><span>Seed (0 = zufällig)</span><b id="seedVal">0</b></span>
-            <input type="range" id="seedSlider" min="0" max="9999" value="0">
-          </label>
-          <div class="checks" style="margin-top:14px">
-            <label class="check" data-flag="softBlur"><span class="box"></span><span>Weichzeichner (Soft Blur)</span></label>
-          </div>
-        </details>
-      </div>
-    </div>
+function analyzeAndAdaptImage(img) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 160; c.height = 160;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, 160, 160);
+    const { data } = ctx.getImageData(0, 0, 160, 160);
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < data.length; i += 4) {
+      hist[Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2])]++;
+    }
+    const total = 160 * 160;
+    let cumSum = 0, p2 = 0, p98 = 255;
+    for (let i = 0; i < 256; i++) {
+      cumSum += hist[i];
+      if (cumSum / total < 0.02) p2  = i;
+      if (cumSum / total < 0.98) p98 = i;
+    }
+    const range     = Math.max(p98 - p2, 20);
+    const brightPx  = hist.slice(180).reduce((a, b) => a + b, 0);
+    const isDoc     = brightPx / total > 0.45;
 
-    <div class="actions">
-      <button class="btn primary" id="renderBtn" disabled>Render</button>
-      <button class="btn" id="downloadBtn" disabled>PNG</button>
-    </div>
-  </aside>
+    const setSliderSafely = (id, valId, val) => {
+      const s = document.getElementById(id), v = document.getElementById(valId);
+      if(s) s.value = val;
+      if(v) v.textContent = val;
+    };
 
-  <main class="main-content">
-    <div class="glass-card dropzone" id="dropzone">
-      <div class="big" id="dzBig">Bild hier ablegen / klicken</div>
-      <div class="small" id="dzSmall">PNG · JPG · HEIC · WebP</div>
-      <input type="file" id="fileInput" accept="image/*">
-    </div>
+    if (isDoc) {
+      const newContrast = Math.min(65, Math.round((220 / range - 1) * 55));
+      state.brightness  = 0;
+      state.contrast    = Math.max(20, newContrast);
+      state.threshold   = 128;
+      state.dither      = "threshold";
+      setSliderSafely("brightnessSlider", "brightnessVal", 0);
+      setSliderSafely("contrastSlider", "contrastVal", state.contrast);
+      setSliderSafely("thresholdSlider", "thresholdVal", 128);
+      document.querySelectorAll("#ditherBtns button").forEach(b => b.classList.toggle("active", b.dataset.dither === "threshold"));
+      if(document.getElementById("thresholdField")) document.getElementById("thresholdField").style.display = "block";
+    } else {
+      const newBrightness = Math.round(((p2 + p98) / 2 - 128) * -0.35);
+      const newContrast   = Math.min(40, Math.round((180 / range - 1) * 30));
+      state.brightness = Math.max(-60, Math.min(60, newBrightness));
+      state.contrast   = Math.max(0,   Math.min(40, newContrast));
+      setSliderSafely("brightnessSlider", "brightnessVal", state.brightness);
+      setSliderSafely("contrastSlider", "contrastVal", state.contrast);
+    }
+  } catch (e) { console.warn("Image analysis failed", e); }
+}
 
-    <div id="outputSection" style="display:none; flex: 1; flex-direction: column; gap: 15px;">
-      <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; padding: 0;">
-        <div style="padding: 12px 16px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-          <span class="section-label" style="margin: 0;">Output & Vorschau</span>
-          <div id="status" class="status">Bereit.</div>
-        </div>
-        <div class="canvas-wrap" style="flex: 1; margin: 16px; border-radius: 8px; overflow: auto; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-          <canvas id="outCanvas" width="400" height="300" style="max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5);"></canvas>
-        </div>
-      </div>
-      
-      <div class="glass-card">
-        <pre id="ascii" class="ascii empty">// Lade ein Bild hoch, um die Vorschau zu sehen //</pre>
-      </div>
-    </div>
-  </main>
-</div>
+function refreshAscii() {
+  if (!state.sourceImage || !asciiEl) return;
+  try {
+    asciiEl.classList.remove("empty");
+    asciiEl.textContent = asciiPreview(state.sourceImage, 60);
+  } catch (e) { console.warn(e); }
+}
 
-<script type="module" src="js/main.js"></script>
-</body>
-</html>
+function updateProfileMeta() {
+  if(!profileMeta) return;
+  const p = PROFILES[state.profile];
+  if(!p) return;
+  profileMeta.textContent = `${p.label} · ${p.pins}-pin · ${p.dpi_h}×${p.dpi_v} dpi · ⌀ ${p.dot_diameter_mm}mm`;
+  const condCheck = document.querySelector('[data-flag="condensed"]');
+  if(condCheck) {
+    if (!p.supports_condensed) {
+      condCheck.dataset.disabled = "true";
+      condCheck.classList.remove("on");
+      state.condensed = false;
+    } else {
+      condCheck.dataset.disabled = "false";
+    }
+  }
+}
+
+// ==================== SEGMENTED BUTTONS ====================
+function wireSegmented(containerId, stateKey, attrKey, onChange = null) {
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  container.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    container.querySelectorAll(`button`).forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state[stateKey] = btn.dataset[attrKey];
+    if (onChange) onChange();
+    markModified();
+    debouncedRefreshAscii();
+  });
+}
+
+wireSegmented("ditherBtns", "dither", "dither", () => {
+  const tField = document.getElementById("thresholdField");
+  if(tField) tField.style.display = state.dither === "threshold" ? "block" : "none";
+});
+wireSegmented("paperFormatBtns", "paperFormat", "format");
+wireSegmented("orientationBtns",  "orientation", "orient");
+
+// ==================== PROFILE SCROLL LIST ====================
+const profileList = document.getElementById('profileList');
+if(profileList) {
+  profileList.addEventListener('click', (e) => {
+    const item = e.target.closest('.sli');
+    if (!item) return;
+    profileList.querySelectorAll('.sli').forEach(s => s.classList.remove('active'));
+    item.classList.add('active');
+    state.profile = item.dataset.profile;
+    updateProfileMeta();
+    markModified();
+    debouncedRefreshAscii();
+  });
+}
+
+// ==================== ERROR SCROLL LIST ====================
+function syncWearLayersFromUI() {
+  state.wearLayers = [];
+  document.querySelectorAll('#errorList .er.on').forEach(el => {
+    const slider = el.querySelector('.er-slider');
+    if(slider) {
+      state.wearLayers.push({ pattern: el.dataset.pattern, strength: +slider.value });
+    }
+  });
+}
+
+const errorList = document.getElementById('errorList');
+if(errorList) {
+  errorList.addEventListener('click', (e) => {
+    const head = e.target.closest('.er-head');
+    if (!head) return;
+    const er = head.closest('.er');
+    er.classList.toggle('on');
+    const slider = er.querySelector('.er-slider');
+    const valEl  = er.querySelector('.er-val');
+    if(valEl && slider) {
+      valEl.textContent = er.classList.contains('on') ? slider.value + '%' : '0%';
+    }
+    syncWearLayersFromUI();
+    markModified();
+  });
+
+  errorList.addEventListener('input', (e) => {
+    if (!e.target.classList.contains('er-slider')) return;
+    const er = e.target.closest('.er');
+    const valEl = er.querySelector('.er-val');
+    if(valEl) valEl.textContent = e.target.value + '%';
+    syncWearLayersFromUI();
+    markModified();
+  });
+}
+
+// ==================== CHECKBOXES ====================
+document.querySelectorAll(".check").forEach(el => {
+  el.addEventListener("click", () => {
+    if (el.dataset.disabled === "true") return;
+    el.classList.toggle("on");
+    state[el.dataset.flag] = el.classList.contains("on");
+    markModified();
+    debouncedRefreshAscii();
+  });
+});
+
+// ==================== SWATCHES ====================
+function wireSwatches(containerId, stateKey, attrKey) {
+  const box = document.getElementById(containerId);
+  if(!box) return;
+  box.addEventListener("click", (e) => {
+    const sw = e.target.closest(".swatch");
+    if (!sw || !sw.dataset[attrKey]) return;
+    box.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
+    sw.classList.add("active");
+    state[stateKey] = sw.dataset[attrKey].split(",").map(Number);
+    markModified();
+  });
+}
+wireSwatches("inkSwatches",   "ink",   "ink");
+wireSwatches("paperSwatches", "paper", "paper");
+
+// ==================== CUSTOM INK PICKER (Übersichtlich & Logisch) ====================
+function hexToRgb(hex) {
+  const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(n => n.toString(16).padStart(2, '0')).join('');
+}
+
+const inkColorPicker = document.getElementById('inkColorPicker');
+const applyCustomInkBtn = document.getElementById('applyCustomInkBtn');
+
+if(inkColorPicker && applyCustomInkBtn) {
+  applyCustomInkBtn.addEventListener('click', () => {
+    const hex = inkColorPicker.value;
+    const rgb = hexToRgb(hex);
+    if (!rgb) return;
+    
+    const swatch = document.getElementById('customInkSwatch');
+    if(swatch) {
+      swatch.dataset.ink = rgb.join(',');
+      swatch.style.background = hex;
+      document.querySelectorAll('#inkSwatches .swatch').forEach(s => s.classList.remove('active'));
+      swatch.classList.add('active');
+    }
+    state.ink = rgb;
+    markModified();
+  });
+}
+
+// ==================== SLIDERS (with Safeties & Debounce) ====================
+function wireSlider(id, valId, stateKey, transform = v => +v, format = v => v, liveRefresh = false) {
+  const s = document.getElementById(id);
+  const v = document.getElementById(valId);
+  if (!s || !v) return;
+  const apply = (fromUser) => {
+    const raw = transform(s.value);
+    state[stateKey] = raw;
+    v.textContent = format(raw);
+    if (fromUser) markModified();
+    if (liveRefresh) debouncedRefreshAscii();
+  };
+  s.addEventListener("input", () => apply(true));
+  apply(false); // Init
+}
+
+wireSlider("thresholdSlider", "thresholdVal", "threshold", v => +v, v => v, true);
+wireSlider("brightnessSlider","brightnessVal","brightness", v => +v, v => v, true);
+wireSlider("contrastSlider",  "contrastVal",  "contrast",  v => +v, v => v, true);
+wireSlider("gammaSlider",     "gammaVal",     "gamma",     v => +v, v => (+v).toFixed(1), true);
+wireSlider("dpiSlider",       "dpiVal",       "dpi",       v => +v, v => v);
+wireSlider("jitterSlider",    "jitterVal",    "jitterScale", v => +v / 10, v => v.toFixed(1));
+wireSlider("bandingSlider",   "bandingVal",   "bandingScale", v => +v / 10, v => v.toFixed(1));
+wireSlider("maxSizeSlider",   "maxSizeVal",   "maxSize",   v => +v, v => v);
+wireSlider("seedSlider",      "seedVal",      "seed",      v => +v, v => v);
+
+// ==================== PRESET YAML SERIALIZER / PARSER ====================
+function presetToYaml(preset) {
+  const SKIP = new Set(['id', 'system']);
+  const lines = [];
+  for (const [k, v] of Object.entries(preset)) {
+    if (SKIP.has(k)) continue;
+    if (Array.isArray(v)) {
+      if (v.length === 0) lines.push(`${k}: []`);
+      else if (typeof v[0] === 'number') lines.push(`${k}: [${v.join(', ')}]`);
+      else {
+        lines.push(`${k}:`);
+        for (const obj of v) {
+          const entries = Object.entries(obj);
+          lines.push(`  - ${entries[0][0]}: ${entries[0][1]}`);
+          for (let i = 1; i < entries.length; i++) lines.push(`    ${entries[i][0]}: ${entries[i][1]}`);
+        }
+      }
+    } else if (v === null) lines.push(`${k}: null`);
+    else lines.push(`${k}: ${v}`);
+  }
+  return lines.join('\n');
+}
+
+function yamlToPreset(yaml) {
+  const preset = {};
+  const lines  = yaml.split('\n');
+  let currentArrayKey = null;
+  let currentObj      = null;
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const indent = raw.search(/\S/);
+
+    if (indent === 0) {
+      currentArrayKey = null; currentObj = null;
+      const ci = trimmed.indexOf(':');
+      if (ci === -1) continue;
+      const key = trimmed.slice(0, ci).trim();
+      const val = trimmed.slice(ci + 1).trim();
+      if (!val) { currentArrayKey = key; preset[key] = []; }
+      else if (val === '[]')   preset[key] = [];
+      else if (val === 'null') preset[key] = null;
+      else if (val === 'true') preset[key] = true;
+      else if (val === 'false')preset[key] = false;
+      else if (val.startsWith('[')) {
+        const inner = val.slice(1, val.lastIndexOf(']'));
+        preset[key] = inner.split(',').map(s => {
+          const n = parseFloat(s.trim());
+          return isNaN(n) ? s.trim() : n;
+        });
+      } else {
+        const n = parseFloat(val);
+        preset[key] = isNaN(n) ? val : n;
+      }
+    } else if (indent === 2 && trimmed.startsWith('- ') && currentArrayKey) {
+      const inner = trimmed.slice(2).trim();
+      const ci    = inner.indexOf(':');
+      if (ci === -1) continue;
+      const k  = inner.slice(0, ci).trim();
+      const vr = inner.slice(ci + 1).trim();
+      const n  = parseFloat(vr);
+      currentObj = { [k]: isNaN(n) ? vr : n };
+      preset[currentArrayKey].push(currentObj);
+    } else if (indent === 4 && currentObj !== null) {
+      const ci = trimmed.indexOf(':');
+      if (ci === -1) continue;
+      const k  = trimmed.slice(0, ci).trim();
+      const vr = trimmed.slice(ci + 1).trim();
+      const n  = parseFloat(vr);
+      currentObj[k] = isNaN(n) ? vr : n;
+    }
+  }
+  return preset;
+}
+
+// ==================== PRESET SYSTEM ====================
+const STORAGE_KEY = 'dotmatrix_user_presets';
+
+function loadUserPresets() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function saveUserPresets(presets) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); } catch {}
+}
+function deleteUserPreset(id) {
+  const presets = loadUserPresets().filter(p => p.id !== id);
+  saveUserPresets(presets);
+  renderPresetBar();
+}
+
+function captureCurrentPreset(name) {
+  return {
+    name:         name || 'Neu',
+    system:       false,
+    profile:      state.profile,
+    brightness:   state.brightness,
+    contrast:     state.contrast,
+    gamma:        state.gamma,
+    dither:       state.dither,
+    threshold:    state.threshold,
+    ink:          [...state.ink],
+    paper:        [...state.paper],
+    paperFormat:  state.paperFormat,
+    orientation:  state.orientation,
+    doubleStrike: state.doubleStrike,
+    condensed:    state.condensed,
+    dpi:          state.dpi,
+    jitterScale:  state.jitterScale,
+    bandingScale: state.bandingScale,
+    maxSize:      state.maxSize,
+    wearLayers:   state.wearLayers.map(l => ({ ...l })),
+    seed:         state.seed,
+    softBlur:     state.softBlur,
+    invert:       state.invert,
+  };
+}
+
+function applyPreset(preset) {
+  if (!preset) return;
+  clearModified();
+
+  if (preset.profile && PROFILES[preset.profile]) {
+    state.profile = preset.profile;
+    document.querySelectorAll('#profileList .sli').forEach(s => {
+      s.classList.toggle('active', s.dataset.profile === preset.profile);
+    });
+    updateProfileMeta();
+  }
+
+  const setSlider = (id, valId, val, fmt = v => v) => {
+    const el = document.getElementById(id), ve = document.getElementById(valId);
+    if (el && val !== undefined && val !== null) { el.value = val; if (ve) ve.textContent = fmt(val); }
+  };
+  if (preset.brightness !== undefined) { state.brightness = preset.brightness; setSlider('brightnessSlider','brightnessVal', preset.brightness); }
+  if (preset.contrast   !== undefined) { state.contrast   = preset.contrast;   setSlider('contrastSlider',  'contrastVal',   preset.contrast); }
+  if (preset.gamma      !== undefined) { state.gamma      = preset.gamma;      setSlider('gammaSlider',     'gammaVal',      preset.gamma, v => (+v).toFixed(1)); }
+  if (preset.threshold  !== undefined) { state.threshold  = preset.threshold;  setSlider('thresholdSlider', 'thresholdVal',  preset.threshold); }
+  if (preset.dpi        !== undefined) { state.dpi        = preset.dpi;        setSlider('dpiSlider',       'dpiVal',        preset.dpi); }
+  if (preset.jitterScale!== undefined) { state.jitterScale = preset.jitterScale; setSlider('jitterSlider','jitterVal', Math.round(preset.jitterScale * 10), v => (+v/10).toFixed(1)); }
+  if (preset.bandingScale!== undefined){ state.bandingScale= preset.bandingScale;setSlider('bandingSlider','bandingVal',Math.round(preset.bandingScale*10),v=>(+v/10).toFixed(1)); }
+  if (preset.maxSize    !== undefined) { state.maxSize    = preset.maxSize;    setSlider('maxSizeSlider',   'maxSizeVal',    preset.maxSize); }
+  if (preset.seed       !== undefined) { state.seed       = preset.seed;       setSlider('seedSlider',      'seedVal',       preset.seed); }
+
+  if (preset.dither) {
+    state.dither = preset.dither;
+    document.querySelectorAll('#ditherBtns button').forEach(b => b.classList.toggle('active', b.dataset.dither === preset.dither));
+    const tf = document.getElementById('thresholdField');
+    if(tf) tf.style.display = preset.dither === 'threshold' ? 'block' : 'none';
+  }
+
+  if (preset.paperFormat) {
+    state.paperFormat = preset.paperFormat;
+    document.querySelectorAll('#paperFormatBtns button').forEach(b => b.classList.toggle('active', b.dataset.format === preset.paperFormat));
+  }
+  if (preset.orientation) {
+    state.orientation = preset.orientation;
+    document.querySelectorAll('#orientationBtns button').forEach(b => b.classList.toggle('active', b.dataset.orient === preset.orientation));
+  }
+
+  if (preset.ink) {
+    state.ink = preset.ink;
+    const inkStr = preset.ink.join(',');
+    let found = false;
+    document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach(s => {
+      const match = s.dataset.ink === inkStr;
+      s.classList.toggle('active', match);
+      if (match) found = true;
+    });
+    const customSwatch = document.getElementById('customInkSwatch');
+    if (!found && customSwatch) {
+      const hex = rgbToHex(...preset.ink);
+      customSwatch.dataset.ink = inkStr;
+      customSwatch.style.background = hex;
+      customSwatch.classList.add('active');
+      if(document.getElementById('inkColorPicker')) document.getElementById('inkColorPicker').value = hex;
+    } else if (customSwatch) {
+      customSwatch.classList.remove('active');
+    }
+  }
+
+  if (preset.paper) {
+    state.paper = preset.paper;
+    const paperStr = preset.paper.join(',');
+    document.querySelectorAll('#paperSwatches .swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.paper === paperStr);
+    });
+  }
+
+  const setBool = (flag, val) => {
+    if (val === undefined) return;
+    state[flag] = val;
+    const el = document.querySelector(`[data-flag="${flag}"]`);
+    if (el) el.classList.toggle('on', val);
+  };
+  setBool('doubleStrike', preset.doubleStrike);
+  setBool('condensed',    preset.condensed);
+  setBool('softBlur',     preset.softBlur);
+  setBool('invert',       preset.invert);
+  updateProfileMeta();
+
+  if (preset.wearLayers !== undefined) {
+    state.wearLayers = preset.wearLayers.map(l => ({ ...l }));
+    applyWearLayersToUI(state.wearLayers);
+  }
+
+  debouncedRefreshAscii();
+}
+
+function applyWearLayersToUI(layers) {
+  document.querySelectorAll('#errorList .er').forEach(el => {
+    el.classList.remove('on');
+    const valEl = el.querySelector('.er-val');
+    if (valEl) valEl.textContent = '0%';
+  });
+  if(!layers || !Array.isArray(layers)) return;
+  for (const layer of layers) {
+    const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
+    if (!el) continue;
+    el.classList.add('on');
+    const slider = el.querySelector('.er-slider');
+    const valEl  = el.querySelector('.er-val');
+    if (slider) slider.value = layer.strength ?? 50;
+    if (valEl)  valEl.textContent = (layer.strength ?? 50) + '%';
+  }
+}
+
+let activePresetId = null;
+let presetDirty    = false;
+
+function markModified() { if (!presetDirty) { presetDirty = true; renderPresetBar(); } }
+function clearModified() { presetDirty = false; }
+
+function renderPresetBar() {
+  const list = document.getElementById('presetList');
+  if(!list) return;
+  const userPresets = loadUserPresets();
+  list.innerHTML = '';
+
+  const allPresets = [...SYSTEM_PRESETS, ...userPresets];
+
+  for (const preset of allPresets) {
+    const isActive = preset.id === activePresetId;
+    const isDirty  = isActive && presetDirty;
+    
+    const div = document.createElement('div');
+    div.className = 'sli' + (isActive ? ' active' : '') + (isDirty ? ' modified' : '');
+    div.dataset.id = preset.id;
+    
+    let innerHTML = `<div class="sli-row">
+                       <span class="sli-name" style="font-size: 13px;">${preset.name}</span>
+                       ${preset.system ? '<span class="sli-badge" style="border:none; opacity:0.5;">SYS</span>' : '<button class="delete-btn" title="Löschen">×</button>'}
+                     </div>`;
+    div.innerHTML = innerHTML;
+
+    div.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        e.stopPropagation();
+        if (confirm(`Preset "${preset.name}" wirklich löschen?`)) {
+          if (activePresetId === preset.id) { activePresetId = null; clearModified(); }
+          deleteUserPreset(preset.id);
+        }
+        return;
+      }
+      activePresetId = preset.id;
+      clearModified();
+      renderPresetBar();
+      applyPreset(preset);
+    });
+
+    list.appendChild(div);
+  }
+}
+
+// ==================== EXPORT / IMPORT ====================
+function downloadText(text, filename) {
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+const exportBtn = document.getElementById('exportCurrentBtn');
+if(exportBtn) {
+  exportBtn.addEventListener('click', () => {
+    const name   = prompt('Name für Export?', 'Mein Preset') || 'Mein Preset';
+    const preset = captureCurrentPreset(name);
+    const yaml   = presetToYaml(preset);
+    const slug   = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    downloadText(yaml, `${slug}.yaml`);
+  });
+}
+
+const importBtn = document.getElementById('importPresetBtn');
+const fileInp = document.getElementById('presetFileInput');
+if(importBtn && fileInp) {
+  importBtn.addEventListener('click', () => fileInp.click());
+  fileInp.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    importFromText(text);
+    e.target.value = '';
+  });
+}
+
+const saveBtn = document.getElementById('savePresetBtn');
+if(saveBtn) {
+  saveBtn.addEventListener('click', () => {
+    const name = prompt('Name für neues Preset:', 'Mein Preset');
+    if (!name) return;
+    const preset = captureCurrentPreset(name.trim());
+    preset.id    = 'user_' + Date.now();
+    const presets = loadUserPresets();
+    presets.push(preset);
+    saveUserPresets(presets);
+    activePresetId = preset.id;
+    clearModified();
+    renderPresetBar();
+    setStatus(`Preset "${preset.name}" gespeichert.`);
+  });
+}
+
+function normalizePreset(raw) {
+  if (raw.wear && !raw.wearLayers) {
+    const known = new Set(Object.keys({ cloudy:1, ghosting:1, misaligned:1, pin_skip:1, smudge:1, ribbon_twist:1, head_gap:1, ink_starved:1, paper_slip:1, static_noise:1, double_feed:1, mechanical_resonance:1 }));
+    raw.wearLayers = Object.entries(raw.wear)
+      .filter(([k, v]) => known.has(k) && v > 0)
+      .map(([pattern, strength]) => ({ pattern, strength }));
+    delete raw.wear;
+  }
+  return raw;
+}
+
+function importFromText(text) {
+  try {
+    let preset;
+    const stripped = text.trim();
+    if (stripped.startsWith('{')) preset = normalizePreset(JSON.parse(stripped));
+    else preset = yamlToPreset(stripped);
+    
+    if (!preset.name) preset.name = 'Importiert';
+    applyPreset(preset);
+    clearModified();
+    setStatus(`Preset "${preset.name}" importiert.`);
+    
+    preset.id = 'user_' + Date.now();
+    preset.system = false;
+    const presets = loadUserPresets();
+    presets.push(preset);
+    saveUserPresets(presets);
+    activePresetId = preset.id;
+    renderPresetBar();
+  } catch (err) { alert('Import fehlgeschlagen: ' + err.message); }
+}
+
+// ==================== FILE HANDLING ====================
+if(dropzone && fileInput) {
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+  dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+}
+
+async function handleFile(file) {
+  if (!file || !file.type.startsWith("image/")) { setStatus("Keine gültige Bilddatei."); return; }
+  setStatus("Lade Bild...");
+  let metaDpi = null;
+  try {
+    const buf = await file.slice(0, 256).arrayBuffer();
+    if (file.type === 'image/jpeg') metaDpi = readJfifDpi(buf);
+    else if (file.type === 'image/png') metaDpi = readPngDpi(buf);
+  } catch {}
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    const sourceDpi = (metaDpi && metaDpi > 96) ? snapDpi(metaDpi) : estimateDpiFromImageSize(img);
+    state.dpi = sourceDpi;
+    const dpiS = document.getElementById("dpiSlider");
+    const dpiV = document.getElementById("dpiVal");
+    if(dpiS) dpiS.value = sourceDpi;
+    if(dpiV) dpiV.textContent = sourceDpi;
+    
+    state.sourceImage = img;
+    detectAndSetPaperColor(img);
+    analyzeAndAdaptImage(img);
+    
+    const dzB = document.getElementById("dzBig"), dzS = document.getElementById("dzSmall");
+    if(dzB) dzB.textContent = file.name;
+    if(dzS) dzS.textContent = `${img.width} × ${img.height} · Ändern klicken`;
+    
+    if(outSection) outSection.style.display = "flex";
+    const scale = Math.min(1, 800 / Math.max(img.width, img.height));
+    if(outCanvas && outCtx) {
+      outCanvas.width  = Math.round(img.width  * scale);
+      outCanvas.height = Math.round(img.height * scale);
+      outCtx.drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
+    }
+    
+    if(renderBtn) renderBtn.disabled = false;
+    setStatus("Bereit. Auf RENDER klicken.");
+    debouncedRefreshAscii();
+  };
+  img.onerror = () => setStatus("Fehler beim Laden.");
+  img.src = url;
+}
+
+// ==================== RENDER ====================
+if(renderBtn) {
+  renderBtn.addEventListener("click", async () => {
+    if (!state.sourceImage) return;
+    renderBtn.disabled  = true;
+    if(downloadBtn) downloadBtn.disabled = true;
+    setStatus("Rendern...", true);
+    try {
+      const t0 = performance.now();
+      const { imageData, width, height } = await render(state.sourceImage, msg => setStatus(msg, true));
+      if(outCanvas && outCtx) {
+        outCanvas.width  = width;
+        outCanvas.height = height;
+        outCtx.putImageData(imageData, 0, 0);
+        outCanvas.toBlob(blob => {
+          lastRenderedBlob = blob;
+          if(downloadBtn) downloadBtn.disabled = false;
+        }, "image/png");
+      }
+      setStatus(`Fertig in ${((performance.now() - t0) / 1000).toFixed(2)}s · ${width}×${height}`);
+    } catch (e) {
+      console.error(e);
+      setStatus("Render fehlgeschlagen: " + e.message);
+    } finally {
+      renderBtn.disabled = false;
+    }
+  });
+}
+
+if(downloadBtn) {
+  downloadBtn.addEventListener("click", () => {
+    if (!lastRenderedBlob) return;
+    const a  = document.createElement("a");
+    a.href   = URL.createObjectURL(lastRenderedBlob);
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    a.download = `dotmatrix_${state.profile}_${ts}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+}
+
+// ==================== INIT ====================
+document.addEventListener("DOMContentLoaded", () => {
+  updateProfileMeta();
+  renderPresetBar();
+});
