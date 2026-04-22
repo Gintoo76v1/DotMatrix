@@ -1,236 +1,118 @@
 <!doctype html>
-<html lang="en" data-theme="spline">
+<html lang="de">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
-<title>dotmatrix — retro printer renderer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-<script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.7/build/spline-viewer.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>DotMatrix Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-<div class="retro-bg"></div>
-<div class="vapor-grid"></div>
-<div class="spline-bg">
-  <spline-viewer url="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode"></spline-viewer>
-</div>
-<header>
-  <h1>dotmatrix<span class="dot">.</span></h1>
-  <div class="tag">retro printer aesthetic · ∎ 9-pin · 24-pin</div>
-  <div style="margin-top:14px">
-    <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px">UI Theme</div>
-    <div class="theme-bar" id="themeSelector">
-      <button class="theme-btn active" data-settheme="spline">Spline 3D ⭐</button>
-      <button class="theme-btn" data-settheme="glass">Glass ✦</button>
-      <button class="theme-btn" data-settheme="toxic">Toxic ☢</button>
-      <button class="theme-btn" data-settheme="proto">Proto ⬡</button>
-      <button class="theme-btn" data-settheme="classic">Classic</button>
-      <button class="theme-btn" data-settheme="amber">Amber</button>
-      <button class="theme-btn" data-settheme="gameboy">Gameboy</button>
-      <button class="theme-btn" data-settheme="crt-hacker">Hacker ⭐</button>
-      <button class="theme-btn" data-settheme="vaporwave">Vapor ⭐</button>
-    </div>
-  </div>
-</header>
-<section>
-  <div class="section-label">Presets</div>
-  <div class="preset-bar" id="presetBar"></div>
-  <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-    <button class="btn-sm" id="exportPresetBtn">&#8595; Export YAML</button>
-    <button class="btn-sm" id="importPresetBtn">&#8593; Import YAML</button>
-    <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
-  </div>
-</section>
-<section>
-  <details id="presetCreatorDetails">
-    <summary>Preset Creator</summary>
-    <div style="margin-top:12px">
-      <label class="field" style="margin-top:0">
-        <span class="name"><span>Preset Name</span></span>
-        <input type="text" id="presetNameInput" class="text-input" placeholder="My Custom Preset" autocomplete="off">
-      </label>
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn-sm" id="savePresetBtn">Save to Library</button>
-        <button class="btn-sm" id="exportCurrentBtn">Export as YAML</button>
+<body class="dark-mode"> <div class="app-container">
+    
+    <nav class="activity-bar">
+      <div class="icon-btn active" data-tab="tab-source" title="Source & Print">🖨️</div>
+      <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
+      <div class="icon-btn" data-tab="tab-errors" title="Hardware Errors">🔧</div>
+      <div class="spacer"></div>
+      <div class="icon-btn" data-tab="tab-system" title="System Settings">⚙️</div>
+    </nav>
+
+    <aside class="sidebar glass-card">
+      
+      <div class="tab-content active" id="tab-source">
+        <h2 data-i18n="sourceTitle">Bildquelle</h2>
+        <div id="dropzone" class="dropzone">
+          <div class="big" id="dzBig" data-i18n="dropzoneBig">Bild auswählen</div>
+          <div class="small" id="dzSmall">PNG · JPG · HEIC · WebP</div>
+          <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <h2 data-i18n="profileTitle" style="margin-top:20px;">Druckerprofil</h2>
+        <div class="scroll-list" id="profileList">
+          </div>
+        <div class="profile-meta" id="profileMeta"></div>
+
+        <h2 data-i18n="adjustTitle" style="margin-top:20px;">Bildanpassung</h2>
+        <label class="field"><span class="name"><span>Helligkeit</span><b id="brightnessVal">0</b></span><input type="range" id="brightnessSlider" min="-100" max="100" value="0"></label>
+        <label class="field"><span class="name"><span>Kontrast</span><b id="contrastVal">20</b></span><input type="range" id="contrastSlider" min="-100" max="100" value="20"></label>
+        
+        <h2 data-i18n="inkTitle" style="margin-top:20px;">Tinte</h2>
+        <div class="custom-ink-row">
+          <input type="color" id="inkColorPicker" class="color-picker" value="#19191e" title="Farbe wählen">
+          <input type="text" id="inkHexInput" class="hex-input text-input" value="#19191e" maxlength="7" spellcheck="false">
+        </div>
       </div>
-      <div style="margin-top:14px">
-        <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px">Import / Paste YAML</div>
-        <textarea id="presetYamlArea" class="yaml-area" placeholder="Paste YAML here or use the Import button above..." rows="6"></textarea>
-        <button class="btn-sm" id="importYamlBtn" style="margin-top:6px">Apply from YAML</button>
+
+      <div class="tab-content" id="tab-presets">
+        <h2 data-i18n="presetsTitle">Presets</h2>
+        <div class="scroll-list" id="presetList">
+          </div>
+        <div class="action-row" style="margin-top:10px;">
+          <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport">Export YAML</button>
+          <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport">Import YAML</button>
+          <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
+        </div>
+        <div style="margin-top:20px;">
+          <input type="text" id="presetNameInput" class="text-input" placeholder="Name für neues Preset">
+          <button class="btn-sm" id="savePresetBtn" style="width:100%; margin-top:8px;" data-i18n="btnSavePreset">Als neues Preset speichern</button>
+        </div>
       </div>
-    </div>
-  </details>
-</section>
-<section>
-  <div class="section-label">Source</div>
-  <div id="dropzone" class="dropzone">
-    <div class="big" id="dzBig">Tap to choose image</div>
-    <div class="small" id="dzSmall">PNG &middot; JPG &middot; HEIC &middot; WebP</div>
-    <input type="file" id="fileInput" accept="image/*">
-  </div>
-</section>
-<section id="outputSection" style="display:none">
-  <div class="section-label">Output &amp; Preview</div>
-  <div class="canvas-wrap">
-    <canvas id="outCanvas" width="400" height="300"></canvas>
-  </div>
-  <pre id="ascii" class="ascii empty">// upload an image to see the preview //</pre>
-  <div id="status" class="status">Ready.</div>
-</section>
-<section>
-  <div class="section-label">Printer Profile</div>
-  <div class="scroll-list" id="profileList">
-    <div class="sli" data-profile="epson_fx"><div class="sli-row"><span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">120&#215;72 dpi &middot; &#8960;0.35mm</div></div>
-    <div class="sli" data-profile="epson_lq"><div class="sli-row"><span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span></div><div class="sli-meta">180&#215;180 dpi &middot; &#8960;0.20mm</div></div>
-    <div class="sli" data-profile="ibm_proprinter"><div class="sli-row"><span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">120&#215;72 dpi &middot; &#8960;0.38mm</div></div>
-    <div class="sli active" data-profile="oki_microline"><div class="sli-row"><span class="sli-name">OKI Microline</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144&#215;72 dpi &middot; &#8960;0.33mm</div></div>
-    <div class="sli" data-profile="star_nx1000"><div class="sli-row"><span class="sli-name">Star NX-1000</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144&#215;144 dpi &middot; &#8960;0.32mm</div></div>
-    <div class="sli" data-profile="panasonic_kx"><div class="sli-row"><span class="sli-name">Panasonic KX-P</span><span class="sli-badge">24-PIN</span></div><div class="sli-meta">360&#215;180 dpi &middot; &#8960;0.22mm</div></div>
-    <div class="sli" data-profile="dec_la75"><div class="sli-row"><span class="sli-name">DEC LA75</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144&#215;144 dpi &middot; &#8960;0.35mm</div></div>
-    <div class="sli" data-profile="nec_p6"><div class="sli-row"><span class="sli-name">NEC P6</span><span class="sli-badge">24-PIN</span></div><div class="sli-meta">360&#215;360 dpi &middot; &#8960;0.15mm</div></div>
-    <div class="sli" data-profile="commodore_mps"><div class="sli-row"><span class="sli-name">MPS-803</span><span class="sli-badge">7-PIN</span></div><div class="sli-meta">60&#215;72 dpi &middot; &#8960;0.45mm</div></div>
-    <div class="sli" data-profile="apple_imagewriter"><div class="sli-row"><span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span></div><div class="sli-meta">144&#215;72 dpi &middot; &#8960;0.35mm</div></div>
-  </div>
-  <div class="profile-meta" id="profileMeta"></div>
-  <div class="checks" style="margin-top:12px">
-    <label class="check" data-flag="doubleStrike"><span class="box"></span><span>Double-strike</span></label>
-    <label class="check" data-flag="condensed"><span class="box"></span><span>Condensed Mode</span></label>
-  </div>
-</section>
-<section>
-  <div class="section-label">Image Adjustments</div>
-  <label class="field">
-    <span class="name"><span>Brightness</span><b id="brightnessVal">0</b></span>
-    <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
-  </label>
-  <label class="field">
-    <span class="name"><span>Contrast</span><b id="contrastVal">20</b></span>
-    <input type="range" id="contrastSlider" min="-100" max="100" value="20">
-  </label>
-  <label class="field">
-    <span class="name"><span>Gamma</span><b id="gammaVal">1.0</b></span>
-    <input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0">
-  </label>
-  <div class="checks" style="margin-top:14px">
-    <label class="check" data-flag="invert"><span class="box"></span><span>Invert Image</span></label>
-  </div>
-</section>
-<section>
-  <div class="section-label">Halftone</div>
-  <div class="segmented" id="ditherBtns">
-    <button data-dither="floyd_steinberg">Floyd-S</button>
-    <button data-dither="ordered">Ordered</button>
-    <button data-dither="threshold" class="active">Thresh</button>
-  </div>
-  <label class="field" id="thresholdField" style="display:block">
-    <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
-    <input type="range" id="thresholdSlider" min="0" max="255" value="128">
-  </label>
-</section>
-<section>
-  <div class="section-label">Paper &amp; Format</div>
-  <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Format</div>
-  <div class="segmented scrollable" id="paperFormatBtns" style="margin-bottom:10px">
-    <button data-format="Original" class="active">1:1 Orig</button>
-    <button data-format="Fit">Auto</button>
-    <button data-format="A4">A4</button>
-    <button data-format="A5">A5</button>
-    <button data-format="A6">A6</button>
-    <button data-format="Letter">Letter</button>
-  </div>
-  <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Orientation</div>
-  <div class="segmented" id="orientationBtns">
-    <button data-orient="Portrait" class="active">Portrait</button>
-    <button data-orient="Landscape">Landscape</button>
-  </div>
-</section>
-<section>
-  <div class="section-label">Ribbon &middot; Media</div>
-  <div class="grid-2">
-    <div>
-      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Ink</div>
-      <div class="swatches" id="inkSwatches">
-        <div class="swatch active" style="background:#19191e" data-ink="25,25,30" title="black"></div>
-        <div class="swatch" style="background:#142d82" data-ink="20,45,130" title="blue"></div>
-        <div class="swatch" style="background:#a01e23" data-ink="160,30,35" title="red"></div>
-        <div class="swatch" style="background:#5a286e" data-ink="90,40,110" title="purple"></div>
-        <div class="swatch" style="background:#2e5f36" data-ink="46,95,54" title="green"></div>
-        <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e" title="custom"></div>
+
+      <div class="tab-content" id="tab-errors">
+        <h2 data-i18n="errorsTitle">Hardware Fehler</h2>
+        <div class="scroll-list" id="errorList">
+          </div>
       </div>
-      <div class="custom-ink-row">
-        <input type="color" id="inkColorPicker" class="color-picker" value="#19191e" title="Pick custom ink color">
-        <input type="text" id="inkHexInput" class="hex-input text-input" placeholder="#rrggbb" value="#19191e" maxlength="7" spellcheck="false">
-        <button class="btn-sm" id="applyInkBtn">Apply</button>
+
+      <div class="tab-content" id="tab-system">
+        <h2 data-i18n="systemTitle">System</h2>
+        <label class="field">
+          <span class="name">Language / Sprache</span>
+          <select id="langSelector" class="text-input">
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="fr">🇫🇷 Français</option>
+          </select>
+        </label>
+        <label class="field" style="margin-top:15px;">
+          <span class="name">UI Theme Mode</span>
+          <select id="themeModeSelector" class="text-input">
+            <option value="dark">🌙 Dark Mode</option>
+            <option value="light">☀️ Light Mode</option>
+          </select>
+        </label>
       </div>
-    </div>
-    <div>
-      <div style="font-size:10px;letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px">Paper (Auto)</div>
-      <div class="swatches" id="paperSwatches">
-        <div class="swatch" style="background:#f8f5e8" data-paper="248,245,232" title="cream"></div>
-        <div class="swatch active" style="background:#ffffff" data-paper="255,255,255" title="white"></div>
-        <div class="swatch" style="background:#eadfb8" data-paper="234,223,184" title="aged"></div>
-        <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160" title="kraft"></div>
-        <div class="swatch" style="background:#f0d9cf" data-paper="240,217,207" title="pink form"></div>
+
+      <div class="sidebar-actions">
+        <div id="status" class="status">Bereit.</div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
+          <button class="btn" id="downloadBtn" disabled>PNG</button>
+        </div>
       </div>
-    </div>
+    </aside>
+
+    <main class="main-editor">
+      <div class="toolbar">
+        <span data-i18n="previewTitle">Live-Vorschau</span>
+        <div class="zoom-controls">
+          <button id="zoomOut">➖</button>
+          <span id="zoomLevel">100%</span>
+          <button id="zoomIn">➕</button>
+        </div>
+      </div>
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <div class="zoom-container" id="zoomContainer">
+          <canvas id="outCanvas" width="400" height="300"></canvas>
+          <pre id="ascii" class="ascii empty">// Bild hochladen für Vorschau //</pre>
+        </div>
+      </div>
+    </main>
+
   </div>
-</section>
-<section>
-  <div class="section-label">Hardware Errors</div>
-  <div class="scroll-list" id="errorList">
-    <div class="er" data-pattern="cloudy"><div class="er-head"><span class="er-check"></span><span class="er-name">Cloudy</span><span class="er-desc">Blotchy ink density, ribbon saturation spots</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="ghosting"><div class="er-head"><span class="er-check"></span><span class="er-name">Ghosting</span><span class="er-desc">Bi-directional print shadow at row offset</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="misaligned"><div class="er-head"><span class="er-check"></span><span class="er-name">Wobble</span><span class="er-desc">Horizontal row drift, worn carriage rails</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="pin_skip"><div class="er-head"><span class="er-check"></span><span class="er-name">Pin Skip</span><span class="er-desc">Dead/weak pin leaves horizontal void lines</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="smudge"><div class="er-head"><span class="er-check"></span><span class="er-name">Smudge</span><span class="er-desc">Paper-contact drag in intermittent bands</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="ribbon_twist"><div class="er-head"><span class="er-check"></span><span class="er-name">Ribbon Twist</span><span class="er-desc">Twisted ribbon, column-wise density variation</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="head_gap"><div class="er-head"><span class="er-check"></span><span class="er-name">Head Gap</span><span class="er-desc">Platen too wide, all dots print too light</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="ink_starved"><div class="er-head"><span class="er-check"></span><span class="er-name">Ink Starved</span><span class="er-desc">Ribbon near end, density fades line by line</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="paper_slip"><div class="er-head"><span class="er-check"></span><span class="er-name">Paper Slip</span><span class="er-desc">Feed roller slip, irregular line spacing</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="static_noise"><div class="er-head"><span class="er-check"></span><span class="er-name">Static</span><span class="er-desc">Electrostatic discharge, stray dot bursts</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="double_feed"><div class="er-head"><span class="er-check"></span><span class="er-name">Double Feed</span><span class="er-desc">Two sheets stacked, faint offset shadow copy</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-    <div class="er" data-pattern="mechanical_resonance"><div class="er-head"><span class="er-check"></span><span class="er-name">Resonance</span><span class="er-desc">Print head vibration, wavy vertical tracks</span><span class="er-val">0%</span></div><div class="er-body"><input type="range" class="er-slider" min="0" max="100" value="50"></div></div>
-  </div>
-</section>
-<section>
-  <details>
-    <summary>Advanced Rendering</summary>
-    <label class="field">
-      <span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span>
-      <input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300">
-    </label>
-    <label class="field">
-      <span class="name"><span>Jitter scale</span><b id="jitterVal">1.0</b></span>
-      <input type="range" id="jitterSlider" min="0" max="30" value="10">
-    </label>
-    <label class="field">
-      <span class="name"><span>Banding scale</span><b id="bandingVal">1.0</b></span>
-      <input type="range" id="bandingSlider" min="0" max="20" value="10">
-    </label>
-    <label class="field">
-      <span class="name"><span>Max output size (px)</span><b id="maxSizeVal">8000</b></span>
-      <input type="range" id="maxSizeSlider" min="1000" max="8000" step="100" value="8000">
-    </label>
-    <label class="field">
-      <span class="name"><span>Seed (0 = random)</span><b id="seedVal">0</b></span>
-      <input type="range" id="seedSlider" min="0" max="9999" value="0">
-    </label>
-    <div class="checks" style="margin-top:14px">
-      <label class="check" data-flag="softBlur"><span class="box"></span><span>Softening Blur</span></label>
-    </div>
-  </details>
-</section>
-<footer>
-  <div class="dots">&middot; &middot; &middot; &middot; &middot;</div>
-  dotmatrix v2.1.0 &middot; modular errors &middot; preset system &middot; pin physics
-</footer>
-<div class="actions">
-  <button class="btn primary" id="renderBtn" disabled>Render</button>
-  <button class="btn" id="downloadBtn" disabled>PNG</button>
-</div>
-<script type="module" src="js/main.js"></script>
+  
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
