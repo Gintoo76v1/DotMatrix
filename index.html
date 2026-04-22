@@ -115,18 +115,20 @@
         <div class="tab-content" id="tab-presets">
           <h2 data-i18n="presetsTitle">Presets</h2>
           <div class="scroll-list" id="presetList"></div>
+          
           <div style="display:flex; gap:8px; margin-top:12px;">
             <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport" style="flex:1;">Export YAML</button>
             <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport" style="flex:1;">Import YAML</button>
             <input type="file" id="presetFileInput" accept=".yaml,.yml,.json" style="display:none">
           </div>
+
           <h2 style="margin-top:32px;" data-i18n="createPresetTitle">Preset Erstellen</h2>
-          <input type="text" id="presetNameInput" class="text-input" placeholder="Name">
+          <input type="text" id="presetNameInput" class="text-input" placeholder="Name für Preset">
           <div style="display:flex; gap:8px; margin-top:10px;">
             <button class="btn-sm" id="savePresetBtn" style="flex:1;" data-i18n="btnSavePreset">Speichern</button>
-            <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">Als YAML exportieren</button>
+            <button class="btn-sm" id="exportCurrentBtn" style="flex:1;">YAML exportieren</button>
           </div>
-          <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code..." rows="10" style="margin-top:16px;"></textarea>
+          <textarea id="presetYamlArea" class="yaml-area text-input" placeholder="YAML Code hier einfügen..." rows="10" style="margin-top:16px;"></textarea>
           <button class="btn-sm" id="importYamlBtn" style="width:100%; margin-top:10px;">Aus Textfeld anwenden</button>
         </div>
 
@@ -179,9 +181,13 @@
     <main class="main-editor glass-panel">
       <div class="toolbar">
         <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
-        <div class="zoom-controls">
-          <button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button>
-          <button id="loupeToggle" title="Lupe aktivieren" style="margin-left:12px; font-size:14px;">🔍</button>
+        
+        <div style="display:flex; align-items:center; gap: 20px;">
+          <div class="zoom-controls">
+            <button id="zoomOut">➖</button><span id="zoomLevel">100%</span><button id="zoomIn">➕</button>
+            <button id="loupeToggle" title="Lupe aktivieren" style="margin-left:8px; font-size:12px;">🔍</button>
+          </div>
+          <div class="app-logo">DotMatrix<span style="color:var(--accent)">.</span></div>
         </div>
       </div>
       
@@ -195,14 +201,15 @@
         </div>
       </div>
       
-      <div class="status-panel glass-panel" id="statusPanel">
-        <span id="status" class="status-large">Warte auf Bild...</span>
-      </div>
-
-      <div class="floating-actions glass-panel">
-        <div class="action-buttons">
-          <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
-          <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
+      <div class="floating-container">
+        <div class="status-panel glass-panel" id="statusPanel">
+          <span id="status" class="status-large">Warte auf Bild...</span>
+        </div>
+        <div class="floating-actions glass-panel">
+          <div class="action-buttons">
+            <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">Rendern</button>
+            <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
+          </div>
         </div>
       </div>
     </main>
