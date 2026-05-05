@@ -292,6 +292,7 @@ input[type="file"] { display: none; }
 .app-bg[data-anim="aurora"]::before {
   content: '';
   position: absolute; inset: 0;
+  pointer-events: none;
   opacity: var(--anim-intensity, 0.3);
   background: radial-gradient(
     ellipse calc(60% * var(--anim-size, 1)) calc(40% * var(--anim-size, 1)) at 20% 80%,
@@ -304,6 +305,7 @@ input[type="file"] { display: none; }
 .app-bg[data-anim="aurora"]::after {
   content: '';
   position: absolute; inset: 0;
+  pointer-events: none;
   opacity: var(--anim-intensity, 0.3);
   background: radial-gradient(
     ellipse calc(50% * var(--anim-size, 1)) calc(60% * var(--anim-size, 1)) at 80% 20%,
@@ -368,6 +370,7 @@ input[type="file"] { display: none; }
 .app-bg[data-anim="off"]::before {
   content: '';
   position: absolute; inset: 0;
+  pointer-events: none;
   background: radial-gradient(
     ellipse 70% 50% at 30% 80%,
     var(--dm-primary-soft) 0%,
@@ -380,6 +383,7 @@ input[type="file"] { display: none; }
 .app-bg[data-anim="off"]::after {
   content: '';
   position: absolute; inset: 0;
+  pointer-events: none;
   background: radial-gradient(
     ellipse 60% 60% at 80% 20%,
     var(--dm-info-soft, transparent) 0%,
@@ -394,6 +398,7 @@ input[type="file"] { display: none; }
   position: absolute; border-radius: 50%;
   opacity: var(--anim-intensity, 0.3);
   mix-blend-mode: screen; will-change: transform;
+  pointer-events: none;
 }
 .app-bg .orb-1 {
   width: calc(70vw * var(--anim-size, 1));
