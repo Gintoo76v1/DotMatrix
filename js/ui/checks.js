@@ -4,7 +4,7 @@
 // also written to localStorage via settings-store.
 
 import { saveSettings } from '../settings-store.js';
-import { updateBgAnimVisibility } from './theme.js';
+import { updateBgAnimVisibility } from './appearance.js';
 
 const PERSISTED = new Set(['autoRender', 'uiSounds', 'bgAnim', 'legacyMath', 'useWorker']);
 
