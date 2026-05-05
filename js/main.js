@@ -4,6 +4,18 @@
 // per-feature modules under js/ui/* and js/*.js so this file stays small
 // and easy to read end-to-end.
 
+// Fatal error display (shows in UI if JS crashes before wiring)
+window.addEventListener('error', (e) => {
+  console.error('[DotMatrix Fatal]', e.error);
+  const status = document.getElementById('status');
+  if (status) status.textContent = '⚠️ JS Error: ' + (e.error?.message || 'Unknown');
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[DotMatrix Unhandled]', e.reason);
+  const status = document.getElementById('status');
+  if (status) status.textContent = '⚠️ JS Promise Error: ' + (e.reason?.message || 'Unknown');
+});
+
 import { state, PROFILES } from './config.js';
 import { renderImage } from './render-client.js';
 import { hydrateState } from './settings-store.js';
@@ -277,3 +289,5 @@ if (downloadBtn) downloadBtn.addEventListener('click', () => {
 renderPresetList();
 updateProfileMeta();
 syncAllFromState(state);
+
+console.log('[DotMatrix] JS initialized successfully. Version 2.');
