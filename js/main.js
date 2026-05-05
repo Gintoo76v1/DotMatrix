@@ -55,17 +55,8 @@ function initTabs() {
 initTabs();
 
 // ── Touch-scroll guard (mobile) ────────────────────────────────────────────
-// Allow native scroll inside lists/sliders, suppress page rubber-banding.
-const SCROLLABLE_SELECTOR = '.scroll-list, .sidebar-scrollable, .yaml-area, .error-container, input[type="range"], .changelog-body, .settings-group .sg-body';
-document.addEventListener('touchmove', (e) => {
-  const inScrollable = e.target.closest(SCROLLABLE_SELECTOR);
-  if (!inScrollable) {
-    e.preventDefault();
-  } else {
-    // Stop event from bubbling to body to prevent rubber-banding on iOS
-    e.stopPropagation();
-  }
-}, { passive: false });
+// Removed: passive: false + preventDefault() broke native scrolling on iOS.
+// CSS overscroll-behavior: contain on scrollable elements is sufficient.
 
 // ── Render orchestration ───────────────────────────────────────────────────
 

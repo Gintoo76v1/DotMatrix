@@ -1597,8 +1597,7 @@ html.changelog-open body {
 
 /* Mobile / Small Tablet: < 768px */
 @media (max-width: 767px), (orientation: portrait) {
-  html, body { position: relative; height: auto; min-height: 100vh; overflow: auto; }
-  .app-layout { padding: 8px; gap: 8px; min-height: 100vh; }
+  .app-layout { padding: 8px; gap: 8px; }
   .app-container { flex-direction: column; gap: 8px; }
   .activity-bar {
     width: 100%; height: auto;
