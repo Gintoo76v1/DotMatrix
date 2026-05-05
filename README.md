@@ -14,7 +14,6 @@ Ghosting, Mechanical-Resonance, …).
 - **OffscreenCanvas Worker** — Render läuft im Hintergrund, UI bleibt responsive
 - **Pan & Zoom** — Pinch + Wheel + Buttons, Mikrojitter-Filter gegen "Wackelpudding"
 - **Preset-System** — YAML-basiert, Import/Export, User-Presets im LocalStorage
-- **Text-Print-Tab** — Zweiter Renderer für reine Text-Eingabe, mit Live-Animation
 - **Mehrsprachig** (DE / EN), Theme-Akzente, Background-Animation
 - **Legacy-Math-Toggle** — v1-kompatible Render-Mathematik für Backwards-Kompatibilität
 
@@ -55,7 +54,6 @@ js/
 ├── render-worker.js     Module-Worker, lädt engine.js mit OffscreenCanvas
 ├── settings-store.js    LocalStorage Persistenz für UI-Flags
 ├── lang.js              i18n Wörterbücher
-├── dot-matrix-printer.js Text-Druck-Komponente (eigenständig)
 └── ui/                  UI-Module (eines pro Bereich)
     ├── error.js         Fehler-Toast + Global-Catcher
     ├── audio.js         WebAudio Click-Sounds
@@ -68,8 +66,7 @@ js/
     ├── upload.js        File-Upload + Drag/Drop
     ├── analyze.js       Histogram-Analyse, Auto-Adjust
     ├── presets.js       Preset-Liste, Import/Export
-    ├── theme.js         Theme/Sprache/BG-Animation
-    └── text-printer.js  Text-Print-Tab Wiring
+    └── theme.js         Theme/Sprache/BG-Animation
 ```
 
 ## Render-Pipeline

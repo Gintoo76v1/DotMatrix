@@ -16,7 +16,7 @@ export default defineConfig({
         'js/ui/**',
         'js/lang.js',
         'js/settings-store.js',
-        'js/dot-matrix-printer.js'
+        'js/render-client.js'
       ],
       thresholds: {
         lines: 70,

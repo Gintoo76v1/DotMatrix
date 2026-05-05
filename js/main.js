@@ -19,7 +19,6 @@ import { initWearLayers } from './ui/wear.js';
 import { initUpload } from './ui/upload.js';
 import { initPresets, renderPresetList } from './ui/presets.js';
 import { initTheme, initTabs } from './ui/theme.js';
-import { initTextPrinter } from './ui/text-printer.js';
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 
@@ -181,7 +180,6 @@ initPresets({
 // ── Theme + tabs ───────────────────────────────────────────────────────────
 
 initTheme(state, persisted);
-initTextPrinter(state);
 
 // ── Pointer-up: click sounds + ripple ──────────────────────────────────────
 

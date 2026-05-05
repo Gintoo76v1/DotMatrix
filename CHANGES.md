@@ -140,13 +140,7 @@ OffscreenCanvas-Worker-Rendering und modularer Refaktorierung.
 - Liefert ein einziges Config-Objekt — keine `if(state.legacyMath)`
   Streuung im Hot-Loop
 
-### Text-Print Tab
 
-- `dot-matrix-printer.js` Demo-Block (172 Zeilen) entfernt
-- Neuer Tab "Text Print" 📝 in der Activity-Bar
-- 10 Slider, 2 Checks, 3 Buttons im UI
-- Live-Re-Render bei Texteingabe (debounced 200ms)
-- 16 Tests in `tests/dot-matrix-printer.test.js`
 
 ## Test-Suite
 
@@ -158,14 +152,13 @@ OffscreenCanvas-Worker-Rendering und modularer Refaktorierung.
 | tests/engine.layers.test.js      |    16 | 12 Wear-Patterns + legacy   |
 | tests/config.test.js             |    28 | Profile-Sanity, Presets     |
 | tests/presets.test.js            |    23 | YAML-Roundtrip, Edge-Cases  |
-| tests/dot-matrix-printer.test.js |    16 | DMP-Komponente              |
-| **Σ**                            | **136** | **>93 % Math-Coverage**   |
+| **Σ**                            | **120** | **>93 % Math-Coverage**   |
 
 ## Stats
 
 ```
 Vorher: 6 Files,   ~110 KB JS,   ~580 LOC main.js,  0 Tests
-Nachher: 24 Files, ~150 KB JS,   ~184 LOC main.js, 136 Tests, 93 % Coverage
+Nachher: 21 Files, ~120 KB JS,   ~184 LOC main.js, 120 Tests, 93 % Coverage
 ```
 
 Modulare Refaktorierung erlaubt jetzt isoliertes Testen, einfacheres Debugging
