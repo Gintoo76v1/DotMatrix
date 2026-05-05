@@ -26,8 +26,21 @@ import { initChangelog } from './ui/changelog.js';
 const persisted = hydrateState(state);
 initErrorPopup();
 initAudio();
-initTabs();
 initZoom();
+
+/* initTabs wurde aus dem gelöschten theme.js hierher migriert */
+function initTabs() {
+  document.querySelectorAll('.activity-bar .icon-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.activity-bar .icon-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      const tab = document.getElementById(btn.dataset.tab);
+      if (tab) tab.classList.add('active');
+    });
+  });
+}
+initTabs();
 
 // ── Touch-scroll guard (mobile) ────────────────────────────────────────────
 // Allow native scroll inside lists/sliders, suppress page rubber-banding.

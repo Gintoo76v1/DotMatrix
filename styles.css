@@ -1502,7 +1502,7 @@ body[data-layout="opencode"] .oc-bento {
   left: 16px;
   right: 16px;
   z-index: 20;
-  pointer-events: none;
+  pointer-events: none;   /* Klicks passieren durch zum Canvas */
 }
 
 .oc-bento-card {
@@ -1514,7 +1514,7 @@ body[data-layout="opencode"] .oc-bento {
   border: 1px solid var(--border-base);
   border-radius: 14px;
   padding: 14px 16px;
-  pointer-events: auto;
+  pointer-events: none;   /* Nur visuell, keine Interaktion */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
