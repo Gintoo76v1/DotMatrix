@@ -225,6 +225,12 @@ initPresets({
 initAppearance(persisted);
 initChangelog();
 
+// ── Custom event bridge (avoids circular imports) ──────────────────────────
+
+document.addEventListener('dm:triggerRender', () => {
+  triggerUpdate();
+});
+
 // ── Click sounds on every interactive element ─────────────────────────────
 
 const INTERACTIVE_SELECTOR = 'button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker, .segmented button, select, .btn-sm, .changelog-close, .settings-search-clear, textarea, .zoom-controls button, .footer-version';

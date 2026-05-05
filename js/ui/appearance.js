@@ -112,7 +112,7 @@ export function initAppearance(persisted = {}) {
     // state.renderDebug toggled by checks.js
     // Trigger a re-render if we have an image
     if (state.sourceImage && state.autoRender) {
-      import('../main.js').then(m => m.triggerUpdate?.());
+      document.dispatchEvent(new CustomEvent('dm:triggerRender'));
     }
   });
 
