@@ -618,7 +618,7 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-c
 .canvas-wrapper:active { cursor: grabbing; }
 
 .zoom-container {
-  transform-origin: center center;
+  transform-origin: 0 0;
   display: flex; flex-direction: column;
   align-items: center; gap: 20px;
   touch-action: none;
