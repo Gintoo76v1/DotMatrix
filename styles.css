@@ -1132,6 +1132,7 @@ input[type=range]::-webkit-slider-thumb {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
+  overscroll-behavior: none;
 }
 
 .changelog-overlay.open {
@@ -1139,16 +1140,25 @@ input[type=range]::-webkit-slider-thumb {
   pointer-events: auto;
 }
 
+/* Body-Scroll-Sperre wenn Overlay offen (JS setzt Klasse auf html) */
+html.changelog-open,
+html.changelog-open body {
+  overflow: hidden;
+  height: 100%;
+  touch-action: none;
+}
+
 .changelog-backdrop {
   position: absolute; inset: 0;
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .changelog-panel {
   position: relative;
   width: 100%; max-width: 560px;
-  max-height: 80vh;
+  max-height: min(80vh, 600px);
   display: flex; flex-direction: column;
   background: var(--dm-surface-raised);
   border: 1px solid var(--dm-border-base);
@@ -1196,12 +1206,15 @@ input[type=range]::-webkit-slider-thumb {
   border-color: var(--dm-border-hover);
 }
 
+/* Der Body scrollt — Panel ist flex-column mit overflow:hidden,
+   also füllt der Body den verbleibenden Raum und scrollt seinen Inhalt. */
 .changelog-body {
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px 24px;
-  max-height: calc(80vh - 80px);
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 

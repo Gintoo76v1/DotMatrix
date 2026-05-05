@@ -81,7 +81,7 @@ export function openOverlay() {
   overlay.setAttribute('aria-hidden', 'false');
   body.innerHTML = _renderBody();
   markSeen();
-  document.body.style.overflow = 'hidden';
+  document.documentElement.classList.add('changelog-open');
 }
 
 export function closeOverlay() {
@@ -90,7 +90,7 @@ export function closeOverlay() {
   isOpen = false;
   overlay.classList.remove('open');
   overlay.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = '';
+  document.documentElement.classList.remove('changelog-open');
 }
 
 function _updateFooter() {
