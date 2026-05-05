@@ -128,7 +128,7 @@ h2 { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; margin:
 .check span:not(.box) { letter-spacing: 0.1em; color: var(--ink-soft); transition: 0.2s ease; }
 .check.on span:not(.box) { color: var(--ink); font-weight: 700; }
 
-.error-container { background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
+.error-container { background: var(--paper-dark); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; max-height: 55vh; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .er { border-bottom: 1px solid var(--glass-border); background: transparent; transition: background 0.2s; }
 .er:last-child { border-bottom: none; }
 .er-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; transition: background 0.2s; }

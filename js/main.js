@@ -31,7 +31,7 @@ initZoom();
 // ── Touch-scroll guard (mobile) ────────────────────────────────────────────
 // Allow native scroll inside lists/sliders, suppress page rubber-banding.
 document.addEventListener('touchmove', (e) => {
-  if (!e.target.closest('.scroll-list, .sidebar-scrollable, .yaml-area, input[type="range"]')) {
+  if (!e.target.closest('.scroll-list, .sidebar-scrollable, .yaml-area, .error-container, input[type="range"]')) {
     e.preventDefault();
   }
 }, { passive: false });
