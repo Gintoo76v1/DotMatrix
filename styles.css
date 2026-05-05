@@ -22,10 +22,10 @@
 
 /* ── 1. Base Tokens (werden pro Theme überschrieben) ─────────────────────────── */
 :root {
-  /* Surfaces */
-  --dm-surface-base: #1C1C1C;
-  --dm-surface-raised: #232323;
-  --dm-surface-overlay: #282828;
+  /* Surfaces — dunkles Warm-Grau statt fast-Schwarz */
+  --dm-surface-base: #242424;
+  --dm-surface-raised: #2a2a2a;
+  --dm-surface-overlay: #303030;
   --dm-surface-hover: rgba(255,255,255,0.05);
 
   /* Text */
@@ -36,9 +36,9 @@
   --dm-text-invert: #171311;
 
   /* Border */
-  --dm-border-base: #282828;
-  --dm-border-hover: #343434;
-  --dm-border-active: #505050;
+  --dm-border-base: #333333;
+  --dm-border-hover: #404040;
+  --dm-border-active: #555555;
 
   /* Semantic */
   --dm-primary: #fab283;
@@ -50,7 +50,7 @@
   --dm-interactive: #034cff;
 
   /* Glass (abgeleitet von surface) */
-  --dm-glass-bg: rgba(28,28,28,0.85);
+  --dm-glass-bg: rgba(36,36,36,0.85);
   --dm-glass-border: var(--dm-border-base);
   --dm-glass-highlight: var(--dm-border-hover);
   --dm-glass-shadow: 0 8px 32px 0 rgba(0,0,0,0.4);
@@ -73,11 +73,11 @@
 
 /* ── 2. Theme Definitions ──────────────────────────────────────────────────── */
 
-/* OC-2 (Haupt-Theme — warmes Peach auf Dunkelgrau) */
+/* OC-2 (Haupt-Theme — warmes Peach auf dunklem Warm-Grau) */
 [data-theme="oc-2"], :root {
-  --dm-surface-base: #1C1C1C;
-  --dm-surface-raised: #232323;
-  --dm-surface-overlay: #282828;
+  --dm-surface-base: #242424;
+  --dm-surface-raised: #2a2a2a;
+  --dm-surface-overlay: #303030;
   --dm-text-strong: #EDEDED;
   --dm-text-base: #A0A0A0;
   --dm-text-weak: #707070;
@@ -89,9 +89,9 @@
   --dm-error: #fc533a;
   --dm-info: #edb2f1;
   --dm-interactive: #034cff;
-  --dm-border-base: #282828;
-  --dm-border-hover: #343434;
-  --dm-border-active: #505050;
+  --dm-border-base: #333333;
+  --dm-border-hover: #404040;
+  --dm-border-active: #555555;
 }
 
 /* OC-2 Light */
@@ -1197,10 +1197,11 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .changelog-body {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px 24px;
+  max-height: calc(80vh - 80px);
   -webkit-overflow-scrolling: touch;
 }
 

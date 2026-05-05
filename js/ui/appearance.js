@@ -72,7 +72,7 @@ export function initAppearance(persisted = {}) {
   restore('animIntensitySlider', (persisted.animIntensity ?? state.animIntensity).toString());
   restore('animSizeSlider',      (persisted.animSize      ?? state.animSize).toString());
   restore('layoutSelector',      persisted.layout       || state.layout);
-  restore('changelogAutoCheck',  persisted.autoCheckUpdates !== false);
+  // changelogAutoCheck removed — static GitHub Pages site, no live update checking
 
   // Custom-font visibility
   _toggleCustomFields();
@@ -94,7 +94,7 @@ export function initAppearance(persisted = {}) {
   _wireSlider('animIntensitySlider', 'animIntensity', v => v, applyAppearance);
   _wireSlider('animSizeSlider',      'animSize',      v => v, applyAppearance);
   _wire('layoutSelector',       'layout',       applyAppearance);
-  _wire('changelogAutoCheck',   'autoCheckUpdates', v => v === 'true' || v === true, null, true);
+  // autoCheckUpdates persists in state but has no DOM control (static site)
 
   // Language (already wired in old code, keep here for completeness)
   const lang = document.getElementById('langSelector');
