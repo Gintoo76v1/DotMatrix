@@ -22,11 +22,51 @@ export function initZoom() {
   let pointers = [];
   let initialDist = 0, initialZoom = 1;
   let lastCenterX = 0, lastCenterY = 0;
+  let initialPinchPanX = 0, initialPinchPanY = 0;
+  let initialPinchCX = 0, initialPinchCY = 0;
+
+  let needsUpdate = false;
+  let animating = false;
+  let velocityX = 0, velocityY = 0;
 
   function update(smooth = false) {
     zoomContainer.style.transition = smooth ? 'transform 0.2s ease-out' : 'none';
     zoomContainer.style.transform  = `translate(${panX}px, ${panY}px) scale(${zoom})`;
     if (zoomLevelText) zoomLevelText.textContent = `${Math.round(zoom * 100)}%`;
+  }
+
+  function renderLoop() {
+    let active = false;
+
+    if (needsUpdate) {
+      update(false);
+      needsUpdate = false;
+      active = true;
+    }
+
+    if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
+      panX += velocityX;
+      panY += velocityY;
+      velocityX *= 0.92;
+      velocityY *= 0.92;
+      update(false);
+      active = true;
+    }
+
+    if (active) {
+      animating = true;
+      requestAnimationFrame(renderLoop);
+    } else {
+      animating = false;
+    }
+  }
+
+  function scheduleUpdate() {
+    needsUpdate = true;
+    if (!animating) {
+      animating = true;
+      requestAnimationFrame(renderLoop);
+    }
   }
 
   canvasWrapper.addEventListener('pointerdown', (e) => {
@@ -48,8 +88,12 @@ export function initZoom() {
         pointers[0].clientY - pointers[1].clientY
       );
       initialZoom = zoom;
-      lastCenterX = (pointers[0].clientX + pointers[1].clientX) / 2;
-      lastCenterY = (pointers[0].clientY + pointers[1].clientY) / 2;
+      initialPinchPanX = panX;
+      initialPinchPanY = panY;
+      initialPinchCX = (pointers[0].clientX + pointers[1].clientX) / 2;
+      initialPinchCY = (pointers[0].clientY + pointers[1].clientY) / 2;
+      lastCenterX = initialPinchCX;
+      lastCenterY = initialPinchCY;
     }
   });
 
@@ -60,11 +104,15 @@ export function initZoom() {
     dragState.hasDragged = true;
 
     if (pointers.length === 1) {
-      panX += pointers[0].clientX - lastCenterX;
-      panY += pointers[0].clientY - lastCenterY;
+      const dx = pointers[0].clientX - lastCenterX;
+      const dy = pointers[0].clientY - lastCenterY;
+      panX += dx;
+      panY += dy;
+      velocityX = dx;
+      velocityY = dy;
       lastCenterX = pointers[0].clientX;
       lastCenterY = pointers[0].clientY;
-      update(false);
+      scheduleUpdate();
     } else if (pointers.length === 2 && initialDist > 0) {
       const currentDist = Math.hypot(
         pointers[0].clientX - pointers[1].clientX,
@@ -76,11 +124,17 @@ export function initZoom() {
 
       const cx = (pointers[0].clientX + pointers[1].clientX) / 2;
       const cy = (pointers[0].clientY + pointers[1].clientY) / 2;
-      panX += cx - lastCenterX;
-      panY += cy - lastCenterY;
+
+      // Anchor: keep the image pixel under the pinch centroid stationary.
+      // Formula: newPan = pinchCenter - (pinchCenter - oldPan) * (newZoom / oldZoom)
+      // We use the initial gesture state as reference so the anchor stays
+      // stable even with smoothing applied to the zoom value.
+      panX = cx - zoom * (initialPinchCX - initialPinchPanX) / initialZoom;
+      panY = cy - zoom * (initialPinchCY - initialPinchPanY) / initialZoom;
+
       lastCenterX = cx;
       lastCenterY = cy;
-      update(false);
+      scheduleUpdate();
     }
   });
 
@@ -93,6 +147,7 @@ export function initZoom() {
       try { canvasWrapper.releasePointerCapture(e.pointerId); } catch { /* not captured */ }
       // Keep hasDragged true briefly so the click handler ignores this gesture.
       setTimeout(() => { dragState.hasDragged = false; }, 50);
+      scheduleUpdate(); // kick off momentum if velocity > 0
     }
   };
   canvasWrapper.addEventListener('pointerup', pointerUp);
@@ -106,7 +161,7 @@ export function initZoom() {
       panX -= e.deltaX;
       panY -= e.deltaY;
     }
-    update(false);
+    scheduleUpdate();
   }, { passive: false });
 
   if (zoomInBtn)  zoomInBtn .addEventListener('click', () => { zoom = Math.min(ZOOM_MAX, zoom + 0.25); update(true); });

@@ -18,7 +18,7 @@ import { initChecks } from './ui/checks.js';
 import { initWearLayers } from './ui/wear.js';
 import { initUpload } from './ui/upload.js';
 import { initPresets, renderPresetList } from './ui/presets.js';
-import { initAppearance, updateBento } from './ui/appearance.js';
+import { initAppearance } from './ui/appearance.js';
 import { initChangelog } from './ui/changelog.js';
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
@@ -100,7 +100,6 @@ async function performRender() {
   } finally {
     isRendering = false;
     if (renderBtn) renderBtn.disabled = false;
-    updateBento();
   }
 }
 
@@ -196,7 +195,6 @@ initPresets({
 
 initAppearance(persisted);
 initChangelog();
-updateBento();
 
 // ── Pointer-up: click sounds + ripple ──────────────────────────────────────
 
@@ -228,5 +226,4 @@ if (downloadBtn) downloadBtn.addEventListener('click', () => {
 
 renderPresetList();
 updateProfileMeta();
-updateBento();
 syncAllFromState(state);

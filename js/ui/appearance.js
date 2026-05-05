@@ -3,7 +3,7 @@
 // This module wires the System-tab controls into CSS custom properties and
 // persists the choices via settings-store.
 
-import { state, PROFILES } from '../config.js';
+import { state } from '../config.js';
 import { saveSettings } from '../settings-store.js';
 import { applyLanguage } from '../lang.js';
 
@@ -71,7 +71,6 @@ export function initAppearance(persisted = {}) {
   restore('animSpeedSlider',     (persisted.animSpeed     ?? state.animSpeed).toString());
   restore('animIntensitySlider', (persisted.animIntensity ?? state.animIntensity).toString());
   restore('animSizeSlider',      (persisted.animSize      ?? state.animSize).toString());
-  restore('layoutSelector',      persisted.layout       || state.layout);
   // changelogAutoCheck removed — static GitHub Pages site, no live update checking
 
   // Custom-font visibility
@@ -93,7 +92,6 @@ export function initAppearance(persisted = {}) {
   _wireSlider('animSpeedSlider',     'animSpeed',     v => v, applyAppearance);
   _wireSlider('animIntensitySlider', 'animIntensity', v => v, applyAppearance);
   _wireSlider('animSizeSlider',      'animSize',      v => v, applyAppearance);
-  _wire('layoutSelector',       'layout',       applyAppearance);
   // autoCheckUpdates persists in state but has no DOM control (static site)
 
   // Language (already wired in old code, keep here for completeness)
@@ -118,6 +116,7 @@ export function initAppearance(persisted = {}) {
   }
 
   updateBgAnimVisibility(state);
+  _initSettingsSearch();
 }
 
 /**
@@ -149,10 +148,11 @@ export function applyAppearance() {
     const isOff = !state.bgAnim || state.animPattern === 'off';
     appBg.setAttribute('data-anim', isOff ? 'off' : state.animPattern);
 
-    // Speed, intensity, size are handled via CSS vars for dynamic adjustment
+    // Speed, intensity, size are handled via CSS vars for dynamic adjustment.
+    // animSize=50 → 1.0 (100% of base size). Range: 20..100 → 0.4..2.0
     body.style.setProperty('--anim-speed',     state.animSpeed / 100);
     body.style.setProperty('--anim-intensity', state.animIntensity / 100);
-    body.style.setProperty('--anim-size',      state.animSize / 100);
+    body.style.setProperty('--anim-size',      state.animSize / 50);
 
     // Dynamic animation duration based on speed slider.
     // Base durations (seconds) per pattern — these match the CSS defaults.
@@ -175,10 +175,6 @@ export function applyAppearance() {
     appBg.style.setProperty('--anim-dur-orb2',    scale(baseDur.orb2));
   }
 
-  // ── Layout ──
-  body.setAttribute('data-layout', state.layout);
-  _switchLayout(state.layout);
-
   // Persist
   saveSettings({
     theme: state.theme,
@@ -193,7 +189,6 @@ export function applyAppearance() {
     animSpeed: state.animSpeed,
     animIntensity: state.animIntensity,
     animSize: state.animSize,
-    layout: state.layout,
     autoCheckUpdates: state.autoCheckUpdates,
   });
 }
@@ -270,83 +265,50 @@ function _applyAnimPreset() {
   apply('animSizeSlider',      preset.size);
 }
 
-/* ── Layout Switching ─────────────────────────────────────────────────────── */
+/* ── Settings Search (A6) ───────────────────────────────────────────────── */
 
-let _bentoInterval = null;
-let _mobileToggleWired = false;
+function _initSettingsSearch() {
+  const input = document.getElementById('settingsSearch');
+  const clearBtn = document.getElementById('settingsSearchClear');
+  if (!input) return;
 
-function _switchLayout(layout) {
+  const groups = document.querySelectorAll('#tab-system .settings-group');
+  const originalOpen = new Map();
+  groups.forEach(g => originalOpen.set(g, g.open));
 
-  // Bento cards: start/stop interval
-  if (layout === 'opencode') {
-    if (!_bentoInterval) {
-      updateBento();
-      _bentoInterval = setInterval(updateBento, 1000);
+  function _doSearch() {
+    const q = input.value.trim().toLowerCase();
+    const wrap = input.closest('.settings-search-wrap');
+    if (wrap) wrap.classList.toggle('has-text', q.length > 0);
+
+    if (!q) {
+      groups.forEach(g => {
+        g.classList.remove('search-hidden');
+        g.open = originalOpen.get(g);
+      });
+      return;
     }
-  } else {
-    if (_bentoInterval) {
-      clearInterval(_bentoInterval);
-      _bentoInterval = null;
-    }
+
+    groups.forEach(g => {
+      const title = (g.querySelector('summary')?.textContent || '').toLowerCase();
+      const bodyText = (g.querySelector('.sg-body')?.textContent || '').toLowerCase();
+      const match = title.includes(q) || bodyText.includes(q);
+
+      g.classList.toggle('search-hidden', !match);
+      if (match) {
+        g.open = true;
+      }
+    });
   }
 
-  // Mobile sidebar toggle (once)
-  if (!_mobileToggleWired) {
-    _mobileToggleWired = true;
-    const toggle = document.getElementById('sidebarToggle');
-    const overlay = document.getElementById('sidebarOverlay');
-    const sidebar = document.querySelector('.sidebar');
-    if (toggle && sidebar) {
-      toggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        if (overlay) overlay.classList.toggle('active', sidebar.classList.contains('open'));
-      });
-    }
-    if (overlay && sidebar) {
-      overlay.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('active');
-      });
-    }
+  input.addEventListener('input', _doSearch);
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      _doSearch();
+      input.focus();
+    });
   }
 }
 
-/**
- * Update Bento info cards from current state.
- * Called automatically every second when OpenCode layout is active.
- */
-export function updateBento() {
-  const els = {
-    res:      document.getElementById('bentoRes'),
-    resVal:   document.getElementById('bentoResVal'),
-    paper:    document.getElementById('bentoPaper'),
-    paperVal: document.getElementById('bentoPaperVal'),
-    ink:      document.getElementById('bentoInk'),
-    inkVal:   document.getElementById('bentoInkVal'),
-    profile:  document.getElementById('bentoProfile'),
-    profileVal: document.getElementById('bentoProfileVal'),
-  };
-  if (!els.res) return; // Bento not in DOM (classic layout)
 
-  const p = PROFILES[state.profile];
-  const profileName = p ? p.name : state.profile;
-
-  // Resolution (from canvas or state)
-  const canvas = document.getElementById('outCanvas');
-  const w = canvas ? canvas.width : 0;
-  const h = canvas ? canvas.height : 0;
-
-  if (els.res)     els.res.textContent     = w && h ? `${w}×${h}` : '—';
-  if (els.resVal)  els.resVal.textContent  = w && h ? `${(w * h / 1e6).toFixed(2)} MP` : '—';
-
-  if (els.paper)    els.paper.textContent    = state.paperFormat || 'Original';
-  if (els.paperVal) els.paperVal.textContent = state.orientation || 'Portrait';
-
-  // Ink colour preview
-  const ink = state.inkColour || [25, 25, 30];
-  if (els.ink)     els.ink.textContent     = `RGB(${ink.join(', ')})`;
-  if (els.inkVal)  els.inkVal.textContent  = `#${ink.map(c => c.toString(16).padStart(2, '0')).join('')}`;
-
-  if (els.profile)    els.profile.textContent    = profileName;
-  if (els.profileVal) els.profileVal.textContent = p ? `${p.pins}-PIN · ${p.dpi_h}×${p.dpi_v} dpi` : '—';
-}

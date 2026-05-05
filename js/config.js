@@ -251,7 +251,7 @@ export const state = {
   // UI flags (persisted via settings-store)
   autoRender: true,
   uiSounds: true,
-  bgAnim: true,
+  bgAnim: false,
   // ── Appearance (Phase 1: OpenCode Theme System) ────────────────────────────
   theme: "oc-2",               // oc-2, matrix, tokyonight, synthwave, gruvbox
   themeMode: "dark",           // dark, light, auto
@@ -265,9 +265,6 @@ export const state = {
   animSpeed: 50,               // 10-200
   animIntensity: 30,            // 0-100
   animSize: 50,                // 20-100
-  // ── Layout (Phase 2 preparation) ───────────────────────────────────────────────
-  layout: "classic",           // classic, opencode
-  navExpanded: false,
   // ── Version / Changelog ────────────────────────────────────────────────────
   lastSeenVersion: "",
   autoCheckUpdates: true,

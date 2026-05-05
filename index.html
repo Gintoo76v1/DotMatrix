@@ -165,164 +165,156 @@
           <div class="tab-content" id="tab-system">
             <h2 data-i18n="systemTitle">System Settings</h2>
 
-            <!-- Erscheinungsbild -->
-            <label class="field"><span class="name">Farbschema</span>
-              <select id="themeSelector" class="text-input">
-                <option value="oc-2" selected>OC-2</option>
-                <option value="matrix">Matrix</option>
-                <option value="tokyonight">Tokyonight</option>
-                <option value="synthwave">Synthwave</option>
-                <option value="gruvbox">Gruvbox</option>
-              </select>
-            </label>
-
-            <label class="field" style="margin-top:12px;"><span class="name">Thema</span>
-              <select id="themeModeSelector" class="text-input">
-                <option value="dark" selected>Dunkel</option>
-                <option value="light">Hell</option>
-                <option value="auto">System</option>
-              </select>
-            </label>
-
-            <!-- Schriftarten -->
-            <h2 style="margin-top:28px;">Schriftarten</h2>
-
-            <label class="field"><span class="name">UI-Schriftart</span>
-              <select id="fontSansSelector" class="text-input">
-                <option value="Inter" selected>Inter</option>
-                <option value="System Sans">System Sans</option>
-                <option value="SF Pro">SF Pro</option>
-                <option value="Roboto">Roboto</option>
-                <option value="Open Sans">Open Sans</option>
-                <option value="Custom">Custom...</option>
-              </select>
-            </label>
-            <label class="field" id="fontSansCustomField" style="margin-top:8px; display:none;">
-              <span class="name">Custom UI Font</span>
-              <input type="text" id="fontSansCustom" class="text-input" placeholder="z.B. 'Helvetica Neue'">
-            </label>
-
-            <label class="field" style="margin-top:12px;"><span class="name">Code-Schriftart</span>
-              <select id="fontMonoSelector" class="text-input">
-                <option value="JetBrains Mono" selected>JetBrains Mono</option>
-                <option value="System Mono">System Mono</option>
-                <option value="Fira Code">Fira Code</option>
-                <option value="Cascadia Code">Cascadia Code</option>
-                <option value="IBM Plex Mono">IBM Plex Mono</option>
-                <option value="Custom">Custom...</option>
-              </select>
-            </label>
-            <label class="field" id="fontMonoCustomField" style="margin-top:8px; display:none;">
-              <span class="name">Custom Code Font</span>
-              <input type="text" id="fontMonoCustom" class="text-input" placeholder="z.B. 'Source Code Pro'">
-            </label>
-
-            <label class="field" style="margin-top:12px;"><span class="name">Terminal Font</span>
-              <select id="fontTerminalSelector" class="text-input">
-                <option value="JetBrainsMono Nerd Font Mono" selected>JetBrainsMono Nerd Font Mono</option>
-                <option value="JetBrains Mono">JetBrains Mono</option>
-                <option value="Fira Code">Fira Code</option>
-                <option value="Hack">Hack</option>
-                <option value="Custom">Custom...</option>
-              </select>
-            </label>
-            <label class="field" id="fontTerminalCustomField" style="margin-top:8px; display:none;">
-              <span class="name">Custom Terminal Font</span>
-              <input type="text" id="fontTerminalCustom" class="text-input" placeholder="z.B. 'Iosevka'">
-            </label>
-
-            <!-- Animation -->
-            <h2 style="margin-top:28px;">Animation</h2>
-
-            <label class="field"><span class="name">Muster</span>
-              <select id="animPatternSelector" class="text-input">
-                <option value="aurora" selected>Aurora</option>
-                <option value="pulse">Pulse</option>
-                <option value="orbit">Orbit</option>
-                <option value="drift">Drift</option>
-                <option value="breathe">Breathe</option>
-                <option value="off">Aus</option>
-              </select>
-            </label>
-
-            <label class="field" style="margin-top:12px;"><span class="name">Geschwindigkeit <b id="animSpeedVal">50%</b></span>
-              <input type="range" id="animSpeedSlider" min="10" max="200" value="50">
-            </label>
-
-            <label class="field" style="margin-top:12px;"><span class="name">Intensität <b id="animIntensityVal">30%</b></span>
-              <input type="range" id="animIntensitySlider" min="0" max="100" value="30">
-            </label>
-
-            <label class="field" style="margin-top:12px;"><span class="name">Größe <b id="animSizeVal">50%</b></span>
-              <input type="range" id="animSizeSlider" min="20" max="100" value="50">
-            </label>
-
-            <!-- Layout (Vorbereitung Phase 2) -->
-            <h2 style="margin-top:28px;">Layout</h2>
-            <label class="field"><span class="name">Layout-Stil</span>
-              <select id="layoutSelector" class="text-input">
-                <option value="classic" selected>Classic</option>
-                <option value="opencode">OpenCode Desktop</option>
-              </select>
-            </label>
-
-            <!-- Sprache -->
-            <h2 style="margin-top:28px;">Sprache</h2>
-            <label class="field"><span class="name">Sprache</span>
-              <select id="langSelector" class="text-input">
-                <option value="de" selected>🇩🇪 Deutsch</option>
-                <option value="en">🇺🇸 English</option>
-              </select>
-            </label>
-
-            <!-- Toggles -->
-            <div class="checks" style="margin-top:28px;">
-              <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
-              <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
-              <label class="check" data-flag="bgAnim"><span class="box"></span><span>Hintergrund-Animation</span></label>
+            <!-- Suchleiste (A6) -->
+            <div class="settings-search-wrap">
+              <input type="text" id="settingsSearch" class="text-input settings-search" placeholder="🔍 Einstellungen suchen..." autocomplete="off">
+              <button class="settings-search-clear" id="settingsSearchClear" aria-label="Suche leeren">✕</button>
             </div>
 
-            <h2 style="margin-top:28px;">Math Engine</h2>
-            <div class="checks">
-              <label class="check" data-flag="legacyMath"><span class="box"></span><span>Legacy Math (v1 kompatibel)</span></label>
-              <label class="check" data-flag="useWorker"><span class="box"></span><span>Worker Rendering</span></label>
-            </div>
-            <div style="font-size:11px; opacity:0.65; margin-top:8px; line-height:1.5;">
-              <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
-              klassisches Floyd–Steinberg, RGB-Filter). Aus = neuere, korrektere Mathematik.<br>
-              <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker
-              (UI bleibt responsiv). Fällt automatisch auf Inline-Rendering zurück, falls
-              OffscreenCanvas nicht verfügbar.
-            </div>
+            <details class="settings-group">
+              <summary><span class="sg-icon">🎨</span><span class="sg-title">Erscheinungsbild</span></summary>
+              <div class="sg-body">
+                <label class="field"><span class="name">Farbschema</span>
+                  <select id="themeSelector" class="text-input">
+                    <option value="oc-2" selected>OC-2</option>
+                    <option value="matrix">Matrix</option>
+                    <option value="tokyonight">Tokyonight</option>
+                    <option value="synthwave">Synthwave</option>
+                    <option value="gruvbox">Gruvbox</option>
+                  </select>
+                </label>
+                <label class="field" style="margin-top:12px;"><span class="name">Thema</span>
+                  <select id="themeModeSelector" class="text-input">
+                    <option value="dark" selected>Dunkel</option>
+                    <option value="light">Hell</option>
+                    <option value="auto">System</option>
+                  </select>
+                </label>
+                <label class="field" style="margin-top:12px;"><span class="name">Layout-Stil</span>
+                  <select id="layoutSelector" class="text-input">
+                    <option value="classic" selected>Classic</option>
+    
+                  </select>
+                </label>
+              </div>
+            </details>
+
+            <details class="settings-group">
+              <summary><span class="sg-icon">✏️</span><span class="sg-title">Schriftarten</span></summary>
+              <div class="sg-body">
+                <label class="field"><span class="name">UI-Schriftart</span>
+                  <select id="fontSansSelector" class="text-input">
+                    <option value="Inter" selected>Inter</option>
+                    <option value="System Sans">System Sans</option>
+                    <option value="SF Pro">SF Pro</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Open Sans">Open Sans</option>
+                    <option value="Custom">Custom...</option>
+                  </select>
+                </label>
+                <label class="field" id="fontSansCustomField" style="margin-top:8px; display:none;">
+                  <span class="name">Custom UI Font</span>
+                  <input type="text" id="fontSansCustom" class="text-input" placeholder="z.B. 'Helvetica Neue'">
+                </label>
+                <label class="field" style="margin-top:12px;"><span class="name">Code-Schriftart</span>
+                  <select id="fontMonoSelector" class="text-input">
+                    <option value="JetBrains Mono" selected>JetBrains Mono</option>
+                    <option value="System Mono">System Mono</option>
+                    <option value="Fira Code">Fira Code</option>
+                    <option value="Cascadia Code">Cascadia Code</option>
+                    <option value="IBM Plex Mono">IBM Plex Mono</option>
+                    <option value="Custom">Custom...</option>
+                  </select>
+                </label>
+                <label class="field" id="fontMonoCustomField" style="margin-top:8px; display:none;">
+                  <span class="name">Custom Code Font</span>
+                  <input type="text" id="fontMonoCustom" class="text-input" placeholder="z.B. 'Source Code Pro'">
+                </label>
+                <label class="field" style="margin-top:12px;"><span class="name">Terminal Font</span>
+                  <select id="fontTerminalSelector" class="text-input">
+                    <option value="JetBrainsMono Nerd Font Mono" selected>JetBrainsMono Nerd Font Mono</option>
+                    <option value="JetBrains Mono">JetBrains Mono</option>
+                    <option value="Fira Code">Fira Code</option>
+                    <option value="Hack">Hack</option>
+                    <option value="Custom">Custom...</option>
+                  </select>
+                </label>
+                <label class="field" id="fontTerminalCustomField" style="margin-top:8px; display:none;">
+                  <span class="name">Custom Terminal Font</span>
+                  <input type="text" id="fontTerminalCustom" class="text-input" placeholder="z.B. 'Iosevka'">
+                </label>
+              </div>
+            </details>
+
+            <details class="settings-group">
+              <summary><span class="sg-icon">🎬</span><span class="sg-title">Animation</span></summary>
+              <div class="sg-body">
+                <label class="field"><span class="name">Muster</span>
+                  <select id="animPatternSelector" class="text-input">
+                    <option value="aurora" selected>Aurora</option>
+                    <option value="pulse">Pulse</option>
+                    <option value="orbit">Orbit</option>
+                    <option value="drift">Drift</option>
+                    <option value="breathe">Breathe</option>
+                    <option value="off">Aus</option>
+                  </select>
+                </label>
+                <label class="field" style="margin-top:12px;"><span class="name">Geschwindigkeit <b id="animSpeedVal">50%</b></span>
+                  <input type="range" id="animSpeedSlider" min="10" max="200" value="50">
+                </label>
+                <label class="field" style="margin-top:12px;"><span class="name">Intensität <b id="animIntensityVal">30%</b></span>
+                  <input type="range" id="animIntensitySlider" min="0" max="100" value="30">
+                </label>
+                <label class="field" style="margin-top:12px;"><span class="name">Größe <b id="animSizeVal">50%</b></span>
+                  <input type="range" id="animSizeSlider" min="20" max="100" value="50">
+                </label>
+              </div>
+            </details>
+
+            <details class="settings-group">
+              <summary><span class="sg-icon">🔊</span><span class="sg-title">Verhalten</span></summary>
+              <div class="sg-body">
+                <div class="checks">
+                  <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
+                  <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
+                  <label class="check" data-flag="bgAnim"><span class="box"></span><span>Hintergrund-Animation</span></label>
+                </div>
+              </div>
+            </details>
+
+            <details class="settings-group">
+              <summary><span class="sg-icon">🧪</span><span class="sg-title">Math Engine</span></summary>
+              <div class="sg-body">
+                <div class="checks">
+                  <label class="check" data-flag="legacyMath"><span class="box"></span><span>Legacy Math (v1 kompatibel)</span></label>
+                  <label class="check" data-flag="useWorker"><span class="box"></span><span>Worker Rendering</span></label>
+                </div>
+                <div style="font-size:11px; opacity:0.65; margin-top:8px; line-height:1.5;">
+                  <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
+                  klassisches Floyd–Steinberg, RGB-Filter). Aus = neuere, korrektere Mathematik.<br>
+                  <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker
+                  (UI bleibt responsiv). Fällt automatisch auf Inline-Rendering zurück, falls
+                  OffscreenCanvas nicht verfügbar.
+                </div>
+              </div>
+            </details>
+
+            <details class="settings-group">
+              <summary><span class="sg-icon">🌐</span><span class="sg-title">Sprache</span></summary>
+              <div class="sg-body">
+                <label class="field"><span class="name">Sprache</span>
+                  <select id="langSelector" class="text-input">
+                    <option value="de" selected>🇩🇪 Deutsch</option>
+                    <option value="en">🇺🇸 English</option>
+                  </select>
+                </label>
+              </div>
+            </details>
           </div>
         </div>
       </aside>
 
       <main class="main-editor glass-panel">
-        <!-- Bento Info Cards (OpenCode Layout only) -->
-        <div class="oc-bento" id="ocBento">
-          <div class="oc-bento-card">
-            <h3>Resolution</h3>
-            <p id="bentoRes">—</p>
-            <div class="oc-bento-val" id="bentoResVal">—</div>
-          </div>
-          <div class="oc-bento-card">
-            <h3>Paper Size</h3>
-            <p id="bentoPaper">—</p>
-            <div class="oc-bento-val" id="bentoPaperVal">—</div>
-          </div>
-          <div class="oc-bento-card">
-            <h3>Ink Level</h3>
-            <p id="bentoInk">—</p>
-            <div class="oc-bento-val" id="bentoInkVal">—</div>
-          </div>
-          <div class="oc-bento-card">
-            <h3>Profile</h3>
-            <p id="bentoProfile">—</p>
-            <div class="oc-bento-val" id="bentoProfileVal">—</div>
-          </div>
-        </div>
-
         <div class="toolbar">
           <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
           <div style="display:flex; align-items:center; gap: 20px;">
@@ -395,9 +387,7 @@
 
   </div>
 
-  <!-- Mobile Sidebar Toggle + Overlay (OpenCode Layout) -->
-  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Einstellungen öffnen">⚙️</button>
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 
   <script type="module" src="js/main.js"></script>
 </body>
