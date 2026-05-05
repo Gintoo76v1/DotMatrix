@@ -622,6 +622,7 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-c
   display: flex; flex-direction: column;
   align-items: center; gap: 20px;
   touch-action: none;
+  will-change: transform;
 }
 
 canvas {
