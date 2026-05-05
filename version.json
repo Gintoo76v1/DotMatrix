@@ -1,0 +1,72 @@
+{
+  "$schema": "./version.schema.json",
+  "current": "1.3.0",
+  "buildDate": "2026-05-05",
+  "lastUpdated": "2026-05-05T14:30:00Z",
+  "changelog": [
+    {
+      "version": "1.3.0",
+      "date": "2026-05-05",
+      "tags": ["UI", "Performance", "Testing"],
+      "summary": "OpenCode Theme-System, 120 Tests, Worker-Rendering, Font-Individualisierung",
+      "mdFile": "CHANGELOG.md#v130",
+      "highlights": [
+        "5 neue Themes inspiriert von OpenCode Desktop: OC-2, Matrix, Tokyonight, Synthwave, Gruvbox",
+        "Token-basiertes CSS-Design-System mit 26 Custom Properties pro Theme",
+        "120 Unit-Tests mit 93% Coverage auf Math/Engine-Modulen",
+        "OffscreenCanvas Web-Worker für nicht-blockierendes Rendering",
+        "3 individualisierbare Fonts: UI-Sans, Code-Mono, Terminal-Mono",
+        "Animation-System mit 4 Patterns (Aurora, Pulse, Orbit, Off) + Detail-Slider",
+        "Version/Changelog-Overlay mit Update-Indikator im Footer",
+        "13 Render-Engine-Bugs behoben mit Legacy-Math-Toggle",
+        "9 UI/State-Bugs behoben (Slider-Sync, YAML-Parser, etc.)",
+        "YAML-basierter Preset-Parser mit String-Quoting und Edge-Case-Handling"
+      ]
+    },
+    {
+      "version": "1.2.0",
+      "date": "2026-04-20",
+      "tags": ["Bugfix", "Refactor"],
+      "summary": "Wear-Layer Scroll-Fix, UI-Modularisierung, YAML-Parser",
+      "mdFile": "CHANGELOG.md#v120",
+      "highlights": [
+        "Wear-Layer-Liste scrollbar gemacht (max-height + overflow-y: auto)",
+        "Touch-Scroll-Whitelist erweitert um .error-container",
+        "main.js in 12 UI-Module aufgesplittet (error, audio, zoom, sliders, etc.)",
+        "YAML-Preset-Parser robuster gemacht (Kommentare, Quotes, Number-Detection)",
+        "State-Persistenz via settings-store.js (localStorage)",
+        "Math-Mode-Helper für Legacy/Modern-Toggle"
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-03-15",
+      "tags": ["Feature", "UI"],
+      "summary": "Preset-System, Multi-Touch Zoom, Audio-Feedback",
+      "mdFile": "CHANGELOG.md#v110",
+      "highlights": [
+        "Preset-System mit Import/Export (YAML + JSON)",
+        "User-Presets in localStorage",
+        "Multi-Touch Pinch-Zoom mit Low-Pass-Filter",
+        "UI Click-Sounds via WebAudio API",
+        "Click-Shockwave Animation",
+        "12 Hardware-Fehler-Layer (Wear-Patterns)"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-02-01",
+      "tags": ["Release"],
+      "summary": "Erstveröffentlichung DotMatrix Studio",
+      "mdFile": "CHANGELOG.md#v100",
+      "highlights": [
+        "10 Drucker-Profile (Epson FX-80, LQ-850, IBM Proprinter, OKI Microline, etc.)",
+        "3 Dither-Algorithmen: Floyd-Steinberg, Ordered Bayer 4x4, Threshold",
+        "Dot-Matrix Render-Engine mit Pin-Offset, Jitter, Banding",
+        "Bild-Upload mit Drag & Drop",
+        "Pan & Zoom auf Canvas",
+        "Dark/Light Mode"
+      ]
+    }
+  ]
+}

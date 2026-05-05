@@ -7,7 +7,12 @@ const KEY = 'dotmatrix_settings_v1';
 const PERSIST_KEYS = [
   'autoRender', 'uiSounds', 'bgAnim',
   'legacyMath', 'useWorker',
-  'language', 'themeAccent', 'themeMode', 'bgAnimStyle',
+  'language', 'theme', 'themeMode',
+  'fontSans', 'fontSansCustom', 'fontMono', 'fontMonoCustom',
+  'fontTerminal', 'fontTerminalCustom',
+  'animPattern', 'animSpeed', 'animIntensity', 'animSize',
+  'layout', 'navExpanded',
+  'lastSeenVersion', 'autoCheckUpdates',
 ];
 
 export function loadSettings() {
@@ -37,7 +42,7 @@ export function saveSettings(partial) {
 /** Apply persisted settings onto a state object in-place. */
 export function hydrateState(state) {
   const s = loadSettings();
-  for (const k of ['autoRender', 'uiSounds', 'bgAnim', 'legacyMath', 'useWorker']) {
+  for (const k of PERSIST_KEYS) {
     if (k in s) state[k] = s[k];
   }
   return s;

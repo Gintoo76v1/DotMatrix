@@ -252,6 +252,25 @@ export const state = {
   autoRender: true,
   uiSounds: true,
   bgAnim: true,
+  // ── Appearance (Phase 1: OpenCode Theme System) ────────────────────────────
+  theme: "oc-2",               // oc-2, matrix, tokyonight, synthwave, gruvbox
+  themeMode: "dark",           // dark, light, auto
+  fontSans: "Inter",
+  fontSansCustom: "",
+  fontMono: "JetBrains Mono",
+  fontMonoCustom: "",
+  fontTerminal: "JetBrainsMono Nerd Font Mono",
+  fontTerminalCustom: "",
+  animPattern: "aurora",       // aurora, pulse, orbit, drift, breathe, off
+  animSpeed: 50,               // 10-200
+  animIntensity: 30,            // 0-100
+  animSize: 50,                // 20-100
+  // ── Layout (Phase 2 preparation) ───────────────────────────────────────────────
+  layout: "classic",           // classic, opencode
+  navExpanded: false,
+  // ── Version / Changelog ────────────────────────────────────────────────────
+  lastSeenVersion: "",
+  autoCheckUpdates: true,
 };
 
 export const PRESETS = {
