@@ -1387,7 +1387,6 @@ html.changelog-open body {
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  pointer-events: auto;
 }
 
 .changelog-panel {
@@ -1404,7 +1403,6 @@ html.changelog-open body {
   overflow: hidden;
   transform: scale(0.95);
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  pointer-events: auto;
 }
 
 .changelog-overlay.open .changelog-panel {
