@@ -26,6 +26,7 @@
         <div class="icon-btn active" data-tab="tab-source" title="Quelle">🖨️</div>
         <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
         <div class="icon-btn" data-tab="tab-errors" title="Hardware">🔧</div>
+        <div class="icon-btn" data-tab="tab-textprint" title="Text Print">📝</div>
         <div class="spacer"></div>
         <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
       </nav>
@@ -162,6 +163,61 @@
             <div class="checks" style="margin-top:16px;"><label class="check" data-flag="softBlur"><span class="box"></span><span>Softening Blur</span></label></div>
           </div>
 
+          <div class="tab-content" id="tab-textprint">
+            <h2>Text Print</h2>
+            <textarea id="textPrintInput" class="yaml-area text-input" rows="10" spellcheck="false" placeholder="Text hier eingeben..."
+              style="font-family: 'JetBrains Mono', monospace; font-size: 13px;">================================
+   MARKTPLATZ KIOSK GmbH
+================================
+
+Café au lait        € 2,80
+Croissant           € 1,50
+Sparkling water     € 0,90
+Süße Teilchen       € 2,20
+--------------------------------
+SUMME               € 7,40
+inkl. MwSt. 7%      € 0,48
+
+Tschüss & Auf Wiedersehen!
+Karte: ****  1337</textarea>
+
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <button class="btn-sm" id="textPrintRenderBtn" style="flex:1;">Drucken (statisch)</button>
+              <button class="btn-sm" id="textPrintAnimateBtn" style="flex:1;">Animiert</button>
+              <button class="btn-sm" id="textPrintStopBtn" style="flex:1;">Stop</button>
+            </div>
+
+            <h2 style="margin-top:24px;">Dot Geometry</h2>
+            <label class="field"><span class="name"><span>Dot Radius</span><b id="tpDotRadiusVal">1.8</b></span><input type="range" id="tpDotRadiusSlider" min="5" max="40" step="1" value="18"></label>
+            <label class="field"><span class="name"><span>Dot Spacing</span><b id="tpDotSpacingVal">5.0</b></span><input type="range" id="tpDotSpacingSlider" min="20" max="80" step="1" value="50"></label>
+            <label class="field"><span class="name"><span>Font Size</span><b id="tpFontSizeVal">15</b></span><input type="range" id="tpFontSizeSlider" min="10" max="32" value="15"></label>
+
+            <h2 style="margin-top:24px;">Variation</h2>
+            <label class="field"><span class="name"><span>Position Jitter</span><b id="tpPosJitterVal">0.50</b></span><input type="range" id="tpPosJitterSlider" min="0" max="100" value="50"></label>
+            <label class="field"><span class="name"><span>Intensity Jitter</span><b id="tpIntJitterVal">0.24</b></span><input type="range" id="tpIntJitterSlider" min="0" max="100" value="24"></label>
+            <label class="field"><span class="name"><span>Shape Jitter</span><b id="tpShapeJitterVal">0.22</b></span><input type="range" id="tpShapeJitterSlider" min="0" max="100" value="22"></label>
+            <div class="checks" style="margin-top:8px;">
+              <label class="check on" data-tp-flag="softEdge"><span class="box"></span><span>Soft Edge (Bleed)</span></label>
+            </div>
+
+            <h2 style="margin-top:24px;">Ribbon Wear</h2>
+            <div class="checks">
+              <label class="check" data-tp-flag="ribbonWear"><span class="box"></span><span>Ribbon Wear aktiv</span></label>
+            </div>
+            <label class="field"><span class="name"><span>Wear Intensity</span><b id="tpWearIntensityVal">0.40</b></span><input type="range" id="tpWearIntensitySlider" min="0" max="100" value="40"></label>
+            <label class="field"><span class="name"><span>Band Frequency</span><b id="tpBandFreqVal">3.2</b></span><input type="range" id="tpBandFreqSlider" min="5" max="120" step="1" value="32"></label>
+
+            <h2 style="margin-top:24px;">Animation</h2>
+            <label class="field"><span class="name"><span>Chars/Second</span><b id="tpCpsVal">110</b></span><input type="range" id="tpCpsSlider" min="20" max="500" step="5" value="110"></label>
+            <label class="field"><span class="name"><span>Line Delay (ms)</span><b id="tpLineDelayVal">65</b></span><input type="range" id="tpLineDelaySlider" min="0" max="500" step="5" value="65"></label>
+
+            <p style="font-size:11px; opacity:0.65; margin-top:16px; line-height:1.5;">
+              Renders rein clientseitig via Canvas API. Nutzt System-Schriftarten und sampelt
+              die gerenderten Pixel auf einem Punktraster — das ergibt authentische
+              Pin-Spalten-Abstände für Unicode (€, ä, ç, ¥, …).
+            </p>
+          </div>
+
           <div class="tab-content" id="tab-system">
             <h2 data-i18n="systemTitle">System Settings</h2>
             <label class="field"><span class="name">Sprache</span><select id="langSelector" class="text-input"><option value="de">🇩🇪 Deutsch</option><option value="en">🇺🇸 English</option></select></label>
@@ -189,6 +245,19 @@
               <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
               <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
               <label class="check" data-flag="bgAnim"><span class="box"></span><span>Background Glow Animation</span></label>
+            </div>
+
+            <h2 style="margin-top:32px;">Math Engine</h2>
+            <div class="checks">
+              <label class="check" data-flag="legacyMath"><span class="box"></span><span>Legacy Math (v1 kompatibel)</span></label>
+              <label class="check" data-flag="useWorker"><span class="box"></span><span>Worker Rendering</span></label>
+            </div>
+            <div style="font-size:11px; opacity:0.65; margin-top:8px; line-height:1.5;">
+              <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
+              klassisches Floyd–Steinberg, RGB-Filter). Aus = neuere, korrektere Mathematik.<br>
+              <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker
+              (UI bleibt responsiv). Fällt automatisch auf Inline-Rendering zurück, falls
+              OffscreenCanvas nicht verfügbar.
             </div>
           </div>
         </div>

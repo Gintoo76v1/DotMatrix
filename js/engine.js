@@ -1,27 +1,64 @@
-import { PROFILES, state, MM_PER_INCH, PAPER_SIZES_MM } from './config.js';
-import { mulberry32, gaussian, yieldUI } from './utils.js';
-import { toGrayscale, floydSteinberg, orderedDither, thresholdDither, boxBlur3x3 } from './filters.js';
+// ── Render engine ───────────────────────────────────────────────────────────
+// Public exports:
+//   render(srcImage, onProgressUpdate)  — main pipeline (async, yields to UI)
+//   asciiPreview(srcImage, width)       — quick character-grid preview
+//   makeDotStamp / stampInto / makeValueNoise — exposed for unit tests
+//
+// Hot loop sits in render(); per-cell branches are minimised by hoisting
+// constants and using branch-free clamps.  The legacyMath flag (via
+// math-mode.js) routes between v1-compatible and v2-correct math.
 
-export function makeDotStamp(diameterPx, softness, density) {
+import { PROFILES, state, MM_PER_INCH, PAPER_SIZES_MM } from './config.js';
+import { mulberry32, makeGaussian, yieldUI, smoothstep, clamp } from './utils.js';
+import { toGrayscale, floydSteinberg, orderedDither, thresholdDither, boxBlur3x3 } from './filters.js';
+import { getMathMode } from './math-mode.js';
+
+// ── Dot stamp ────────────────────────────────────────────────────────────────
+//
+// Builds a soft-edged disc with optional anisotropy. The legacy code used a
+// hard-coded 0.88 scaling on dx² which only matched 9-pin printers with
+// dpi_h ≈ 144 / dpi_v ≈ 72.  v2 derives the squashed factor from the actual
+// pin geometry; passing `legacy:true` retains the v1 constant.
+//
+// Stamp values are in [0, density].
+export function makeDotStamp(diameterPx, softness, density, opts = {}) {
   let size = Math.max(3, Math.round(diameterPx));
   if (size % 2 === 0) size++;
   const cx = (size - 1) / 2;
   const radius = size / 2;
   const inner = radius * (1 - softness);
+
+  // anisotropy = horizontal stretch factor (>1 = wider than tall).
+  // dpi_h and dpi_v at the printer determine the expected dot footprint.
+  let xScale2;
+  if (opts.legacy) {
+    xScale2 = 0.88;
+  } else if (opts.dpiH && opts.dpiV) {
+    const aspect = opts.dpiV / opts.dpiH;        // <1 if dpi_h > dpi_v
+    xScale2 = aspect * aspect;
+  } else {
+    xScale2 = 1.0;
+  }
+
   const stamp = new Float32Array(size * size);
+  const denom = Math.max(0.01, radius - inner);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const dx = x - cx, dy = y - cx;
-      const r = Math.sqrt(dx * dx * 0.88 + dy * dy);
+      const r = Math.sqrt(dx * dx * xScale2 + dy * dy);
       let v;
       if (r <= inner) v = 1;
-      else v = Math.max(0, 1 - (r - inner) / Math.max(0.01, radius - inner));
+      else            v = Math.max(0, 1 - (r - inner) / denom);
       stamp[y * size + x] = v * density;
     }
   }
   return { data: stamp, size };
 }
 
+// ── Stamp accumulation ───────────────────────────────────────────────────────
+// Adds a stamp into the ink buffer with clamping at 1.0.  Branch-free inner
+// loop using Math.min (M4).  Out-of-bounds is detected once on entry; the
+// inner loops then run on the clipped intersection only.
 export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
   x0 = Math.round(x0);
   y0 = Math.round(y0);
@@ -39,42 +76,53 @@ export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
     let si = sy * ss + sx0;
     for (let x = dx0; x < dx1; x++, di++, si++) {
       const v = ink[di] + stamp[si] * band;
-      ink[di] = v > 1 ? 1 : v;
+      ink[di] = v < 1 ? v : 1;
     }
   }
 }
 
-function makeValueNoise(rng, noiseW, noiseH) {
+// ── 2D value noise ───────────────────────────────────────────────────────────
+// Bilinear interpolation creates linear seams between cells; smoothstep adds
+// C¹ continuity for less mechanical-looking cloud patterns. Both modes are
+// deterministic when fed the same RNG.
+export function makeValueNoise(rng, noiseW, noiseH, opts = {}) {
   const grid = new Float32Array(noiseW * noiseH);
   for (let i = 0; i < grid.length; i++) grid[i] = rng();
+  const interp = (opts.interp === 'bilinear') ? (t => t) : smoothstep;
   return (x, y, totalW, totalH) => {
     const nx = (x / totalW) * (noiseW - 1);
     const ny = (y / totalH) * (noiseH - 1);
     const x0 = Math.floor(nx), x1 = Math.min(x0 + 1, noiseW - 1);
     const y0 = Math.floor(ny), y1 = Math.min(y0 + 1, noiseH - 1);
-    const fx = nx - x0, fy = ny - y0;
+    const fx = interp(nx - x0), fy = interp(ny - y0);
     const v00 = grid[y0 * noiseW + x0], v10 = grid[y0 * noiseW + x1];
     const v01 = grid[y1 * noiseW + x0], v11 = grid[y1 * noiseW + x1];
-    return v00*(1-fx)*(1-fy) + v10*fx*(1-fy) + v01*(1-fx)*fy + v11*fx*fy;
+    return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy)
+         + v01 * (1 - fx) * fy       + v11 * fx * fy;
   };
 }
 
-// ── Pre-compute all data for one wear layer ──────────────────────────────────
-function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
+// ── Layer pre-computation ───────────────────────────────────────────────────
+// Each wear pattern caches whatever it can compute up-front (row/column
+// LUTs, RNG-derived constants).  Per-cell work in the hot loop is then
+// limited to a switch and a few arithmetic ops.
+function buildLayerData(layer, rng, gridW, gridH, numPins, stepY, mode) {
   const str = (layer.strength ?? 50) / 100;
   const ld = { pattern: layer.pattern, strength: str };
 
   switch (layer.pattern) {
     case 'cloudy': {
-      ld.noise = makeValueNoise(rng, 16, 16);
+      ld.noise = makeValueNoise(rng, 16, 16,
+        { interp: mode.valueNoise === 'bilinear' ? 'bilinear' : 'smoothstep' });
       break;
     }
     case 'misaligned': {
+      // Damped random walk → bounded drift along Y axis.
       ld.rowOff = new Float32Array(gridH);
       let acc = 0;
       for (let y = 0; y < gridH; y++) {
         acc += (rng() - 0.5) * 1.4;
-        acc *= 0.91; // damping keeps drift bounded
+        acc *= 0.91;
         ld.rowOff[y] = acc;
       }
       break;
@@ -84,7 +132,7 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
       for (let p = 0; p < numPins; p++) {
         const roll = rng();
         if (roll < str * 0.22) {
-          ld.health[p] = 0; // completely dead pin
+          ld.health[p] = 0; // dead pin
         } else if (roll < str * 0.55) {
           ld.health[p] = Math.max(0.08, 1.0 - str * (0.3 + rng() * 0.5));
         }
@@ -96,7 +144,7 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
       let inSmudge = false;
       for (let y = 0; y < gridH; y++) {
         if (!inSmudge && rng() < 0.04 * str) inSmudge = true;
-        else if (inSmudge && rng() < 0.22) inSmudge = false;
+        else if (inSmudge && rng() < 0.22)   inSmudge = false;
         ld.rows[y] = inSmudge ? 1 : 0;
       }
       break;
@@ -106,13 +154,13 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
       let val = 0.85 + rng() * 0.15;
       for (let x = 0; x < gridW; x++) {
         val += (rng() - 0.5) * 0.06;
-        val = Math.max(0.25, Math.min(1.0, val));
+        val = clamp(val, 0.25, 1.0);
         ld.col[x] = 1.0 - (1.0 - val) * str;
       }
       break;
     }
     case 'ink_starved': {
-      // Depletion accumulates as ribbon unspools through the job
+      // Depletion accumulates as ribbon unspools through the job.
       ld.rowDep = new Float32Array(gridH);
       let dep = 0;
       for (let y = 0; y < gridH; y++) {
@@ -122,24 +170,27 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
       break;
     }
     case 'paper_slip': {
-      // Random-walk vertical slip (feed roller inconsistency)
+      // Random-walk vertical slip (feed roller inconsistency).
+      // v2: directly in grid pixels — stable across paper-format scales.
+      // v1: scaled by stepY which made effect huge in paper mode and tiny in
+      //     original-resolution mode.
       ld.rowShift = new Float32Array(gridH);
       let slip = 0;
+      const scale = (mode.paperSlip === 'stepScaled') ? (stepY * 4) : 4;
       for (let y = 0; y < gridH; y++) {
-        if (rng() < 0.04 * str) slip += (rng() - 0.5) * stepY * str * 4;
+        if (rng() < 0.04 * str) slip += (rng() - 0.5) * scale * str;
         slip *= 0.85;
         ld.rowShift[y] = slip;
       }
       break;
     }
     case 'mechanical_resonance': {
-      // Sinusoidal X drift from print head resonance at certain carriage speeds
-      ld.freq = 0.08 + rng() * 0.06;
-      ld.amp  = 1.0;  // scaled per-cell by stepX * str
+      ld.freq  = 0.08 + rng() * 0.06;
+      ld.amp   = 1.0;
+      ld.phase = rng() * Math.PI * 2;     // Bug V — stable per render
       break;
     }
     case 'double_feed': {
-      // Offset of second sheet (faint background copy)
       ld.offX = Math.round((3 + rng() * 5) * (rng() < 0.5 ? 1 : -1));
       ld.offY = Math.round(2 + rng() * 4);
       break;
@@ -149,14 +200,39 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
     case 'static_noise':
       break; // computed per-cell only
   }
-
   return ld;
 }
 
-export async function render(srcImage, onProgressUpdate) {
+// ── Pin offsets per pass ────────────────────────────────────────────────────
+// Each carriage pass has its own micro-misalignment; without this the
+// "double strike" mode just stacked identical dots.  (Bug Q)
+function buildPinOffsets(numPins, pinTolPx, rng) {
+  const xOff = new Float32Array(numPins);
+  const yOff = new Float32Array(numPins);
+  for (let p = 0; p < numPins; p++) {
+    yOff[p] = (rng() - 0.5) * 2 * pinTolPx;
+    xOff[p] = (rng() - 0.5) * pinTolPx * 0.35;
+  }
+  return { xOff, yOff };
+}
+
+// ── Canvas factory ───────────────────────────────────────────────────────────
+// Render is host-agnostic; either pass an explicit `createCanvas(w,h)` factory
+// (worker context — uses OffscreenCanvas) or rely on the default DOM factory.
+function defaultCreateCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+// ── Main render ──────────────────────────────────────────────────────────────
+export async function render(srcImage, onProgressUpdate, opts = {}) {
+  const createCanvas = opts.createCanvas || defaultCreateCanvas;
   const profile = PROFILES[state.profile];
   const seed = state.seed || Math.floor(Math.random() * 1e9);
   const rng = mulberry32(seed);
+  const gauss = makeGaussian(rng);
+  const mode = getMathMode(state);
   const srcAspect = srcImage.width / srcImage.height;
 
   const condensedMult = (state.condensed && profile.supports_condensed) ? 1.5 : 1.0;
@@ -186,7 +262,7 @@ export async function render(srcImage, onProgressUpdate) {
     } else {
       const size = PAPER_SIZES_MM[state.paperFormat];
       if (state.orientation === "Landscape") { paperW = size[1]; paperH = size[0]; }
-      else { paperW = size[0]; paperH = size[1]; }
+      else                                   { paperW = size[0]; paperH = size[1]; }
     }
     const marginMm = 10;
     const printableW = Math.max(1, paperW - 2 * marginMm);
@@ -215,92 +291,131 @@ export async function render(srcImage, onProgressUpdate) {
     stepX = effDpi / dpiH; stepY = effDpi / dpiV;
   }
 
-  const gridCanvas = document.createElement("canvas");
-  gridCanvas.width = gridW; gridCanvas.height = gridH;
+  // Source image → grid resolution → grayscale
+  const gridCanvas = createCanvas(gridW, gridH);
   const gctx = gridCanvas.getContext("2d");
   gctx.fillStyle = "#fff";
   gctx.fillRect(0, 0, gridW, gridH);
   gctx.drawImage(srcImage, 0, 0, gridW, gridH);
   const gridData = gctx.getImageData(0, 0, gridW, gridH);
-  const gray = toGrayscale(gridData, state);
+  const gray = toGrayscale(gridData, state, mode);
 
+  // Halftone / dither
   let dots;
-  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, gridW, gridH);
+  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, gridW, gridH, mode, state.threshold);
   else if (state.dither === "ordered")    dots = orderedDither(gray, gridW, gridH);
   else                                    dots = thresholdDither(gray, gridW, gridH, state.threshold);
 
+  // Allocate output ink plane
   const ink = new Float32Array(outW * outH);
-  const dotPx = Math.max(2, Math.round(profile.dot_diameter_mm / MM_PER_INCH * effDpi));
-  const { data: stamp, size: stampSize } = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density);
+  // Bug R — keep dot diameter ≥3 (matches makeDotStamp's own minimum)
+  const dotPx = Math.max(3, Math.round(profile.dot_diameter_mm / MM_PER_INCH * effDpi));
+  const baseStamp = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density,
+    state.legacyMath ? { legacy: true } : { dpiH, dpiV });
+  const stamp = baseStamp.data;
+  const stampSize = baseStamp.size;
   const stampR = (stampSize - 1) / 2;
 
-  const passes    = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
-  const jitterPx  = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
-  const bandAmp   = profile.banding * state.bandingScale;
+  const passes   = Math.min(3, profile.passes * (state.doubleStrike ? 2 : 1));
+  const jitterPx = profile.jitter_mm * state.jitterScale / MM_PER_INCH * effDpi;
+  const bandAmp  = profile.banding * state.bandingScale;
 
-  // ── PER-PIN CHARACTERISTICS ──────────────────────────────────────────────
-  const numPins     = profile.pins;
-  const pinYOff     = new Float32Array(numPins);
-  const pinXOff     = new Float32Array(numPins);
-  const pinDensMod  = new Float32Array(numPins);
-  const pinHealth   = new Float32Array(numPins).fill(1.0);
-
-  const pinTolPx = Math.max(0.5, profile.jitter_mm * 0.5 / MM_PER_INCH * effDpi);
+  // Per-pin geometry: each pin has a fixed mechanical tolerance offset
+  // plus a density modulation (centre pins print harder than edge pins).
+  const numPins    = profile.pins;
+  const pinDensMod = new Float32Array(numPins);
+  const pinTolPx   = Math.max(0.5, profile.jitter_mm * 0.5 / MM_PER_INCH * effDpi);
   for (let p = 0; p < numPins; p++) {
-    pinYOff[p] = (rng() - 0.5) * 2 * pinTolPx;
-    pinXOff[p] = (rng() - 0.5) * pinTolPx * 0.35;
     const norm = (p - (numPins - 1) / 2) / Math.max(1, (numPins - 1) / 2);
     pinDensMod[p] = 1.0 - 0.14 * norm * norm;
   }
 
-  // ── BUILD MODULAR WEAR LAYER DATA ─────────────────────────────────────────
+  // Per-pass pin offsets — each pass gets its own jitter (Bug Q)
+  const passPinOffsets = [];
+  for (let p = 0; p < passes; p++) passPinOffsets.push(buildPinOffsets(numPins, pinTolPx, rng));
+
+  // Active wear layers
   const wearLayers = Array.isArray(state.wearLayers) ? state.wearLayers : [];
   const layerData  = wearLayers
     .filter(l => l && l.pattern && l.pattern !== 'none' && (l.strength ?? 0) > 0)
-    .map(l => buildLayerData(l, rng, gridW, gridH, numPins, stepY));
+    .map(l => buildLayerData(l, rng, gridW, gridH, numPins, stepY, mode));
 
-  // Row banding: slight row-to-row density variation from paper/head oscillation
+  // Row banding LUT — symmetric (mean ≈ 1) in v2; one-sided (mean < 1) in v1.
   const rowBands = new Float32Array(gridH);
-  for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
+  if (mode.rowBands === 'symmetric') {
+    for (let y = 0; y < gridH; y++) rowBands[y] = 1 + bandAmp * (rng() - 0.5) * 2;
+  } else {
+    for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
+  }
 
-  const onCells = [];
-  for (let y = 0; y < gridH; y++)
-    for (let x = 0; x < gridW; x++)
-      if (dots[y * gridW + x]) onCells.push([x, y]);
+  // Sweep height for ghosting (≈ one carriage pass = numPins * stepY).
+  // v1 used `Math.floor(gy / numPins)` which mis-grouped at high pin counts.
+  const sweepRows = Math.max(1, Math.round(numPins * (mode.ghosting === 'sweep' ? 1 : 1)));
+
+  // Compact list of "on" cells. Int32Array (M6) — 2 ints per cell.
+  let onCount = 0;
+  for (let i = 0; i < dots.length; i++) if (dots[i]) onCount++;
+  const onCells = new Int32Array(onCount * 2);
+  {
+    let k = 0;
+    for (let y = 0; y < gridH; y++) {
+      const row = y * gridW;
+      for (let x = 0; x < gridW; x++) {
+        if (dots[row + x]) { onCells[k++] = x; onCells[k++] = y; }
+      }
+    }
+  }
+
+  // Hot-loop constants (M9)
+  const dpiNorm160     = effDpi / 160;
+  const dpiNorm300     = effDpi / 300;
+  const ribbonFadeAmt  = (profile.ribbon_fade ?? 0.09);
+  const invMaxGx       = 1 / Math.max(1, gridW - 1);
+  const invGridW       = 1 / Math.max(1, gridW);
 
   let processed = 0;
-  const total = onCells.length * passes;
+  const total = onCount * passes;
   await yieldUI();
 
   for (let p = 0; p < passes; p++) {
     const passJitter = jitterPx * (1 + 0.3 * p);
+    const { xOff: pinXOff, yOff: pinYOff } = passPinOffsets[p];
 
-    for (let idx = 0; idx < onCells.length; idx++) {
-      const [gx, gy] = onCells[idx];
+    for (let idx = 0; idx < onCount; idx++) {
+      const gx = onCells[idx * 2];
+      const gy = onCells[idx * 2 + 1];
       const pinIdx = gy % numPins;
 
       let cx = offsetX + gx * stepX + stepX / 2 + pinXOff[pinIdx];
       let cy = offsetY + gy * stepY + stepY / 2 + pinYOff[pinIdx];
       let wearFactor = 1.0;
       let dxTotal = 0, dyTotal = 0;
-      const ghosts = [];
+      let ghostCount = 0;
+      // Ghost array reused per cell — capacity 8 (more than any layer adds).
+      const ghostDx = ghostsDx, ghostDy = ghostsDy, ghostA = ghostsA;
       let skipCell = false;
 
-      // ── Apply each active wear layer ─────────────────────────────────────
-      for (const ld of layerData) {
+      for (let li = 0; li < layerData.length; li++) {
         if (skipCell) break;
-        const { pattern: pat, strength: str } = ld;
+        const ld = layerData[li];
+        const str = ld.strength;
 
-        switch (pat) {
+        switch (ld.pattern) {
           case 'cloudy': {
             wearFactor *= 1.0 - ld.noise(gx, gy, gridW, gridH) * str * 0.75;
             break;
           }
           case 'ghosting': {
-            const dir = (Math.floor(gy / numPins) % 2 === 0) ? 1 : -1;
-            const gdx = dir * 7 * str * (effDpi / 300);
+            const sweepIdx = Math.floor(gy / sweepRows);
+            const dir = (sweepIdx & 1) === 0 ? 1 : -1;
+            const gdx = dir * 7 * str * dpiNorm300;
             const gdy = (rng() - 0.5) * 2;
-            ghosts.push({ dx: gdx, dy: gdy, alphaMod: 0.25 * str });
+            if (ghostCount < 8) {
+              ghostDx[ghostCount] = gdx;
+              ghostDy[ghostCount] = gdy;
+              ghostA[ghostCount]  = 0.25 * str;
+              ghostCount++;
+            }
             break;
           }
           case 'pin_skip': {
@@ -310,7 +425,7 @@ export async function render(srcImage, onProgressUpdate) {
             break;
           }
           case 'misaligned': {
-            dxTotal += ld.rowOff[gy] * str * (effDpi / 160);
+            dxTotal += ld.rowOff[gy] * str * dpiNorm160;
             break;
           }
           case 'smudge': {
@@ -330,7 +445,7 @@ export async function render(srcImage, onProgressUpdate) {
           }
           case 'ink_starved': {
             const rowFade  = ld.rowDep[gy];
-            const lineFade = (gx / Math.max(1, gridW - 1)) * str * 0.40;
+            const lineFade = (gx * invMaxGx) * str * 0.40;
             wearFactor *= Math.max(0.04, 1.0 - rowFade * str * 0.60 - lineFade);
             break;
           }
@@ -341,26 +456,26 @@ export async function render(srcImage, onProgressUpdate) {
           case 'static_noise': {
             if (rng() < 0.002 * str * 5) {
               const burst = 1 + Math.floor(rng() * 3);
-              for (let k = 0; k < burst; k++) {
-                ghosts.push({
-                  dx: (rng() - 0.5) * stepX * 8 * str,
-                  dy: (rng() - 0.5) * stepY * 2,
-                  alphaMod: rng() * 0.45 * str,
-                });
+              for (let k = 0; k < burst && ghostCount < 8; k++) {
+                ghostDx[ghostCount] = (rng() - 0.5) * stepX * 8 * str;
+                ghostDy[ghostCount] = (rng() - 0.5) * stepY * 2;
+                ghostA[ghostCount]  = rng() * 0.45 * str;
+                ghostCount++;
               }
             }
             break;
           }
           case 'double_feed': {
-            ghosts.push({
-              dx: ld.offX * stepX,
-              dy: ld.offY * stepY,
-              alphaMod: 0.12 * str,
-            });
+            if (ghostCount < 8) {
+              ghostDx[ghostCount] = ld.offX * stepX;
+              ghostDy[ghostCount] = ld.offY * stepY;
+              ghostA[ghostCount]  = 0.12 * str;
+              ghostCount++;
+            }
             break;
           }
           case 'mechanical_resonance': {
-            dxTotal += Math.sin(gy * ld.freq * Math.PI * 2) * stepX * str * 1.2;
+            dxTotal += Math.sin(gy * ld.freq * 2 * Math.PI + ld.phase) * stepX * str * 1.2;
             break;
           }
         }
@@ -371,25 +486,20 @@ export async function render(srcImage, onProgressUpdate) {
       cx += dxTotal;
       cy += dyTotal;
 
-      const ribbonFade = 1.0 - (gx / gridW) * 0.09;
+      const ribbonFade = 1.0 - (gx * invGridW) * ribbonFadeAmt;
 
       if (passJitter > 0) {
-        cx += gaussian(rng) * passJitter;
-        cy += gaussian(rng) * passJitter;
+        cx += gauss() * passJitter;
+        cy += gauss() * passJitter;
       }
 
-      // 🐞 BUGFIX: dotBandMult entfernt, da undefiniert. 
       const band = rowBands[gy] * wearFactor * pinDensMod[pinIdx] * ribbonFade;
-      
-      // 🐞 BUGFIX: bleedStampSize ersetzt durch existierende Variable stampSize
       stampInto(ink, outW, outH, stamp, stampSize, cx - stampR, cy - stampR, band);
 
-      // 🐞 BUGFIX: w_drag Block entfernt, da diese Variable undefiniert war und das Rendering abstürzen ließ.
-
-      for (const g of ghosts) {
+      for (let g = 0; g < ghostCount; g++) {
         stampInto(ink, outW, outH, stamp, stampSize,
-          cx - stampR + g.dx, cy - stampR + g.dy,
-          band * g.alphaMod);
+          cx - stampR + ghostDx[g], cy - stampR + ghostDy[g],
+          band * ghostA[g]);
       }
 
       processed++;
@@ -400,36 +510,45 @@ export async function render(srcImage, onProgressUpdate) {
     }
   }
 
+  // Compose output ImageData — paper underlies ink with linear blend.
   const finalImg = new ImageData(outW, outH);
   const [pr, pg, pb] = state.paper;
   const [ir, ig, ib] = state.ink;
   const d = finalImg.data;
   for (let i = 0, j = 0; i < ink.length; i++, j += 4) {
-    const a = ink[i];
-    d[j]   = Math.round(pr * (1 - a) + ir * a);
-    d[j+1] = Math.round(pg * (1 - a) + ig * a);
-    d[j+2] = Math.round(pb * (1 - a) + ib * a);
-    d[j+3] = 255;
+    const a = ink[i] > 1 ? 1 : ink[i];
+    d[j]     = (pr * (1 - a) + ir * a) | 0;
+    d[j + 1] = (pg * (1 - a) + ig * a) | 0;
+    d[j + 2] = (pb * (1 - a) + ib * a) | 0;
+    d[j + 3] = 255;
   }
 
   if (state.softBlur) boxBlur3x3(d, outW, outH);
   return { imageData: finalImg, width: outW, height: outH };
 }
 
+// ── Per-cell ghost scratch buffers ──────────────────────────────────────────
+// Module-scoped to avoid GC churn. Render is single-threaded by virtue of
+// running on the main thread or one dedicated worker.
+const ghostsDx = new Float32Array(8);
+const ghostsDy = new Float32Array(8);
+const ghostsA  = new Float32Array(8);
+
+// ── ASCII preview ────────────────────────────────────────────────────────────
 export function asciiPreview(srcImage, width = 60) {
   const aspect = srcImage.width / srcImage.height;
   let h = Math.round(width / aspect / 2) * 2;
   h = Math.max(8, Math.min(60, h));
-  const c = document.createElement("canvas");
-  c.width = width; c.height = h;
+  const c = defaultCreateCanvas(width, h);
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, width, h);
   ctx.drawImage(srcImage, 0, 0, width, h);
-  const gray = toGrayscale(ctx.getImageData(0, 0, width, h), state);
+  const mode = getMathMode(state);
+  const gray = toGrayscale(ctx.getImageData(0, 0, width, h), state, mode);
 
   let dots;
-  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, width, h);
+  if (state.dither === "floyd_steinberg") dots = floydSteinberg(gray, width, h, mode, state.threshold);
   else if (state.dither === "ordered")    dots = orderedDither(gray, width, h);
   else                                    dots = thresholdDither(gray, width, h, state.threshold);
 
