@@ -256,7 +256,7 @@ body.light-mode {
 /* ── 5. Typography ─────────────────────────────────────────────────────────── */
 
 h2, .btn, .dropzone .big, .status-large, .er-name, .sli-name, .header-fancy, .footer-accent {
-  font-family: 'Space Grotesk', sans-serif; font-weight: 500;
+  font-family: var(--dm-font-sans); font-weight: 500;
 }
 
 .ascii, .yaml-area, .text-input, .profile-meta, .er-val, .hex-input {
@@ -443,6 +443,12 @@ input[type="file"] { display: none; }
   border-radius: 16px;
 }
 
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .footer-accent {
   color: var(--dm-primary);
   font-weight: 700; font-size: 13px;
@@ -455,7 +461,7 @@ input[type="file"] { display: none; }
   border: 1px solid var(--dm-border-base);
   padding: 2px 6px; border-radius: 4px;
   font-size: 9px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--dm-font-sans);
   text-transform: uppercase;
   margin-left: 5px;
   color: var(--dm-text-base);
@@ -702,17 +708,51 @@ h2 {
   display: flex; flex-direction: column;
   justify-content: center;
   background: var(--paper-dark);
-  border: 1px dashed var(--dm-border-base);
+  border: none;
   border-radius: 12px;
   padding: 20px 10px;
   text-align: center;
   cursor: pointer;
   transition: 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.dropzone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, var(--dm-border-base) 50%, transparent 50%) top / 16px 2px repeat-x,
+    linear-gradient(90deg, var(--dm-border-base) 50%, transparent 50%) bottom / 16px 2px repeat-x,
+    linear-gradient(0deg, var(--dm-border-base) 50%, transparent 50%) left / 2px 16px repeat-y,
+    linear-gradient(0deg, var(--dm-border-base) 50%, transparent 50%) right / 2px 16px repeat-y;
+  animation: dash-flow 30s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dropzone > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes dash-flow {
+  0% { background-position: 0 0, 0 100%, 0 0, 100% 0; }
+  100% { background-position: 32px 0, -32px 100%, 0 -32px, 100% 32px; }
 }
 
 .dropzone:hover {
-  border-color: var(--dm-primary);
   background: rgba(0,0,0,0.5);
+}
+
+.dropzone:hover::before {
+  background:
+    linear-gradient(90deg, var(--dm-primary) 50%, transparent 50%) top / 16px 2px repeat-x,
+    linear-gradient(90deg, var(--dm-primary) 50%, transparent 50%) bottom / 16px 2px repeat-x,
+    linear-gradient(0deg, var(--dm-primary) 50%, transparent 50%) left / 2px 16px repeat-y,
+    linear-gradient(0deg, var(--dm-primary) 50%, transparent 50%) right / 2px 16px repeat-y;
 }
 
 .dropzone .big { margin-bottom: 6px; }
@@ -755,8 +795,12 @@ h2 {
 .sli.active {
   background: var(--dm-primary-soft);
   color: var(--dm-primary);
-  border-left: 3px solid var(--dm-primary);
-  padding-left: 13px; /* 16px - 3px border */
+  border: 2px solid var(--dm-primary);
+  border-bottom: 2px solid var(--dm-primary) !important;
+  padding: 12px 14px;
+  border-radius: 8px;
+  box-shadow: 0 0 12px var(--dm-primary-soft), inset 0 0 8px var(--dm-primary-soft);
+  margin: 2px 4px;
 }
 
 .sli-row {
@@ -771,7 +815,7 @@ h2 {
   padding: 2px 6px;
   border: 1px solid currentColor;
   border-radius: 4px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--dm-font-sans);
 }
 
 .sli-del {
@@ -1085,7 +1129,7 @@ input[type=range]::-webkit-slider-thumb {
   padding: 12px 4px;
   cursor: pointer;
   font-size: 11px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--dm-font-sans);
   text-transform: uppercase;
   min-width: 65px;
   transition: 0.2s;
@@ -1266,6 +1310,26 @@ input[type=range]::-webkit-slider-thumb {
   padding: 0 2px;
 }
 
+.setting-desc {
+  font-size: 10px;
+  color: var(--dm-text-weaker);
+  margin: 4px 0 8px;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.check-desc {
+  margin: -4px 0 6px 36px;
+}
+
+/* Parent-Child: Animation disabled when bgEffects off */
+#animSettingsBody.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.6);
+  transition: opacity 0.3s, filter 0.3s;
+}
+
 /* ── 26. Changelog Overlay ─────────────────────────────────────────────────── */
 
 .changelog-overlay {
@@ -1289,7 +1353,6 @@ html.changelog-open,
 html.changelog-open body {
   overflow: hidden;
   height: 100%;
-  touch-action: none;
 }
 
 .changelog-backdrop {
@@ -1359,6 +1422,7 @@ html.changelog-open body {
   padding: 16px 24px;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: auto !important;
 }
 
 .changelog-entry {
@@ -1525,7 +1589,7 @@ html.changelog-open body {
 
 .error-header {
   color: #ff5555;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--dm-font-sans);
   font-weight: 700; font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;

@@ -252,6 +252,8 @@ export const state = {
   autoRender: true,
   uiSounds: true,
   bgAnim: false,
+  bgEffects: true,
+  renderDebug: false,
   // ── Appearance (Phase 1: OpenCode Theme System) ────────────────────────────
   theme: "oc-2",               // oc-2, matrix, tokyonight, synthwave, gruvbox
   themeMode: "dark",           // dark, light, auto

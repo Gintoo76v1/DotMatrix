@@ -22,19 +22,41 @@ export function initAudio() {
 }
 
 export function playClickSound() {
-  if (!state.uiSounds || !audioCtx) return;
+  if (!state.uiSounds) return;
+  ensureCtx();
+  if (!audioCtx) return;
   try {
     const t0 = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(600, t0);
-    osc.frequency.exponentialRampToValueAtTime(100, t0 + 0.03);
-    gain.gain.setValueAtTime(0.10, t0);
-    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.03);
+    osc.frequency.setValueAtTime(800, t0);
+    osc.frequency.exponentialRampToValueAtTime(200, t0 + 0.06);
+    gain.gain.setValueAtTime(0.08, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
     osc.connect(gain).connect(audioCtx.destination);
     osc.start(t0);
-    osc.stop(t0 + 0.04);
+    osc.stop(t0 + 0.10);
+  } catch {
+    /* swallow */
+  }
+}
+
+export function playToggleSound(on) {
+  if (!state.uiSounds) return;
+  ensureCtx();
+  if (!audioCtx) return;
+  try {
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(on ? 1000 : 500, t0);
+    gain.gain.setValueAtTime(0.06, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.06);
   } catch {
     /* swallow */
   }

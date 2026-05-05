@@ -71,10 +71,17 @@ export function initAppearance(persisted = {}) {
   restore('animSpeedSlider',     (persisted.animSpeed     ?? state.animSpeed).toString());
   restore('animIntensitySlider', (persisted.animIntensity ?? state.animIntensity).toString());
   restore('animSizeSlider',      (persisted.animSize      ?? state.animSize).toString());
+
+  // New toggles (checkbox-backed)
+  if (persisted.bgEffects != null) state.bgEffects = persisted.bgEffects;
+  if (persisted.renderDebug != null) state.renderDebug = persisted.renderDebug;
   // changelogAutoCheck removed — static GitHub Pages site, no live update checking
 
   // Custom-font visibility
   _toggleCustomFields();
+
+  // Parent-child: disable animation if bgEffects off
+  _updateAnimDisabledState();
 
   // Apply everything to CSS
   applyAppearance();
@@ -92,6 +99,23 @@ export function initAppearance(persisted = {}) {
   _wireSlider('animSpeedSlider',     'animSpeed',     v => v, applyAppearance);
   _wireSlider('animIntensitySlider', 'animIntensity', v => v, applyAppearance);
   _wireSlider('animSizeSlider',      'animSize',      v => v, applyAppearance);
+
+  // Wire bgEffects checkbox (from checks.js, but we need to react here)
+  document.querySelector('.check[data-flag="bgEffects"]')?.addEventListener('click', () => {
+    // state.bgEffects is already toggled by checks.js
+    _updateAnimDisabledState();
+    applyAppearance();
+  });
+
+  // Wire renderDebug checkbox
+  document.querySelector('.check[data-flag="renderDebug"]')?.addEventListener('click', () => {
+    // state.renderDebug toggled by checks.js
+    // Trigger a re-render if we have an image
+    if (state.sourceImage && state.autoRender) {
+      import('../main.js').then(m => m.triggerUpdate?.());
+    }
+  });
+
   // autoCheckUpdates persists in state but has no DOM control (static site)
 
   // Language (already wired in old code, keep here for completeness)
@@ -145,8 +169,9 @@ export function applyAppearance() {
 
   // ── Animation ──
   if (appBg) {
-    const isOff = !state.bgAnim || state.animPattern === 'off';
+    const isOff = !state.bgEffects || !state.bgAnim || state.animPattern === 'off';
     appBg.setAttribute('data-anim', isOff ? 'off' : state.animPattern);
+    appBg.style.opacity = state.bgEffects ? '1' : '0';
 
     // Speed, intensity, size are handled via CSS vars for dynamic adjustment.
     // animSize=50 → 1.0 (100% of base size). Range: 20..100 → 0.4..2.0
@@ -190,6 +215,8 @@ export function applyAppearance() {
     animIntensity: state.animIntensity,
     animSize: state.animSize,
     autoCheckUpdates: state.autoCheckUpdates,
+    bgEffects: state.bgEffects,
+    renderDebug: state.renderDebug,
   });
 }
 
@@ -243,6 +270,12 @@ function _toggleCustomFields() {
   toggle('fontSansSelector',     'fontSansCustomField');
   toggle('fontMonoSelector',     'fontMonoCustomField');
   toggle('fontTerminalSelector', 'fontTerminalCustomField');
+}
+
+function _updateAnimDisabledState() {
+  const body = document.getElementById('animSettingsBody');
+  if (!body) return;
+  body.classList.toggle('disabled', !state.bgEffects);
 }
 
 function _applyAnimPreset() {

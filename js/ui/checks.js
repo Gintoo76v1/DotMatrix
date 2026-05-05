@@ -6,7 +6,7 @@
 import { saveSettings } from '../settings-store.js';
 import { updateBgAnimVisibility } from './appearance.js';
 
-const PERSISTED = new Set(['autoRender', 'uiSounds', 'bgAnim', 'legacyMath', 'useWorker']);
+const PERSISTED = new Set(['autoRender', 'uiSounds', 'bgAnim', 'bgEffects', 'renderDebug', 'legacyMath', 'useWorker']);
 
 export function initChecks(state, onChange) {
   document.querySelectorAll('.check[data-flag]').forEach(el => {

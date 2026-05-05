@@ -9,7 +9,7 @@ import { renderImage } from './render-client.js';
 import { hydrateState } from './settings-store.js';
 
 import { initErrorPopup, showError } from './ui/error.js';
-import { initAudio, playClickSound } from './ui/audio.js';
+import { initAudio, playClickSound, playToggleSound } from './ui/audio.js';
 import { initZoom, dragState } from './ui/zoom.js';
 import { registerSlider, wireSlider, syncAllFromState } from './ui/sliders.js';
 import { wireSegmented } from './ui/segments.js';
@@ -66,7 +66,7 @@ function setStatus(text, working = false) {
   statusEl.style.color = working ? 'var(--ink)' : 'var(--accent)';
 }
 
-const triggerUpdate = (() => {
+export const triggerUpdate = (() => {
   let t;
   return () => {
     clearTimeout(t);
@@ -87,7 +87,31 @@ async function performRender() {
     if (outCanvas) {
       outCanvas.width = width;
       outCanvas.height = height;
-      outCanvas.getContext('2d').putImageData(imageData, 0, 0);
+      const ctx = outCanvas.getContext('2d');
+      ctx.putImageData(imageData, 0, 0);
+
+      if (state.renderDebug) {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(8, 8, 280, 110);
+        ctx.strokeStyle = '#00ff41';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(8, 8, 280, 110);
+        ctx.font = '11px monospace';
+        ctx.fillStyle = '#00ff41';
+        const p = PROFILES[state.profile];
+        const lines = [
+          `Profile: ${p?.label || state.profile}`,
+          `Size: ${width}x${height}`,
+          `DPI: ${state.dpi}  Dither: ${state.dither}`,
+          `Gamma: ${state.gamma}  Bright: ${state.brightness}`,
+          `Contrast: ${state.contrast}  Jitter: ${state.jitterScale}`,
+          `Wear: ${state.wearLayers.length} layers`,
+        ];
+        lines.forEach((line, i) => {
+          ctx.fillText(line, 16, 28 + i * 14);
+        });
+      }
+
       outCanvas.toBlob((blob) => {
         lastRenderedBlob = blob;
         if (downloadBtn) downloadBtn.disabled = false;
@@ -196,13 +220,28 @@ initPresets({
 initAppearance(persisted);
 initChangelog();
 
-// ── Pointer-up: click sounds + ripple ──────────────────────────────────────
+// ── Click sounds on every interactive element ─────────────────────────────
+
+const INTERACTIVE_SELECTOR = 'button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker, .segmented button, select, .btn-sm, .changelog-close, .settings-search-clear, textarea, .zoom-controls button, .footer-version';
+
+document.addEventListener('click', (e) => {
+  if (!state.uiSounds) return;
+  const el = e.target.closest(INTERACTIVE_SELECTOR);
+  if (el) {
+    // Toggle sounds for checkboxes
+    if (el.classList.contains('check')) {
+      const isOn = el.classList.contains('on');
+      playToggleSound(!isOn);
+    } else {
+      playClickSound();
+    }
+  }
+});
+
+// ── Pointer-up: ripple effect ──────────────────────────────────────────────
 
 document.addEventListener('pointerup', (e) => {
   if (dragState.hasDragged) return;
-  if (e.target.closest('button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker')) {
-    playClickSound();
-  }
   if (['BUTTON', 'INPUT', 'SELECT'].includes(e.target.tagName)) return;
 
   const r = document.createElement('div');
