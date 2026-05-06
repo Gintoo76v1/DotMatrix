@@ -1,0 +1,69 @@
+// ── API Client Layer ─────────────────────────────────────────────────────────
+
+const API_BASE = '/api/v1';
+
+export class APIError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function request(endpoint, options = {}) {
+  const url = `${API_BASE}${endpoint}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+
+  const config = {
+    ...options,
+    headers,
+    credentials: 'same-origin' // Ensures session cookies are sent
+  };
+
+  if (options.body && typeof options.body === 'object') {
+    config.body = JSON.stringify(options.body);
+  }
+
+  try {
+    const response = await fetch(url, config);
+    
+    if (response.status === 401) {
+      // Unauthorized, redirect to login
+      window.location.href = '/login.html';
+      throw new APIError(401, 'Unauthorized');
+    }
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new APIError(response.status, data?.error || 'Unknown error');
+    }
+
+    return data;
+  } catch (err) {
+    if (err instanceof APIError) throw err;
+    // Network error (Offline)
+    throw new Error('Network error or offline');
+  }
+}
+
+export const api = {
+  auth: {
+    login: (usernameOrEmail, password) => request('/auth/login', { method: 'POST', body: { usernameOrEmail, password } }),
+    register: (inviteCode, username, password, email) => request('/auth/register', { method: 'POST', body: { inviteCode, username, password, email } }),
+    logout: () => request('/auth/logout', { method: 'POST' }),
+    me: () => request('/auth/me'),
+  },
+  settings: {
+    get: () => request('/me/settings'),
+    update: (settingsJson) => request('/me/settings', { method: 'PUT', body: { settingsJson } }),
+  },
+  projects: {
+    list: () => request('/projects'),
+    create: (name, contentJson) => request('/projects', { method: 'POST', body: { name, contentJson } }),
+    update: (id, version, contentJson) => request(`/projects/${id}`, { method: 'PATCH', body: { version, contentJson } }),
+    getUploadUrl: (id, filename, contentType) => request(`/projects/${id}/upload-url`, { method: 'POST', body: { filename, contentType } }),
+  }
+};
