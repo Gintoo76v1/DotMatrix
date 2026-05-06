@@ -50,6 +50,8 @@ import invitesRoutes from './api/invites.js';
 import rolesRoutes from './api/roles.js';
 import projectsRoutes from './api/projects.js';
 import settingsRoutes from './api/settings.js';
+import usersRoutes from './api/users.js';
+import auditRoutes from './api/audit.js';
 
 // Basic Route
 app.get('/api/v1/health', (req, res) => {
@@ -62,6 +64,8 @@ app.use('/api/v1/invites', invitesRoutes);
 app.use('/api/v1/roles', rolesRoutes);
 app.use('/api/v1/projects', projectsRoutes);
 app.use('/api/v1/me/settings', settingsRoutes);
+app.use('/api/v1/users', usersRoutes);
+app.use('/api/v1/audit', auditRoutes);
 
 // Start Server
 app.listen(PORT, () => {
