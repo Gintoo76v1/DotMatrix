@@ -616,6 +616,17 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-c
 .tab-content { display: none; padding: 24px; }
 .tab-content.active { display: block; }
 
+.sidebar-logo {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dm-primary);
+  opacity: 0.5;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
 /* ── 12. Main Editor ───────────────────────────────────────────────────────── */
 
 .main-editor {
@@ -719,8 +730,13 @@ h2 {
   font-size: 12px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin: 0 0 14px;
-  color: var(--dm-text-weak);
+  margin: 28px 0 10px;
+  color: var(--dm-text-base);
+}
+
+/* First h2 in a tab should have less top margin */
+.tab-content > h2:first-child {
+  margin-top: 0;
 }
 
 .grid-2 {
@@ -1141,6 +1157,7 @@ input[type=range]::-webkit-slider-thumb {
 .custom-ink-row {
   display: flex; gap: 8px;
   align-items: center;
+  justify-content: center;
   margin-top: 10px;
 }
 
@@ -1175,8 +1192,11 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 11px;
   font-family: var(--dm-font-sans);
   text-transform: uppercase;
-  min-width: 65px;
+  min-width: 48px;
   transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .segmented button:last-child { border-right: none; }
