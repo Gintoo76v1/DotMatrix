@@ -9,20 +9,41 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "coverage": "vitest run --coverage",
-    "serve": "python3 -m http.server 8080"
+    "serve": "python3 -m http.server 8080",
+    "dev:server": "nodemon server/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.19.0",
+    "@types/pg": "^8.20.0",
     "@vitest/coverage-v8": "^2.1.9",
     "@vitest/ui": "^2.1.9",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.4",
     "globals": "^17.6.0",
     "htmlhint": "^1.9.2",
     "jscpd": "^4.0.9",
     "jsdom": "^25.0.1",
+    "nodemon": "^3.1.14",
     "prettier": "^3.8.3",
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^39.0.1",
     "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "argon2": "^0.44.0",
+    "connect-pg-simple": "^10.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.1.0",
+    "pg": "^8.20.0",
+    "zod": "^4.4.3"
   }
 }
