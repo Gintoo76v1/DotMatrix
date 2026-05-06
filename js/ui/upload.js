@@ -7,18 +7,19 @@ import { showError } from './error.js';
 const A4_LONG_INCH = 297 / 25.4;
 
 function estimateDpiFromImageSize(img) {
-  return Math.max(100, Math.min(1200,
-    Math.round((Math.max(img.width, img.height) / A4_LONG_INCH) / 50) * 50
-  ));
+  return Math.max(
+    100,
+    Math.min(1200, Math.round(Math.max(img.width, img.height) / A4_LONG_INCH / 50) * 50)
+  );
 }
 
 export function initUpload(state, opts) {
-  const dropzone  = document.getElementById('dropzone');
+  const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
   const outCanvas = document.getElementById('outCanvas');
   const renderBtn = document.getElementById('renderBtn');
-  const dzBig     = document.getElementById('dzBig');
-  const dzSmall   = document.getElementById('dzSmall');
+  const dzBig = document.getElementById('dzBig');
+  const dzSmall = document.getElementById('dzSmall');
   if (!dropzone || !fileInput) return;
 
   function handleFile(file) {
@@ -37,13 +38,13 @@ export function initUpload(state, opts) {
       detectAndSetPaperColor(state, img);
       analyzeAndAdaptImage(state, img);
 
-      if (dzBig)   dzBig.textContent   = file.name;
+      if (dzBig) dzBig.textContent = file.name;
       if (dzSmall) dzSmall.textContent = `${img.width} × ${img.height}`;
 
       // Initial preview: scaled bitmap, replaced when render() resolves.
       if (outCanvas) {
         const scale = Math.min(1, 800 / Math.max(img.width, img.height));
-        outCanvas.width  = Math.round(img.width * scale);
+        outCanvas.width = Math.round(img.width * scale);
         outCanvas.height = Math.round(img.height * scale);
         outCanvas.getContext('2d').drawImage(img, 0, 0, outCanvas.width, outCanvas.height);
       }
@@ -57,9 +58,14 @@ export function initUpload(state, opts) {
 
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
-  dropzone.addEventListener('dragover',  (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--accent)'; });
-  dropzone.addEventListener('dragleave', ()  => { dropzone.style.borderColor = 'var(--glass-border-light)'; });
-  dropzone.addEventListener('drop',      (e) => {
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--accent)';
+  });
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.style.borderColor = 'var(--glass-border-light)';
+  });
+  dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.style.borderColor = 'var(--glass-border-light)';
     if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);

@@ -5,14 +5,28 @@
 const KEY = 'dotmatrix_settings_v1';
 
 const PERSIST_KEYS = [
-  'autoRender', 'uiSounds', 'bgAnim',
-  'legacyMath', 'useWorker',
-  'language', 'theme', 'themeMode',
-  'fontSans', 'fontSansCustom', 'fontMono', 'fontMonoCustom',
-  'fontTerminal', 'fontTerminalCustom',
-  'animPattern', 'animSpeed', 'animIntensity', 'animSize',
-  'layout', 'navExpanded',
-  'lastSeenVersion', 'autoCheckUpdates',
+  'autoRender',
+  'uiSounds',
+  'bgAnim',
+  'legacyMath',
+  'useWorker',
+  'language',
+  'theme',
+  'themeMode',
+  'fontSans',
+  'fontSansCustom',
+  'fontMono',
+  'fontMonoCustom',
+  'fontTerminal',
+  'fontTerminalCustom',
+  'animPattern',
+  'animSpeed',
+  'animIntensity',
+  'animSize',
+  'layout',
+  'navExpanded',
+  'lastSeenVersion',
+  'autoCheckUpdates',
 ];
 
 export function loadSettings() {
@@ -20,7 +34,7 @@ export function loadSettings() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return {};
     const obj = JSON.parse(raw);
-    return (obj && typeof obj === 'object') ? obj : {};
+    return obj && typeof obj === 'object' ? obj : {};
   } catch {
     return {};
   }

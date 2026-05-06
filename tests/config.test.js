@@ -1,11 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { PROFILES, SYSTEM_PRESETS, WEAR_PATTERNS, PAPER_SIZES_MM, MM_PER_INCH, state } from '../js/config.js';
+import {
+  PROFILES,
+  SYSTEM_PRESETS,
+  WEAR_PATTERNS,
+  PAPER_SIZES_MM,
+  MM_PER_INCH,
+  state,
+} from '../js/config.js';
 
 describe('PROFILES sanity', () => {
   const required = [
-    'label', 'pins', 'dpi_h', 'dpi_v',
-    'dot_diameter_mm', 'dot_softness', 'ink_density',
-    'passes', 'jitter_mm', 'banding', 'ribbon_fade', 'supports_condensed'
+    'label',
+    'pins',
+    'dpi_h',
+    'dpi_v',
+    'dot_diameter_mm',
+    'dot_softness',
+    'ink_density',
+    'passes',
+    'jitter_mm',
+    'banding',
+    'ribbon_fade',
+    'supports_condensed',
   ];
 
   for (const [id, p] of Object.entries(PROFILES)) {
@@ -43,7 +59,7 @@ describe('SYSTEM_PRESETS', () => {
   });
 
   it('all presets have a unique id', () => {
-    const ids = SYSTEM_PRESETS.map(p => p.id);
+    const ids = SYSTEM_PRESETS.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 

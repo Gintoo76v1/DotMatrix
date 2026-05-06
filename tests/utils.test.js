@@ -19,10 +19,15 @@ describe('mulberry32', () => {
   });
 
   it('different seeds produce uncorrelated streams', () => {
-    const a = mulberry32(1), b = mulberry32(99999);
-    const arrA = [], arrB = [];
-    for (let i = 0; i < 2000; i++) { arrA.push(a()); arrB.push(b()); }
-    expect(Math.abs(correlation(arrA, arrB))).toBeLessThan(0.10);
+    const a = mulberry32(1),
+      b = mulberry32(99999);
+    const arrA = [],
+      arrB = [];
+    for (let i = 0; i < 2000; i++) {
+      arrA.push(a());
+      arrB.push(b());
+    }
+    expect(Math.abs(correlation(arrA, arrB))).toBeLessThan(0.1);
   });
 
   it('seed 0 is treated like seed 1 (no all-zero pathology)', () => {
@@ -60,10 +65,16 @@ describe('gaussian / makeGaussian', () => {
 
   it('cached gaussian uses 2nd box-muller value (consumes fewer rng calls)', () => {
     let calls = 0;
-    const counted = () => { calls++; return mulberry32(1)(); };
+    const counted = () => {
+      calls++;
+      return mulberry32(1)();
+    };
     // Better: track via wrapper around a real RNG
     const r = mulberry32(99);
-    const wrapper = () => { calls++; return r(); };
+    const wrapper = () => {
+      calls++;
+      return r();
+    };
     const g = makeGaussian(wrapper);
     g(); // first call: 2 rng draws
     const after1 = calls;
@@ -93,9 +104,15 @@ describe('smoothstep', () => {
 });
 
 describe('clamp', () => {
-  it('clamps below lower bound', () => { expect(clamp(-5, 0, 10)).toBe(0); });
-  it('clamps above upper bound', () => { expect(clamp(50, 0, 10)).toBe(10); });
-  it('passes through in-range values', () => { expect(clamp(5, 0, 10)).toBe(5); });
+  it('clamps below lower bound', () => {
+    expect(clamp(-5, 0, 10)).toBe(0);
+  });
+  it('clamps above upper bound', () => {
+    expect(clamp(50, 0, 10)).toBe(10);
+  });
+  it('passes through in-range values', () => {
+    expect(clamp(5, 0, 10)).toBe(5);
+  });
 });
 
 describe('yieldUI', () => {

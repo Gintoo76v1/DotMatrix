@@ -49,7 +49,9 @@ function _wireFooter() {
   const footer = document.getElementById('footerVersion');
   if (!footer) return;
   footer.addEventListener('click', openOverlay);
-  footer.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openOverlay(); });
+  footer.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') openOverlay();
+  });
 }
 
 function _wireOverlay() {
@@ -60,16 +62,22 @@ function _wireOverlay() {
 
   closeBtn?.addEventListener('click', closeOverlay);
   backdrop?.addEventListener('click', closeOverlay);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen) closeOverlay(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen) closeOverlay();
+  });
 
   // Touch swipe-down to close — only from header/backdrop, never from scrollable body
   let startY = 0;
   let canSwipeClose = false;
-  overlay.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    // Allow swipe-to-close only if touch started on header or backdrop, not on scrollable body
-    canSwipeClose = !!(e.target.closest('.changelog-header, .changelog-backdrop'));
-  }, { passive: true });
+  overlay.addEventListener(
+    'touchstart',
+    (e) => {
+      startY = e.touches[0].clientY;
+      // Allow swipe-to-close only if touch started on header or backdrop, not on scrollable body
+      canSwipeClose = !!e.target.closest('.changelog-header, .changelog-backdrop');
+    },
+    { passive: true }
+  );
   overlay.addEventListener('touchend', (e) => {
     if (!canSwipeClose) return;
     const dy = e.changedTouches[0].clientY - startY;
@@ -110,10 +118,13 @@ function _updateFooter() {
 
   if (badges && versionData?.changelog?.length > 0) {
     const latest = versionData.changelog[0];
-    badges.innerHTML = (latest.tags || []).slice(0, 2).map(tag => {
-      const cls = `update-badge--${_tagClass(tag)}`;
-      return `<span class="update-badge ${cls}">${_escape(tag)}</span>`;
-    }).join('');
+    badges.innerHTML = (latest.tags || [])
+      .slice(0, 2)
+      .map((tag) => {
+        const cls = `update-badge--${_tagClass(tag)}`;
+        return `<span class="update-badge ${cls}">${_escape(tag)}</span>`;
+      })
+      .join('');
   }
 
   if (indicator) {
@@ -147,13 +158,15 @@ function _renderBody() {
 }
 
 function _renderEntry(entry, isCurrent, collapsible = false) {
-  const tagHtml = (entry.tags || []).map(tag => {
-    return `<span class="tag tag--${_tagClass(tag)}">${_escape(tag)}</span>`;
-  }).join('');
+  const tagHtml = (entry.tags || [])
+    .map((tag) => {
+      return `<span class="tag tag--${_tagClass(tag)}">${_escape(tag)}</span>`;
+    })
+    .join('');
 
-  const detailsHtml = (entry.highlights || entry.details || []).map(h =>
-    `<li>${_escape(h)}</li>`
-  ).join('');
+  const detailsHtml = (entry.highlights || entry.details || [])
+    .map((h) => `<li>${_escape(h)}</li>`)
+    .join('');
 
   const version = _escape(entry.version);
   const date = _escape(entry.date);
@@ -211,7 +224,8 @@ function _versionCompare(a, b) {
   const pa = a.replace(/^v/, '').split('.').map(Number);
   const pb = b.replace(/^v/, '').split('.').map(Number);
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const na = pa[i] || 0, nb = pb[i] || 0;
+    const na = pa[i] || 0,
+      nb = pb[i] || 0;
     if (na < nb) return -1;
     if (na > nb) return 1;
   }

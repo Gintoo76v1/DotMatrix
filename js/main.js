@@ -30,11 +30,13 @@ initZoom();
 
 /* initTabs wurde aus dem gelöschten theme.js hierher migriert */
 function initTabs() {
-  document.querySelectorAll('.activity-bar .icon-btn[data-tab]').forEach(btn => {
+  document.querySelectorAll('.activity-bar .icon-btn[data-tab]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.activity-bar .icon-btn').forEach(b => b.classList.remove('active'));
+      document
+        .querySelectorAll('.activity-bar .icon-btn')
+        .forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
       const tab = document.getElementById(btn.dataset.tab);
       if (tab) tab.classList.add('active');
     });
@@ -48,10 +50,10 @@ initTabs();
 
 // ── Render orchestration ───────────────────────────────────────────────────
 
-const outCanvas  = document.getElementById('outCanvas');
-const renderBtn  = document.getElementById('renderBtn');
+const outCanvas = document.getElementById('outCanvas');
+const renderBtn = document.getElementById('renderBtn');
 const downloadBtn = document.getElementById('downloadBtn');
-const statusEl   = document.getElementById('status');
+const statusEl = document.getElementById('status');
 
 let lastRenderedBlob = null;
 let isRendering = false;
@@ -66,7 +68,9 @@ export const triggerUpdate = (() => {
   let t;
   return () => {
     clearTimeout(t);
-    t = setTimeout(() => { if (state.autoRender) performRender(); }, 300);
+    t = setTimeout(() => {
+      if (state.autoRender) performRender();
+    }, 300);
   };
 })();
 
@@ -77,8 +81,9 @@ async function performRender() {
   setStatus('Rendern...', true);
 
   try {
-    const { imageData, width, height } = await renderImage(state.sourceImage,
-      msg => setStatus(msg, true));
+    const { imageData, width, height } = await renderImage(state.sourceImage, (msg) =>
+      setStatus(msg, true)
+    );
 
     if (outCanvas) {
       outCanvas.width = width;
@@ -126,22 +131,45 @@ async function performRender() {
 
 // ── Slider registry ────────────────────────────────────────────────────────
 
-registerSlider({ sliderId: 'thresholdSlider',  valueId: 'thresholdVal',  stateKey: 'threshold'    });
-registerSlider({ sliderId: 'brightnessSlider', valueId: 'brightnessVal', stateKey: 'brightness'   });
-registerSlider({ sliderId: 'contrastSlider',   valueId: 'contrastVal',   stateKey: 'contrast'     });
-registerSlider({ sliderId: 'gammaSlider',      valueId: 'gammaVal',      stateKey: 'gamma',
-  format: v => (+v).toFixed(1) });
-registerSlider({ sliderId: 'dpiSlider',        valueId: 'dpiVal',        stateKey: 'dpi'          });
-registerSlider({ sliderId: 'jitterSlider',     valueId: 'jitterVal',     stateKey: 'jitterScale',
-  transform: v => +v / 10, inverse: v => v * 10, format: v => (+v).toFixed(1) });
-registerSlider({ sliderId: 'bandingSlider',    valueId: 'bandingVal',    stateKey: 'bandingScale',
-  transform: v => +v / 10, inverse: v => v * 10, format: v => (+v).toFixed(1) });
-registerSlider({ sliderId: 'maxSizeSlider',    valueId: 'maxSizeVal',    stateKey: 'maxSize'      });
-registerSlider({ sliderId: 'seedSlider',       valueId: 'seedVal',       stateKey: 'seed'         });
+registerSlider({ sliderId: 'thresholdSlider', valueId: 'thresholdVal', stateKey: 'threshold' });
+registerSlider({ sliderId: 'brightnessSlider', valueId: 'brightnessVal', stateKey: 'brightness' });
+registerSlider({ sliderId: 'contrastSlider', valueId: 'contrastVal', stateKey: 'contrast' });
+registerSlider({
+  sliderId: 'gammaSlider',
+  valueId: 'gammaVal',
+  stateKey: 'gamma',
+  format: (v) => (+v).toFixed(1),
+});
+registerSlider({ sliderId: 'dpiSlider', valueId: 'dpiVal', stateKey: 'dpi' });
+registerSlider({
+  sliderId: 'jitterSlider',
+  valueId: 'jitterVal',
+  stateKey: 'jitterScale',
+  transform: (v) => +v / 10,
+  inverse: (v) => v * 10,
+  format: (v) => (+v).toFixed(1),
+});
+registerSlider({
+  sliderId: 'bandingSlider',
+  valueId: 'bandingVal',
+  stateKey: 'bandingScale',
+  transform: (v) => +v / 10,
+  inverse: (v) => v * 10,
+  format: (v) => (+v).toFixed(1),
+});
+registerSlider({ sliderId: 'maxSizeSlider', valueId: 'maxSizeVal', stateKey: 'maxSize' });
+registerSlider({ sliderId: 'seedSlider', valueId: 'seedVal', stateKey: 'seed' });
 
 for (const key of [
-  'threshold', 'brightness', 'contrast', 'gamma', 'dpi',
-  'jitterScale', 'bandingScale', 'maxSize', 'seed',
+  'threshold',
+  'brightness',
+  'contrast',
+  'gamma',
+  'dpi',
+  'jitterScale',
+  'bandingScale',
+  'maxSize',
+  'seed',
 ]) {
   wireSlider(state, key, () => triggerUpdate());
 }
@@ -158,7 +186,7 @@ wireSegmented('orientationBtns', state, 'orientation', 'orient', triggerUpdate);
 
 // ── Swatches ───────────────────────────────────────────────────────────────
 
-wireSwatches('inkSwatches',   state, 'ink',   'ink',   triggerUpdate);
+wireSwatches('inkSwatches', state, 'ink', 'ink', triggerUpdate);
 wireSwatches('paperSwatches', state, 'paper', 'paper', triggerUpdate);
 wireCustomInk(state, triggerUpdate);
 wireCustomPaper(state, triggerUpdate);
@@ -187,7 +215,7 @@ if (profileList) {
   profileList.addEventListener('click', (e) => {
     const item = e.target.closest('.sli');
     if (!item) return;
-    document.querySelectorAll('#profileList .sli').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('#profileList .sli').forEach((s) => s.classList.remove('active'));
     item.classList.add('active');
     state.profile = item.dataset.profile;
     updateProfileMeta();
@@ -198,8 +226,13 @@ if (profileList) {
 // ── Boolean checks (uiSounds, autoRender, legacyMath, useWorker, …) ────────
 
 initChecks(state, (flag) => {
-  if (flag === 'invert' || flag === 'softBlur' || flag === 'doubleStrike' ||
-      flag === 'condensed' || flag === 'legacyMath') {
+  if (
+    flag === 'invert' ||
+    flag === 'softBlur' ||
+    flag === 'doubleStrike' ||
+    flag === 'condensed' ||
+    flag === 'legacyMath'
+  ) {
     triggerUpdate();
   }
 });
@@ -220,7 +253,10 @@ initUpload(state, {
 });
 
 initPresets({
-  onApply: () => { updateProfileMeta(); triggerUpdate(); },
+  onApply: () => {
+    updateProfileMeta();
+    triggerUpdate();
+  },
   onSetStatus: setStatus,
 });
 
@@ -237,7 +273,8 @@ document.addEventListener('dm:triggerRender', () => {
 
 // ── Click sounds on every interactive element ─────────────────────────────
 
-const INTERACTIVE_SELECTOR = 'button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker, .segmented button, select, .btn-sm, .changelog-close, .settings-search-clear, textarea, .zoom-controls button, .footer-version';
+const INTERACTIVE_SELECTOR =
+  'button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker, .segmented button, select, .btn-sm, .changelog-close, .settings-search-clear, textarea, .zoom-controls button, .footer-version';
 
 document.addEventListener('click', (e) => {
   if (!state.uiSounds) return;
@@ -262,7 +299,7 @@ document.addEventListener('pointerup', (e) => {
   const r = document.createElement('div');
   r.className = 'click-shockwave';
   r.style.left = e.clientX + 'px';
-  r.style.top  = e.clientY + 'px';
+  r.style.top = e.clientY + 'px';
   document.body.appendChild(r);
   setTimeout(() => r.remove(), 600);
 });
@@ -270,13 +307,14 @@ document.addEventListener('pointerup', (e) => {
 // ── Final wiring ───────────────────────────────────────────────────────────
 
 if (renderBtn) renderBtn.addEventListener('click', performRender);
-if (downloadBtn) downloadBtn.addEventListener('click', () => {
-  if (!lastRenderedBlob) return;
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(lastRenderedBlob);
-  a.download = `print_${Date.now()}.png`;
-  a.click();
-});
+if (downloadBtn)
+  downloadBtn.addEventListener('click', () => {
+    if (!lastRenderedBlob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(lastRenderedBlob);
+    a.download = `print_${Date.now()}.png`;
+    a.click();
+  });
 
 renderPresetList();
 updateProfileMeta();

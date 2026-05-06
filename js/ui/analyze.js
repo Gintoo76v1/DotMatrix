@@ -11,26 +11,38 @@ import { setSwatchValue } from './swatches.js';
 
 export function detectAndSetPaperColor(state, img) {
   const c = document.createElement('canvas');
-  c.width = 64; c.height = 64;
+  c.width = 64;
+  c.height = 64;
   const ctx = c.getContext('2d');
   ctx.drawImage(img, 0, 0, 64, 64);
   const data = ctx.getImageData(0, 0, 64, 64).data;
-  let r = 0, g = 0, b = 0, count = 0;
+  let r = 0,
+    g = 0,
+    b = 0,
+    count = 0;
   for (let y = 4; y < 60; y++) {
     for (let x = 4; x < 60; x++) {
       const idx = (y * 64 + x) * 4;
-      r += data[idx]; g += data[idx + 1]; b += data[idx + 2];
+      r += data[idx];
+      g += data[idx + 1];
+      b += data[idx + 2];
       count++;
     }
   }
-  r = Math.round(r / count); g = Math.round(g / count); b = Math.round(b / count);
+  r = Math.round(r / count);
+  g = Math.round(g / count);
+  b = Math.round(b / count);
 
-  let best = null, minDist = Infinity;
-  document.querySelectorAll('#paperSwatches .swatch').forEach(sw => {
+  let best = null,
+    minDist = Infinity;
+  document.querySelectorAll('#paperSwatches .swatch').forEach((sw) => {
     if (!sw.dataset.paper) return;
     const rgb = sw.dataset.paper.split(',').map(Number);
     const dist = (r - rgb[0]) ** 2 + (g - rgb[1]) ** 2 + (b - rgb[2]) ** 2;
-    if (dist < minDist) { minDist = dist; best = sw; }
+    if (dist < minDist) {
+      minDist = dist;
+      best = sw;
+    }
   });
   if (best) {
     state.paper = best.dataset.paper.split(',').map(Number);
@@ -45,7 +57,8 @@ export function detectAndSetPaperColor(state, img) {
  */
 export function analyzeAndAdaptImage(state, img, onSettingsChanged) {
   const c = document.createElement('canvas');
-  c.width = 160; c.height = 160;
+  c.width = 160;
+  c.height = 160;
   const ctx = c.getContext('2d');
   ctx.drawImage(img, 0, 0, 160, 160);
   const { data } = ctx.getImageData(0, 0, 160, 160);
@@ -57,7 +70,9 @@ export function analyzeAndAdaptImage(state, img, onSettingsChanged) {
   }
   const total = 160 * 160;
 
-  let cum = 0, p2 = 0, p98 = 255;
+  let cum = 0,
+    p2 = 0,
+    p98 = 255;
   for (let i = 0; i < 256; i++) {
     cum += hist[i];
     if (cum / total < 0.02) p2 = i;

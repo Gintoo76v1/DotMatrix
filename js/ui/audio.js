@@ -18,7 +18,7 @@ function ensureCtx() {
 export function initAudio() {
   // Pre-warm on first interaction so the click in the same handler can play.
   document.addEventListener('touchstart', ensureCtx, { once: true, passive: true });
-  document.addEventListener('mousedown',  ensureCtx, { once: true, passive: true });
+  document.addEventListener('mousedown', ensureCtx, { once: true, passive: true });
 }
 
 const MASTER_VOLUME = 0.35; // -9 dB relative to previous levels

@@ -13,18 +13,20 @@ describe('Event Handler Smoke Test', () => {
     const presetsBtn = document.querySelector('.activity-bar .icon-btn[data-tab="tab-presets"]');
     const sourceTab = document.getElementById('tab-source');
     const presetsTab = document.getElementById('tab-presets');
-    
+
     expect(sourceBtn).not.toBeNull();
     expect(presetsBtn).not.toBeNull();
     expect(sourceTab.classList.contains('active')).toBe(true);
     expect(presetsTab.classList.contains('active')).toBe(false);
-    
+
     // Simulate the initTabs logic manually
-    document.querySelectorAll('.activity-bar .icon-btn').forEach(b => b.classList.remove('active'));
+    document
+      .querySelectorAll('.activity-bar .icon-btn')
+      .forEach((b) => b.classList.remove('active'));
     presetsBtn.classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
     presetsTab.classList.add('active');
-    
+
     expect(sourceTab.classList.contains('active')).toBe(false);
     expect(presetsTab.classList.contains('active')).toBe(true);
   });
@@ -34,14 +36,14 @@ describe('Event Handler Smoke Test', () => {
     expect(box).not.toBeNull();
     const swatches = box.querySelectorAll('.swatch');
     expect(swatches.length).toBeGreaterThan(1);
-    
+
     const first = swatches[0];
     const second = swatches[1];
-    
+
     // Simulate wireSwatches click logic
-    box.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    box.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
     second.classList.add('active');
-    
+
     expect(second.classList.contains('active')).toBe(true);
     expect(first.classList.contains('active')).toBe(false);
   });

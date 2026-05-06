@@ -14,20 +14,20 @@ const KEYWORDS = new Set(['true', 'false', 'null', 'yes', 'no', 'on', 'off', '~'
 function needsQuoting(s) {
   if (s === '') return true;
   if (KEYWORDS.has(s.toLowerCase())) return true;
-  if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(s)) return true;   // looks like a number
-  if (/[:#,\[\]{}&*!|>'"%@`]/.test(s)) return true;            // YAML metacharacters
-  if (/^\s|\s$/.test(s)) return true;                           // leading/trailing ws
+  if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(s)) return true; // looks like a number
+  if (/[:#,\[\]{}&*!|>'"%@`]/.test(s)) return true; // YAML metacharacters
+  if (/^\s|\s$/.test(s)) return true; // leading/trailing ws
   return false;
 }
 
 function formatScalar(v) {
-  if (v === null || v === undefined)      return 'null';
-  if (typeof v === 'boolean')             return v ? 'true' : 'false';
-  if (typeof v === 'number')              return Number.isFinite(v) ? String(v) : 'null';
+  if (v === null || v === undefined) return 'null';
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (typeof v === 'number') return Number.isFinite(v) ? String(v) : 'null';
   // string
   const s = String(v);
   if (!needsQuoting(s)) return s;
-  return JSON.stringify(s);   // JSON-style double-quote escape is YAML-compatible
+  return JSON.stringify(s); // JSON-style double-quote escape is YAML-compatible
 }
 
 /** Serialize a flat preset-shaped object to YAML. */
@@ -40,7 +40,7 @@ export function presetToYaml(preset) {
       if (v.length === 0) {
         lines.push(`${k}: []`);
       } else if (typeof v[0] === 'number') {
-        lines.push(`${k}: [${v.map(n => Number.isFinite(n) ? n : 'null').join(', ')}]`);
+        lines.push(`${k}: [${v.map((n) => (Number.isFinite(n) ? n : 'null')).join(', ')}]`);
       } else if (typeof v[0] === 'object' && v[0] !== null) {
         lines.push(`${k}:`);
         for (const obj of v) {
@@ -71,7 +71,8 @@ export function presetToYaml(preset) {
 
 function stripComment(line) {
   // Remove unquoted # comments. Walk the string respecting quotes.
-  let inSingle = false, inDouble = false;
+  let inSingle = false,
+    inDouble = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"' && !inSingle) inDouble = !inDouble;
@@ -86,15 +87,18 @@ function stripComment(line) {
 function parseScalar(raw) {
   const s = raw.trim();
   if (s === '') return '';
-  if (s === 'null' || s === '~')              return null;
-  if (s === 'true' || s === 'yes' || s === 'on')   return true;
-  if (s === 'false' || s === 'no' || s === 'off')  return false;
+  if (s === 'null' || s === '~') return null;
+  if (s === 'true' || s === 'yes' || s === 'on') return true;
+  if (s === 'false' || s === 'no' || s === 'off') return false;
   // Quoted strings
-  if ((s.startsWith('"') && s.endsWith('"')) ||
-      (s.startsWith("'") && s.endsWith("'"))) {
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
     const inner = s.slice(1, -1);
     if (s[0] === '"') {
-      try { return JSON.parse(s); } catch { return inner; }
+      try {
+        return JSON.parse(s);
+      } catch {
+        return inner;
+      }
     }
     return inner;
   }
@@ -113,7 +117,10 @@ function parseScalar(raw) {
 function splitInlineList(s) {
   // Split on commas that are not inside quotes/brackets.
   const out = [];
-  let depth = 0, inSingle = false, inDouble = false, start = 0;
+  let depth = 0,
+    inSingle = false,
+    inDouble = false,
+    start = 0;
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];
     if (ch === '"' && !inSingle) inDouble = !inDouble;
@@ -161,14 +168,14 @@ export function yamlToPreset(yaml) {
       const inner = trimmed.slice(2);
       const ci = findKeyValueSplit(inner);
       if (ci === -1) continue;
-      const k  = inner.slice(0, ci).trim();
+      const k = inner.slice(0, ci).trim();
       const vr = inner.slice(ci + 1);
       currentObj = { [k]: parseScalar(vr) };
       preset[currentArrayKey].push(currentObj);
     } else if (currentObj !== null) {
       const ci = findKeyValueSplit(trimmed);
       if (ci === -1) continue;
-      const k  = trimmed.slice(0, ci).trim();
+      const k = trimmed.slice(0, ci).trim();
       const vr = trimmed.slice(ci + 1);
       currentObj[k] = parseScalar(vr);
     }
@@ -178,7 +185,8 @@ export function yamlToPreset(yaml) {
 
 /** Find the first ":" that is not inside quotes, returning its index. */
 function findKeyValueSplit(s) {
-  let inSingle = false, inDouble = false;
+  let inSingle = false,
+    inDouble = false;
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];
     if (ch === '"' && !inSingle) inDouble = !inDouble;

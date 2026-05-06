@@ -20,12 +20,12 @@
 export function getMathMode(state) {
   const legacy = !!(state && state.legacyMath);
   return {
-    grayscale:         legacy ? 'rgb'         : 'luma',
-    floydSteinberg:    legacy ? 'classic'     : 'serpentine',
-    rowBands:          legacy ? 'asymmetric'  : 'symmetric',
-    ghosting:          legacy ? 'pinRow'      : 'sweep',
-    paperSlip:         legacy ? 'stepScaled'  : 'gridPx',
-    valueNoise:        legacy ? 'bilinear'    : 'smoothstep',
+    grayscale: legacy ? 'rgb' : 'luma',
+    floydSteinberg: legacy ? 'classic' : 'serpentine',
+    rowBands: legacy ? 'asymmetric' : 'symmetric',
+    ghosting: legacy ? 'pinRow' : 'sweep',
+    paperSlip: legacy ? 'stepScaled' : 'gridPx',
+    valueNoise: legacy ? 'bilinear' : 'smoothstep',
     useFloydThreshold: !legacy,
   };
 }

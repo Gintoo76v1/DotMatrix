@@ -5,7 +5,10 @@ import { expect } from 'vitest';
 
 /** Assert two floats are within tolerance. */
 export function assertClose(actual, expected, tol = 1e-6, msg = '') {
-  expect(Math.abs(actual - expected), msg || `expected ${expected} ± ${tol}, got ${actual}`).toBeLessThanOrEqual(tol);
+  expect(
+    Math.abs(actual - expected),
+    msg || `expected ${expected} ± ${tol}, got ${actual}`
+  ).toBeLessThanOrEqual(tol);
 }
 
 /** Compute mean of a numeric array. */
@@ -25,13 +28,17 @@ export function stddev(arr) {
 
 /** Pearson correlation coefficient. */
 export function correlation(a, b) {
-  const ma = mean(a), mb = mean(b);
-  let num = 0, da = 0, db = 0;
+  const ma = mean(a),
+    mb = mean(b);
+  let num = 0,
+    da = 0,
+    db = 0;
   for (let i = 0; i < a.length; i++) {
-    const xa = a[i] - ma, xb = b[i] - mb;
+    const xa = a[i] - ma,
+      xb = b[i] - mb;
     num += xa * xb;
-    da  += xa * xa;
-    db  += xb * xb;
+    da += xa * xa;
+    db += xb * xb;
   }
   return num / Math.sqrt(da * db);
 }
@@ -43,7 +50,12 @@ export function correlation(a, b) {
 export function makeImageData(width, height, opts = {}) {
   const data = new Uint8ClampedArray(width * height * 4);
   const pattern = opts.pattern || 'solid';
-  const fill = (i, r, g, b, a = 255) => { data[i] = r; data[i+1] = g; data[i+2] = b; data[i+3] = a; };
+  const fill = (i, r, g, b, a = 255) => {
+    data[i] = r;
+    data[i + 1] = g;
+    data[i + 2] = b;
+    data[i + 3] = a;
+  };
 
   if (pattern === 'solid') {
     const [r, g, b] = opts.rgb || [255, 255, 255];
@@ -56,7 +68,8 @@ export function makeImageData(width, height, opts = {}) {
       for (let x = 0; x < width; x++) {
         const i = (y * width + x) * 4;
         const c = (((x / sz) | 0) + ((y / sz) | 0)) & 1;
-        if (c) fill(i, r2, g2, b2); else fill(i, r1, g1, b1);
+        if (c) fill(i, r2, g2, b2);
+        else fill(i, r1, g1, b1);
       }
     }
   } else if (pattern === 'gradient') {
@@ -71,7 +84,7 @@ export function makeImageData(width, height, opts = {}) {
   } else if (pattern === 'noise') {
     let s = (opts.seed || 1) >>> 0;
     const rng = () => {
-      s = (s + 0x6D2B79F5) >>> 0;
+      s = (s + 0x6d2b79f5) >>> 0;
       let t = Math.imul(s ^ (s >>> 15), s | 1);
       t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;

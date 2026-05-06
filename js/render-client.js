@@ -11,16 +11,15 @@ import { render as inlineRender } from './engine.js';
 
 let workerInstance = null;
 let workerSupported = null;
-let activeJob = null;     // { resolve, reject, onProgress }
+let activeJob = null; // { resolve, reject, onProgress }
 
 function detectWorkerSupport() {
   if (workerSupported !== null) return workerSupported;
   try {
-    workerSupported = (
+    workerSupported =
       typeof Worker !== 'undefined' &&
       typeof OffscreenCanvas !== 'undefined' &&
-      typeof createImageBitmap === 'function'
-    );
+      typeof createImageBitmap === 'function';
   } catch {
     workerSupported = false;
   }
@@ -33,15 +32,16 @@ function killWorker(err) {
     activeJob = null;
   }
   if (workerInstance) {
-    try { workerInstance.terminate(); } catch {}
+    try {
+      workerInstance.terminate();
+    } catch {}
     workerInstance = null;
   }
 }
 
 function getWorker() {
   if (workerInstance) return workerInstance;
-  workerInstance = new Worker(new URL('./render-worker.js', import.meta.url),
-    { type: 'module' });
+  workerInstance = new Worker(new URL('./render-worker.js', import.meta.url), { type: 'module' });
   workerInstance.onmessage = (ev) => {
     const m = ev.data;
     if (!activeJob) return;
@@ -76,17 +76,18 @@ async function renderInWorker(srcImage, onProgress) {
     activeJob = null;
   }
   const w = getWorker();
-  const bitmap = (srcImage instanceof ImageBitmap)
-    ? srcImage
-    : await createImageBitmap(srcImage);
+  const bitmap = srcImage instanceof ImageBitmap ? srcImage : await createImageBitmap(srcImage);
 
   return new Promise((resolve, reject) => {
     activeJob = { resolve, reject, onProgress };
-    w.postMessage({
-      type: 'render',
-      state: snapshotState(),
-      bitmap,
-    }, [bitmap]);
+    w.postMessage(
+      {
+        type: 'render',
+        state: snapshotState(),
+        bitmap,
+      },
+      [bitmap]
+    );
   });
 }
 

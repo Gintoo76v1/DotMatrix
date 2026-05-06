@@ -2,9 +2,9 @@
 // Mulberry32 — fast 32-bit PRNG with excellent uniform distribution.
 // Outputs are in [0, 1).
 export function mulberry32(seed) {
-  let t = (seed >>> 0) || 1; // avoid pathological all-zero state
-  return function() {
-    t = (t + 0x6D2B79F5) >>> 0;
+  let t = seed >>> 0 || 1; // avoid pathological all-zero state
+  return function () {
+    t = (t + 0x6d2b79f5) >>> 0;
     let r = t;
     r = Math.imul(r ^ (r >>> 15), r | 1);
     r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
@@ -27,7 +27,9 @@ export function makeGaussian(rng) {
     }
     let u, v;
     // rng() ∈ [0, 1); guarantee strictly positive u for log
-    do { u = rng(); } while (u <= 1e-12);
+    do {
+      u = rng();
+    } while (u <= 1e-12);
     v = rng();
     const mag = Math.sqrt(-2 * Math.log(u));
     const ang = 2 * Math.PI * v;
@@ -39,7 +41,8 @@ export function makeGaussian(rng) {
 // ── Legacy single-shot gaussian — kept for back-compat with existing imports.
 // Discards half the work but matches the original signature/distribution.
 export function gaussian(rng) {
-  let u = 0, v = 0;
+  let u = 0,
+    v = 0;
   while (u === 0) u = rng();
   while (v === 0) v = rng();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
@@ -47,7 +50,7 @@ export function gaussian(rng) {
 
 // ── Cooperative scheduling — yield to the event loop / UA paint queue ──────
 export function yieldUI() {
-  return new Promise(r => setTimeout(r, 0));
+  return new Promise((r) => setTimeout(r, 0));
 }
 
 // ── Smooth interpolation primitive (used by improved value-noise) ──────────

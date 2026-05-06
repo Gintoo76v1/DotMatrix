@@ -32,7 +32,8 @@ beforeEach(() => {
   if (typeof globalThis.ImageData === 'undefined') {
     globalThis.ImageData = class {
       constructor(w, h) {
-        this.width = w; this.height = h;
+        this.width = w;
+        this.height = h;
         this.data = new Uint8ClampedArray(w * h * 4);
       }
     };
@@ -61,9 +62,18 @@ beforeEach(() => {
 });
 
 const PATTERNS = [
-  'cloudy', 'ghosting', 'misaligned', 'pin_skip', 'smudge',
-  'ribbon_twist', 'head_gap', 'ink_starved', 'paper_slip',
-  'static_noise', 'double_feed', 'mechanical_resonance',
+  'cloudy',
+  'ghosting',
+  'misaligned',
+  'pin_skip',
+  'smudge',
+  'ribbon_twist',
+  'head_gap',
+  'ink_starved',
+  'paper_slip',
+  'static_noise',
+  'double_feed',
+  'mechanical_resonance',
 ];
 
 describe('wear layers — each renders without throwing', () => {
@@ -110,7 +120,7 @@ describe('wear layers — each renders without throwing', () => {
     state.wearLayers = [];
     const baseline = await render(img);
     state.wearLayers = [{ pattern: 'pin_skip', strength: 100 }];
-    const damaged  = await render(img);
+    const damaged = await render(img);
     // Damaged should have more white pixels (paper) than baseline.
     const countLight = (r) => {
       let c = 0;

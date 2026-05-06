@@ -21,19 +21,23 @@ self.onmessage = async (ev) => {
     Object.assign(state, msg.state);
     state.sourceImage = msg.bitmap;
 
-    const result = await render(msg.bitmap,
+    const result = await render(
+      msg.bitmap,
       (status) => self.postMessage({ type: 'progress', status }),
       { createCanvas: offscreenCreateCanvas }
     );
 
     // Transfer the underlying buffer back (avoids a copy)
     const buf = result.imageData.data.buffer;
-    self.postMessage({
-      type: 'done',
-      width: result.width,
-      height: result.height,
-      data: result.imageData.data,    // Uint8ClampedArray
-    }, [buf]);
+    self.postMessage(
+      {
+        type: 'done',
+        width: result.width,
+        height: result.height,
+        data: result.imageData.data, // Uint8ClampedArray
+      },
+      [buf]
+    );
   } catch (e) {
     self.postMessage({ type: 'error', message: e.message, stack: e.stack });
   }

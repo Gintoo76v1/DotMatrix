@@ -17,16 +17,23 @@ let onAfterApply = null;
 // ── User preset persistence ────────────────────────────────────────────────
 
 function loadUserPresets() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
 }
 
 function saveUserPresets(presets) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); }
-  catch (e) { showError(`[Speicher Fehler]: ${e.message}`); }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+  } catch (e) {
+    showError(`[Speicher Fehler]: ${e.message}`);
+  }
 }
 
 function deleteUserPreset(id) {
-  saveUserPresets(loadUserPresets().filter(p => p.id !== id));
+  saveUserPresets(loadUserPresets().filter((p) => p.id !== id));
   renderPresetList();
 }
 
@@ -34,27 +41,44 @@ function deleteUserPreset(id) {
 
 export function captureCurrentPreset(name) {
   return {
-    name: name || 'Unnamed', system: false,
+    name: name || 'Unnamed',
+    system: false,
     profile: state.profile,
-    brightness: state.brightness, contrast: state.contrast, gamma: state.gamma,
-    dither: state.dither, threshold: state.threshold,
-    ink:   [...state.ink],
+    brightness: state.brightness,
+    contrast: state.contrast,
+    gamma: state.gamma,
+    dither: state.dither,
+    threshold: state.threshold,
+    ink: [...state.ink],
     paper: state.paper ? [...state.paper] : null,
-    paperFormat: state.paperFormat, orientation: state.orientation,
-    doubleStrike: state.doubleStrike, condensed: state.condensed,
-    softBlur: state.softBlur, invert: state.invert,
-    dpi: state.dpi, jitterScale: state.jitterScale, bandingScale: state.bandingScale,
-    maxSize: state.maxSize, seed: state.seed,
+    paperFormat: state.paperFormat,
+    orientation: state.orientation,
+    doubleStrike: state.doubleStrike,
+    condensed: state.condensed,
+    softBlur: state.softBlur,
+    invert: state.invert,
+    dpi: state.dpi,
+    jitterScale: state.jitterScale,
+    bandingScale: state.bandingScale,
+    maxSize: state.maxSize,
+    seed: state.seed,
     legacyMath: state.legacyMath,
-    wearLayers: (state.wearLayers || []).map(l => ({ ...l })),
+    wearLayers: (state.wearLayers || []).map((l) => ({ ...l })),
   };
 }
 
 // ── Apply a preset back into state + UI ────────────────────────────────────
 
 const SLIDER_KEYS = [
-  'brightness', 'contrast', 'gamma', 'threshold',
-  'dpi', 'jitterScale', 'bandingScale', 'maxSize', 'seed'
+  'brightness',
+  'contrast',
+  'gamma',
+  'threshold',
+  'dpi',
+  'jitterScale',
+  'bandingScale',
+  'maxSize',
+  'seed',
 ];
 
 export function applyPreset(p) {
@@ -88,16 +112,16 @@ export function applyPreset(p) {
       state.ink = [...p.ink];
       const inkStr = p.ink.join(',');
       let found = false;
-      document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach(s => {
+      document.querySelectorAll('#inkSwatches .swatch:not(.custom-swatch)').forEach((s) => {
         const m = s.dataset.ink === inkStr;
         s.classList.toggle('active', m);
         if (m) found = true;
       });
       const custom = document.getElementById('customInkSwatch');
       const picker = document.getElementById('inkColorPicker');
-      const hexIn  = document.getElementById('inkHexInput');
+      const hexIn = document.getElementById('inkHexInput');
       if (!found && custom && picker && hexIn) {
-        const hex = '#' + p.ink.map(x => x.toString(16).padStart(2, '0')).join('');
+        const hex = '#' + p.ink.map((x) => x.toString(16).padStart(2, '0')).join('');
         custom.dataset.ink = inkStr;
         custom.style.background = hex;
         custom.classList.add('active');
@@ -122,24 +146,24 @@ export function applyPreset(p) {
     }
 
     state.doubleStrike = !!p.doubleStrike;
-    state.condensed    = !!p.condensed;
-    state.softBlur     = !!p.softBlur;
-    state.invert       = !!p.invert;
+    state.condensed = !!p.condensed;
+    state.softBlur = !!p.softBlur;
+    state.invert = !!p.invert;
     if ('legacyMath' in p) state.legacyMath = !!p.legacyMath;
 
-    document.querySelectorAll('.check').forEach(c => {
+    document.querySelectorAll('.check').forEach((c) => {
       const flag = c.dataset.flag;
       if (flag in state) c.classList.toggle('on', !!state[flag]);
     });
 
     if (p.wearLayers !== undefined) {
-      state.wearLayers = p.wearLayers.map(l => ({ ...l }));
+      state.wearLayers = p.wearLayers.map((l) => ({ ...l }));
       applyWearLayersToUI(state);
     }
 
-    document.querySelectorAll('#profileList .sli').forEach(s =>
-      s.classList.toggle('active', s.dataset.profile === state.profile)
-    );
+    document
+      .querySelectorAll('#profileList .sli')
+      .forEach((s) => s.classList.toggle('active', s.dataset.profile === state.profile));
 
     if (onAfterApply) onAfterApply();
   } catch (e) {
@@ -171,7 +195,7 @@ export function renderPresetList() {
     }
     el.addEventListener('click', () => {
       activePresetId = p.id;
-      document.querySelectorAll('#presetList .sli').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('#presetList .sli').forEach((s) => s.classList.remove('active'));
       el.classList.add('active');
       applyPreset(p);
     });
@@ -199,59 +223,64 @@ function fileNameFor(name) {
 export function initPresets({ onApply, onSetStatus } = {}) {
   onAfterApply = onApply;
 
-  const expBtn  = document.getElementById('exportPresetBtn');
-  const expCur  = document.getElementById('exportCurrentBtn');
-  const impBtn  = document.getElementById('importPresetBtn');
+  const expBtn = document.getElementById('exportPresetBtn');
+  const expCur = document.getElementById('exportCurrentBtn');
+  const impBtn = document.getElementById('importPresetBtn');
   const preFile = document.getElementById('presetFileInput');
   const saveBtn = document.getElementById('savePresetBtn');
   const impYaml = document.getElementById('importYamlBtn');
-  const nameIn  = document.getElementById('presetNameInput');
+  const nameIn = document.getElementById('presetNameInput');
   const yamlArea = document.getElementById('presetYamlArea');
 
-  if (expBtn) expBtn.addEventListener('click', () => {
-    let name = nameIn ? nameIn.value.trim() : '';
-    if (!name) {
-      name = prompt('Preset Name:', 'My Preset');
-      if (!name) return;
-      if (nameIn) nameIn.value = name;
-    }
-    downloadText(presetToYaml(captureCurrentPreset(name)), fileNameFor(name));
-  });
+  if (expBtn)
+    expBtn.addEventListener('click', () => {
+      let name = nameIn ? nameIn.value.trim() : '';
+      if (!name) {
+        name = prompt('Preset Name:', 'My Preset');
+        if (!name) return;
+        if (nameIn) nameIn.value = name;
+      }
+      downloadText(presetToYaml(captureCurrentPreset(name)), fileNameFor(name));
+    });
 
-  if (expCur) expCur.addEventListener('click', () => {
-    const name = (nameIn && nameIn.value.trim()) || 'my-preset';
-    const yaml = presetToYaml(captureCurrentPreset(name));
-    if (yamlArea) yamlArea.value = yaml;
-    downloadText(yaml, fileNameFor(name));
-  });
+  if (expCur)
+    expCur.addEventListener('click', () => {
+      const name = (nameIn && nameIn.value.trim()) || 'my-preset';
+      const yaml = presetToYaml(captureCurrentPreset(name));
+      if (yamlArea) yamlArea.value = yaml;
+      downloadText(yaml, fileNameFor(name));
+    });
 
   if (impBtn && preFile) impBtn.addEventListener('click', () => preFile.click());
-  if (preFile) preFile.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    importFromText(await file.text(), onSetStatus);
-    e.target.value = '';
-  });
+  if (preFile)
+    preFile.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      importFromText(await file.text(), onSetStatus);
+      e.target.value = '';
+    });
 
-  if (saveBtn) saveBtn.addEventListener('click', () => {
-    const name = nameIn ? nameIn.value.trim() : '';
-    if (!name) return showError('Name für das Preset ist erforderlich.');
-    const preset = captureCurrentPreset(name);
-    preset.id = 'usr_' + Date.now();
-    const presets = loadUserPresets();
-    presets.push(preset);
-    saveUserPresets(presets);
-    activePresetId = preset.id;
-    renderPresetList();
-    if (onSetStatus) onSetStatus('Gespeichert.');
-  });
+  if (saveBtn)
+    saveBtn.addEventListener('click', () => {
+      const name = nameIn ? nameIn.value.trim() : '';
+      if (!name) return showError('Name für das Preset ist erforderlich.');
+      const preset = captureCurrentPreset(name);
+      preset.id = 'usr_' + Date.now();
+      const presets = loadUserPresets();
+      presets.push(preset);
+      saveUserPresets(presets);
+      activePresetId = preset.id;
+      renderPresetList();
+      if (onSetStatus) onSetStatus('Gespeichert.');
+    });
 
-  if (impYaml) impYaml.addEventListener('click', () => {
-    if (!yamlArea || !yamlArea.value.trim()) {
-      return showError('Bitte füge YAML Code in das Textfeld ein!');
-    }
-    importFromText(yamlArea.value.trim(), onSetStatus);
-  });
+  if (impYaml)
+    impYaml.addEventListener('click', () => {
+      if (!yamlArea || !yamlArea.value.trim()) {
+        return showError('Bitte füge YAML Code in das Textfeld ein!');
+      }
+      importFromText(yamlArea.value.trim(), onSetStatus);
+    });
 }
 
 function importFromText(text, onSetStatus) {

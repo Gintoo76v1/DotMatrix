@@ -9,7 +9,7 @@ let hideTimer = null;
 
 export function initErrorPopup() {
   popupEl = document.getElementById('errorPopup');
-  textEl  = document.getElementById('errorText');
+  textEl = document.getElementById('errorText');
   const closeBtn = document.getElementById('errorCloseBtn');
   if (closeBtn && popupEl) {
     closeBtn.addEventListener('click', () => popupEl.classList.remove('show'));

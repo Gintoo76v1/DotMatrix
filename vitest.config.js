@@ -16,14 +16,14 @@ export default defineConfig({
         'js/ui/**',
         'js/lang.js',
         'js/settings-store.js',
-        'js/render-client.js'
+        'js/render-client.js',
       ],
       thresholds: {
         lines: 70,
         functions: 70,
         branches: 65,
-        statements: 70
-      }
-    }
-  }
+        statements: 70,
+      },
+    },
+  },
 });

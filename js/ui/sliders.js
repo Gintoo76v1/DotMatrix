@@ -18,11 +18,11 @@ const REG = new Map();
 export function registerSlider(opts) {
   const cfg = {
     sliderId: opts.sliderId,
-    valueId:  opts.valueId,
+    valueId: opts.valueId,
     stateKey: opts.stateKey,
     transform: opts.transform || ((v) => +v),
-    inverse:   opts.inverse   || ((v) => v),
-    format:    opts.format    || ((v) => v),
+    inverse: opts.inverse || ((v) => v),
+    format: opts.format || ((v) => v),
   };
   REG.set(cfg.stateKey, cfg);
   return cfg;

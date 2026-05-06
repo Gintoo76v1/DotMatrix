@@ -11,11 +11,13 @@ describe('Integration: Tab Switching', () => {
   it('initTabs logic switches active classes correctly', () => {
     // Simulate the exact initTabs logic from main.js
     function initTabs() {
-      document.querySelectorAll('.activity-bar .icon-btn[data-tab]').forEach(btn => {
+      document.querySelectorAll('.activity-bar .icon-btn[data-tab]').forEach((btn) => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.activity-bar .icon-btn').forEach(b => b.classList.remove('active'));
+          document
+            .querySelectorAll('.activity-bar .icon-btn')
+            .forEach((b) => b.classList.remove('active'));
           btn.classList.add('active');
-          document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
           const tab = document.getElementById(btn.dataset.tab);
           if (tab) tab.classList.add('active');
         });
@@ -49,7 +51,7 @@ describe('Integration: Tab Switching', () => {
       box.addEventListener('click', (e) => {
         const sw = e.target.closest('.swatch');
         if (!sw || !sw.dataset.ink) return;
-        box.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        box.querySelectorAll('.swatch').forEach((s) => s.classList.remove('active'));
         sw.classList.add('active');
       });
     }
@@ -74,7 +76,7 @@ describe('Integration: Tab Switching', () => {
       container.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn || !btn.dataset.dither) return;
-        container.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        container.querySelectorAll('button').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
       });
     }

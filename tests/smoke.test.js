@@ -6,11 +6,11 @@ describe('UI Smoke Test', () => {
   it('all tab buttons have matching tab-content ids', () => {
     const html = fs.readFileSync('./index.html', 'utf8');
     document.documentElement.innerHTML = html;
-    
+
     const btns = document.querySelectorAll('.activity-bar .icon-btn[data-tab]');
     expect(btns.length).toBeGreaterThan(0);
-    
-    btns.forEach(btn => {
+
+    btns.forEach((btn) => {
       const tabId = btn.dataset.tab;
       const tab = document.getElementById(tabId);
       expect(tab, `tab ${tabId} must exist`).not.toBeNull();

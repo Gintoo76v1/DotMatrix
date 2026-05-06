@@ -36,7 +36,8 @@ function installCanvasPolyfill() {
   if (typeof globalThis.ImageData === 'undefined') {
     globalThis.ImageData = class ImageData {
       constructor(w, h) {
-        this.width = w; this.height = h;
+        this.width = w;
+        this.height = h;
         this.data = new Uint8ClampedArray(w * h * 4);
       }
     };
@@ -88,13 +89,15 @@ describe('makeDotStamp', () => {
     const s = makeDotStamp(9, 0.2, 1.0, { legacy: true });
     expect(s.size).toBe(9);
     // sanity: not crashing
-    expect(s.data.every(v => v >= 0 && v <= 1)).toBe(true);
+    expect(s.data.every((v) => v >= 0 && v <= 1)).toBe(true);
   });
 });
 
 describe('stampInto', () => {
   let ink, stamp;
-  const W = 20, H = 20, SS = 5;
+  const W = 20,
+    H = 20,
+    SS = 5;
   beforeEach(() => {
     ink = new Float32Array(W * H);
     stamp = new Float32Array(SS * SS).fill(1.0);

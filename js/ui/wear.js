@@ -2,7 +2,7 @@
 
 function collectActiveLayers() {
   const out = [];
-  document.querySelectorAll('#errorList .er.on').forEach(el => {
+  document.querySelectorAll('#errorList .er.on').forEach((el) => {
     const slider = el.querySelector('.er-slider');
     out.push({
       pattern: el.dataset.pattern,
@@ -13,10 +13,10 @@ function collectActiveLayers() {
 }
 
 export function initWearLayers(state, onChange) {
-  document.querySelectorAll('#errorList .er').forEach(er => {
-    const head   = er.querySelector('.er-head');
+  document.querySelectorAll('#errorList .er').forEach((er) => {
+    const head = er.querySelector('.er-head');
     const slider = er.querySelector('.er-slider');
-    const valEl  = er.querySelector('.er-val');
+    const valEl = er.querySelector('.er-val');
 
     if (head) {
       head.addEventListener('click', () => {
@@ -40,7 +40,7 @@ export function initWearLayers(state, onChange) {
 
 /** Sync the DOM checkboxes/sliders to a state.wearLayers array. */
 export function applyWearLayersToUI(state) {
-  document.querySelectorAll('#errorList .er').forEach(el => {
+  document.querySelectorAll('#errorList .er').forEach((el) => {
     el.classList.remove('on');
     const valEl = el.querySelector('.er-val');
     if (valEl) valEl.textContent = '0%';

@@ -25,7 +25,7 @@ export function toGrayscale(imgData, stateObj, mode) {
   const useLuma = !mode || mode.grayscale !== 'rgb';
   const { width, height, data } = imgData;
   const out = new Float32Array(width * height);
-  const c = (stateObj.contrast / 100) + 1;
+  const c = stateObj.contrast / 100 + 1;
   const intercept = 128 * (1 - c);
   const b = stateObj.brightness;
   const g = stateObj.gamma;
@@ -43,13 +43,15 @@ export function toGrayscale(imgData, stateObj, mode) {
   } else {
     // Legacy RGB path — duplicates per-channel math then luminance-mixes.
     for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      let r = data[i], green = data[i + 1], blue = data[i + 2];
-      r     = r     * c + intercept + b;
+      let r = data[i],
+        green = data[i + 1],
+        blue = data[i + 2];
+      r = r * c + intercept + b;
       green = green * c + intercept + b;
-      blue  = blue  * c + intercept + b;
-      r     = 255 * Math.pow(clamp(r, 0, 255)     / 255, g);
+      blue = blue * c + intercept + b;
+      r = 255 * Math.pow(clamp(r, 0, 255) / 255, g);
       green = 255 * Math.pow(clamp(green, 0, 255) / 255, g);
-      blue  = 255 * Math.pow(clamp(blue, 0, 255)  / 255, g);
+      blue = 255 * Math.pow(clamp(blue, 0, 255) / 255, g);
       let luma = 0.299 * r + 0.587 * green + 0.114 * blue;
       if (inv) luma = 255 - luma;
       out[j] = clamp(luma, 0, 255);
@@ -68,15 +70,15 @@ export function toGrayscale(imgData, stateObj, mode) {
 // 128 threshold for byte-identical output.
 export function floydSteinberg(gray, w, h, mode, threshold) {
   const serpentine = !mode || mode.floydSteinberg !== 'classic';
-  const t = (mode && mode.useFloydThreshold && Number.isFinite(threshold)) ? threshold : 128;
+  const t = mode && mode.useFloydThreshold && Number.isFinite(threshold) ? threshold : 128;
   const buf = new Float32Array(gray);
   const out = new Uint8Array(w * h);
 
   for (let y = 0; y < h; y++) {
     const ltr = !serpentine || (y & 1) === 0;
     const xStart = ltr ? 0 : w - 1;
-    const xEnd   = ltr ? w : -1;
-    const xStep  = ltr ? 1 : -1;
+    const xEnd = ltr ? w : -1;
+    const xStep = ltr ? 1 : -1;
 
     for (let x = xStart; x !== xEnd; x += xStep) {
       const i = y * w + x;
@@ -89,18 +91,18 @@ export function floydSteinberg(gray, w, h, mode, threshold) {
       // Diffusion neighbours mirror across the scan direction.
       // Coefficients: 7/16, 3/16, 5/16, 1/16  (Floyd & Steinberg, 1976)
       if (ltr) {
-        if (x + 1 < w)             buf[i + 1]     += err * 7 / 16;
+        if (x + 1 < w) buf[i + 1] += (err * 7) / 16;
         if (y + 1 < h) {
-          if (x > 0)               buf[i + w - 1] += err * 3 / 16;
-                                   buf[i + w]     += err * 5 / 16;
-          if (x + 1 < w)           buf[i + w + 1] += err * 1 / 16;
+          if (x > 0) buf[i + w - 1] += (err * 3) / 16;
+          buf[i + w] += (err * 5) / 16;
+          if (x + 1 < w) buf[i + w + 1] += (err * 1) / 16;
         }
       } else {
-        if (x - 1 >= 0)            buf[i - 1]     += err * 7 / 16;
+        if (x - 1 >= 0) buf[i - 1] += (err * 7) / 16;
         if (y + 1 < h) {
-          if (x + 1 < w)           buf[i + w + 1] += err * 3 / 16;
-                                   buf[i + w]     += err * 5 / 16;
-          if (x - 1 >= 0)          buf[i + w - 1] += err * 1 / 16;
+          if (x + 1 < w) buf[i + w + 1] += (err * 3) / 16;
+          buf[i + w] += (err * 5) / 16;
+          if (x - 1 >= 0) buf[i + w - 1] += (err * 1) / 16;
         }
       }
     }
@@ -109,12 +111,9 @@ export function floydSteinberg(gray, w, h, mode, threshold) {
 }
 
 // ── Ordered (Bayer 4×4) dither ──────────────────────────────────────────────
-const BAYER4 = new Float32Array([
-   0,  8,  2, 10,
-  12,  4, 14,  6,
-   3, 11,  1,  9,
-  15,  7, 13,  5,
-]).map(v => (v + 0.5) / 16 * 255);   // +0.5 centres thresholds in the 0–255 range
+const BAYER4 = new Float32Array([0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]).map(
+  (v) => ((v + 0.5) / 16) * 255
+); // +0.5 centres thresholds in the 0–255 range
 
 export function orderedDither(gray, w, h) {
   const out = new Uint8Array(w * h);
@@ -145,7 +144,8 @@ export function boxBlur3x3(data, w, h) {
     for (let x = 0; x < w; x++) {
       const di = (y * w + x) * 4;
       for (let c = 0; c < 3; c++) {
-        let s = 0, n = 0;
+        let s = 0,
+          n = 0;
         for (let kx = -1; kx <= 1; kx++) {
           const xx = x + kx;
           if (xx < 0 || xx >= w) continue;
@@ -162,7 +162,8 @@ export function boxBlur3x3(data, w, h) {
     for (let x = 0; x < w; x++) {
       const di = (y * w + x) * 4;
       for (let c = 0; c < 3; c++) {
-        let s = 0, n = 0;
+        let s = 0,
+          n = 0;
         for (let ky = -1; ky <= 1; ky++) {
           const yy = y + ky;
           if (yy < 0 || yy >= h) continue;
