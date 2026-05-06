@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body class="dark-mode">
 
@@ -27,6 +27,7 @@
         <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
         <div class="icon-btn" data-tab="tab-errors" title="Hardware">🔧</div>
         <div class="spacer"></div>
+        <div class="icon-btn" id="sidebarToggleBtn" title="Sidebar umschalten">◀</div>
         <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
       </nav>
 
@@ -98,11 +99,12 @@
                   <div class="swatch active" style="background:#19191e" data-ink="25,25,30"></div>
                   <div class="swatch" style="background:#142d82" data-ink="20,45,130"></div>
                   <div class="swatch" style="background:#a01e23" data-ink="160,30,35"></div>
+                  <div class="swatch" style="background:#4a2c6e" data-ink="74,44,110"></div>
                   <div class="swatch custom-swatch" id="customInkSwatch" style="background:#19191e"></div>
-                </div>
-                <div class="custom-ink-row" style="margin-top:10px;">
-                  <input type="color" id="inkColorPicker" class="color-picker" value="#19191e">
-                  <input type="text" id="inkHexInput" class="hex-input text-input" value="#19191e" maxlength="7" spellcheck="false">
+                  <div class="swatch swatch-add" id="inkAddSwatch" title="Benutzerdefinierte Farbe">
+                    <span>+</span>
+                    <input type="color" id="inkColorPickerAdd" class="color-picker-hidden" value="#19191e">
+                  </div>
                 </div>
               </div>
               <div>
@@ -112,6 +114,12 @@
                   <div class="swatch active" style="background:#ffffff" data-paper="255,255,255"></div>
                   <div class="swatch" style="background:#eadfb8" data-paper="234,223,184"></div>
                   <div class="swatch" style="background:#d8c8a0" data-paper="216,200,160"></div>
+                  <div class="swatch" style="background:#f0f0f0" data-paper="240,240,240"></div>
+                  <div class="swatch custom-swatch" id="customPaperSwatch" style="background:#ffffff"></div>
+                  <div class="swatch swatch-add" id="paperAddSwatch" title="Benutzerdefinierte Farbe">
+                    <span>+</span>
+                    <input type="color" id="paperColorPickerAdd" class="color-picker-hidden" value="#ffffff">
+                  </div>
                 </div>
               </div>
             </div>
@@ -176,8 +184,9 @@
             </div>
 
             <details class="settings-group">
-              <summary><span class="sg-icon">🎨</span><span class="sg-title">Erscheinungsbild</span></summary>
+              <summary><span class="sg-icon">🎨</span><span class="sg-title">Darstellung</span></summary>
               <div class="sg-body">
+                <!-- Theme -->
                 <label class="field"><span class="name">Farbschema</span>
                   <select id="themeSelector" class="text-input">
                     <option value="oc-2" selected>OC-2</option>
@@ -202,13 +211,9 @@
                   </select>
                 </label>
                 <p class="setting-desc">Aktuell nur Classic verfügbar.</p>
-              </div>
-            </details>
 
-            <details class="settings-group">
-              <summary><span class="sg-icon">✏️</span><span class="sg-title">Schriftarten</span></summary>
-              <div class="sg-body">
-                <label class="field"><span class="name">UI-Schriftart</span>
+                <!-- Fonts -->
+                <label class="field" style="margin-top:20px;"><span class="name">UI-Schriftart</span>
                   <select id="fontSansSelector" class="text-input">
                     <option value="Inter" selected>Inter</option>
                     <option value="System Sans">System Sans</option>
@@ -252,58 +257,67 @@
                   <span class="name">Custom Render Schriftart</span>
                   <input type="text" id="fontTerminalCustom" class="text-input" placeholder="z.B. 'Iosevka'">
                 </label>
-              </div>
-            </details>
 
-            <details class="settings-group">
-              <summary><span class="sg-icon">🎬</span><span class="sg-title">Animation</span></summary>
-              <div class="sg-body" id="animSettingsBody">
-                <label class="field"><span class="name">Muster</span>
-                  <select id="animPatternSelector" class="text-input">
-                    <option value="aurora" selected>Aurora</option>
-                    <option value="pulse">Pulse</option>
-                    <option value="orbit">Orbit</option>
-                    <option value="drift">Drift</option>
-                    <option value="breathe">Breathe</option>
-                    <option value="off">Aus</option>
-                  </select>
-                </label>
-                <p class="setting-desc">Hintergrund-Animationsmuster oder statisch.</p>
-                <label class="field" style="margin-top:12px;"><span class="name">Geschwindigkeit <b id="animSpeedVal">50%</b></span>
-                  <input type="range" id="animSpeedSlider" min="10" max="200" value="50">
-                </label>
-                <p class="setting-desc">Animationsgeschwindigkeit (10% = langsam, 200% = schnell).</p>
-                <label class="field" style="margin-top:12px;"><span class="name">Intensität <b id="animIntensityVal">30%</b></span>
-                  <input type="range" id="animIntensitySlider" min="0" max="100" value="30">
-                </label>
-                <p class="setting-desc">Deckkraft und Leuchtkraft der Effekte.</p>
-                <label class="field" style="margin-top:12px;"><span class="name">Größe <b id="animSizeVal">50%</b></span>
-                  <input type="range" id="animSizeSlider" min="20" max="100" value="50">
-                </label>
-                <p class="setting-desc">Ausdehnung der animierten Elemente.</p>
-              </div>
-            </details>
-
-            <details class="settings-group">
-              <summary><span class="sg-icon">🔊</span><span class="sg-title">Verhalten</span></summary>
-              <div class="sg-body">
-                <div class="checks">
-                  <label class="check" data-flag="bgEffects"><span class="box"></span><span>Hintergrund-Effekte</span></label>
-                  <p class="setting-desc check-desc">Farbige Hintergrund-Orbs und Glow-Effekte aktivieren.</p>
-                  <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
-                  <p class="setting-desc check-desc">Akustisches Feedback bei jedem Tippen/Klicken.</p>
-                  <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
-                  <p class="setting-desc check-desc">Automatisch neu rendern bei Einstellungsänderungen.</p>
-                  <label class="check" data-flag="bgAnim"><span class="box"></span><span>Hintergrund-Animation</span></label>
-                  <p class="setting-desc check-desc">Bewegte Hintergrund-Muster (erfordert Hintergrund-Effekte).</p>
-                  <label class="check" data-flag="renderDebug"><span class="box"></span><span>Render Debug Text</span></label>
-                  <p class="setting-desc check-desc">Debug-Informationen im Canvas anzeigen.</p>
+                <!-- Animation (sub-group) -->
+                <div class="settings-subgroup" style="margin-top:20px; padding-top:16px; border-top:1px solid var(--dm-border-base);">
+                  <div class="checks">
+                    <label class="check" data-flag="bgEffects"><span class="box"></span><span>Hintergrund-Effekte</span></label>
+                    <p class="setting-desc check-desc">Farbige Hintergrund-Orbs und Glow-Effekte aktivieren.</p>
+                    <label class="check" data-flag="bgAnim"><span class="box"></span><span>Hintergrund-Animation</span></label>
+                    <p class="setting-desc check-desc">Bewegte Hintergrund-Muster (erfordert Hintergrund-Effekte).</p>
+                  </div>
+                  <div id="animSettingsBody">
+                    <label class="field" style="margin-top:12px;"><span class="name">Muster</span>
+                      <select id="animPatternSelector" class="text-input">
+                        <option value="aurora" selected>Aurora</option>
+                        <option value="pulse">Pulse</option>
+                        <option value="orbit">Orbit</option>
+                        <option value="drift">Drift</option>
+                        <option value="breathe">Breathe</option>
+                        <option value="off">Aus</option>
+                      </select>
+                    </label>
+                    <p class="setting-desc">Hintergrund-Animationsmuster oder statisch.</p>
+                    <label class="field" style="margin-top:12px;"><span class="name">Geschwindigkeit <b id="animSpeedVal">50%</b></span>
+                      <input type="range" id="animSpeedSlider" min="10" max="200" value="50">
+                    </label>
+                    <p class="setting-desc">Animationsgeschwindigkeit (10% = langsam, 200% = schnell).</p>
+                    <label class="field" style="margin-top:12px;"><span class="name">Intensität <b id="animIntensityVal">30%</b></span>
+                      <input type="range" id="animIntensitySlider" min="0" max="100" value="30">
+                    </label>
+                    <p class="setting-desc">Deckkraft und Leuchtkraft der Effekte.</p>
+                    <label class="field" style="margin-top:12px;"><span class="name">Größe <b id="animSizeVal">50%</b></span>
+                      <input type="range" id="animSizeSlider" min="20" max="100" value="50">
+                    </label>
+                    <p class="setting-desc">Ausdehnung der animierten Elemente.</p>
+                  </div>
                 </div>
               </div>
             </details>
 
             <details class="settings-group">
-              <summary><span class="sg-icon">🧪</span><span class="sg-title">Math Engine</span></summary>
+              <summary><span class="sg-icon">🔊</span><span class="sg-title">Workflow</span></summary>
+              <div class="sg-body">
+                <div class="checks">
+                  <label class="check" data-flag="uiSounds"><span class="box"></span><span>UI Click Sounds</span></label>
+                  <p class="setting-desc check-desc">Akustisches Feedback bei jedem Tippen/Klicken.</p>
+                  <label class="check" data-flag="autoRender"><span class="box"></span><span>Auto-Render (Live)</span></label>
+                  <p class="setting-desc check-desc">Automatisch neu rendern bei Einstellungsänderungen.</p>
+                  <label class="check" data-flag="renderDebug"><span class="box"></span><span>Render Debug Text</span></label>
+                  <p class="setting-desc check-desc">Debug-Informationen im Canvas anzeigen.</p>
+                </div>
+                <label class="field" style="margin-top:16px;"><span class="name">Sprache</span>
+                  <select id="langSelector" class="text-input">
+                    <option value="de" selected>🇩🇪 Deutsch</option>
+                    <option value="en">🇺🇸 English</option>
+                  </select>
+                </label>
+                <p class="setting-desc">Oberflächensprache der Anwendung.</p>
+              </div>
+            </details>
+
+            <details class="settings-group">
+              <summary><span class="sg-icon">⚡</span><span class="sg-title">Engine</span></summary>
               <div class="sg-body">
                 <div class="checks">
                   <label class="check" data-flag="legacyMath"><span class="box"></span><span>Legacy Math (v1 kompatibel)</span></label>
@@ -411,6 +425,6 @@
 
 
 
-  <script type="module" src="js/main.js?v=3"></script>
+  <script type="module" src="js/main.js?v=4"></script>
 </body>
 </html>

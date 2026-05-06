@@ -220,6 +220,8 @@ export function applyAppearance() {
     bgEffects: state.bgEffects,
     renderDebug: state.renderDebug,
   });
+
+  _updateFooterGlow();
 }
 
 /** Toggle bg-anim visibility (used by the bgAnim checkbox in checks.js). */
@@ -278,6 +280,28 @@ function _updateAnimDisabledState() {
   const body = document.getElementById('animSettingsBody');
   if (!body) return;
   body.classList.toggle('disabled', !state.bgEffects);
+}
+
+function _updateFooterGlow() {
+  const el = document.querySelector('.footer-accent');
+  if (!el) return;
+  const original = el.dataset.originalText || el.textContent;
+  if (!el.dataset.originalText) el.dataset.originalText = original;
+
+  if (state.bgEffects) {
+    if (el.querySelector('.glow-letter')) return; // already split
+    el.textContent = '';
+    original.split('').forEach((ch, i) => {
+      const span = document.createElement('span');
+      span.className = 'glow-letter';
+      span.style.setProperty('--i', String(i));
+      span.textContent = ch === ' ' ? '\u00A0' : ch;
+      el.appendChild(span);
+    });
+  } else {
+    if (!el.querySelector('.glow-letter')) return; // already plain
+    el.textContent = original;
+  }
 }
 
 function _applyAnimPreset() {

@@ -13,7 +13,7 @@ import { initAudio, playClickSound, playToggleSound } from './ui/audio.js';
 import { initZoom, dragState } from './ui/zoom.js';
 import { registerSlider, wireSlider, syncAllFromState } from './ui/sliders.js';
 import { wireSegmented } from './ui/segments.js';
-import { wireSwatches, wireCustomInk } from './ui/swatches.js';
+import { wireSwatches, wireCustomInk, wireCustomPaper } from './ui/swatches.js';
 import { initChecks } from './ui/checks.js';
 import { initWearLayers } from './ui/wear.js';
 import { initUpload } from './ui/upload.js';
@@ -161,6 +161,18 @@ wireSegmented('orientationBtns', state, 'orientation', 'orient', triggerUpdate);
 wireSwatches('inkSwatches',   state, 'ink',   'ink',   triggerUpdate);
 wireSwatches('paperSwatches', state, 'paper', 'paper', triggerUpdate);
 wireCustomInk(state, triggerUpdate);
+wireCustomPaper(state, triggerUpdate);
+
+// ── Sidebar collapse toggle (A10) ──────────────────────────────────────────
+
+const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+const sidebarEl = document.querySelector('.sidebar');
+if (sidebarToggleBtn && sidebarEl) {
+  sidebarToggleBtn.addEventListener('click', () => {
+    sidebarEl.classList.toggle('collapsed');
+    sidebarToggleBtn.textContent = sidebarEl.classList.contains('collapsed') ? '▶' : '◀';
+  });
+}
 
 // ── Profile list ───────────────────────────────────────────────────────────
 
