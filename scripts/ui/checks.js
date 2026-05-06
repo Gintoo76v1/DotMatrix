@@ -1,6 +1,6 @@
 // ── Boolean state checkboxes ───────────────────────────────────────────────
 // All `.check[data-flag]` elements toggle a single property on `state`.
-// Persisted flags (autoRender, uiSounds, bgAnim, legacyMath, useWorker) are
+// Persisted flags (autoRender, uiSounds, bgAnim, useWorker) are
 // also written to localStorage via settings-store.
 
 import { saveSettings } from '../settings-store.js';
@@ -12,7 +12,6 @@ const PERSISTED = new Set([
   'bgAnim',
   'bgEffects',
   'renderDebug',
-  'legacyMath',
   'useWorker',
 ]);
 

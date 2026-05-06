@@ -5,8 +5,7 @@
 //   makeDotStamp / stampInto / makeValueNoise — exposed for unit tests
 //
 // Hot loop sits in render(); per-cell branches are minimised by hoisting
-// constants and using branch-free clamps.  The legacyMath flag (via
-// math-mode.js) routes between v1-compatible and v2-correct math.
+// constants and using branch-free clamps.
 
 import { PROFILES, state, MM_PER_INCH, PAPER_SIZES_MM } from './config.js';
 import { mulberry32, makeGaussian, yieldUI, smoothstep, clamp } from './utils.js';
@@ -17,7 +16,6 @@ import {
   thresholdDither,
   boxBlur3x3,
 } from './filters.js';
-import { getMathMode } from './math-mode.js';
 
 // ── Dot stamp ────────────────────────────────────────────────────────────────
 //
@@ -192,10 +190,10 @@ function _buildInkStarved(ld, rng, gridH, str) {
   }
 }
 
-function _buildPaperSlip(ld, rng, gridH, str, stepY, mode) {
+function _buildPaperSlip(ld, rng, gridH, str, stepY) {
   ld.rowShift = new Float32Array(gridH);
   let slip = 0;
-  const scale = mode.paperSlip === 'stepScaled' ? stepY * 4 : 4;
+  const scale = 4;
   for (let y = 0; y < gridH; y++) {
     if (rng() < 0.04 * str) slip += (rng() - 0.5) * scale * str;
     slip *= 0.85;
@@ -207,14 +205,14 @@ function _buildPaperSlip(ld, rng, gridH, str, stepY, mode) {
 // Each wear pattern caches whatever it can compute up-front (row/column
 // LUTs, RNG-derived constants).  Per-cell work in the hot loop is then
 // limited to a switch and a few arithmetic ops.
-function buildLayerData(layer, rng, gridW, gridH, numPins, stepY, mode) {
+function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
   const str = (layer.strength ?? 50) / 100;
   const ld = { pattern: layer.pattern, strength: str };
 
   switch (layer.pattern) {
     case 'cloudy': {
       ld.noise = makeValueNoise(rng, 16, 16, {
-        interp: mode.valueNoise === 'bilinear' ? 'bilinear' : 'smoothstep',
+        interp: 'smoothstep',
       });
       break;
     }
@@ -239,7 +237,7 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY, mode) {
       break;
     }
     case 'paper_slip': {
-      _buildPaperSlip(ld, rng, gridH, str, stepY, mode);
+      _buildPaperSlip(ld, rng, gridH, str, stepY);
       break;
     }
     case 'mechanical_resonance': {
@@ -298,7 +296,6 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
   const seed = state.seed || Math.floor(Math.random() * 1e9);
   const rng = mulberry32(seed);
   const gauss = makeGaussian(rng);
-  const mode = getMathMode(state);
   const srcAspect = srcImage.width / srcImage.height;
 
   const condensedMult = state.condensed && profile.supports_condensed ? 1.5 : 1.0;
@@ -375,12 +372,12 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
   gctx.fillRect(0, 0, gridW, gridH);
   gctx.drawImage(srcImage, 0, 0, gridW, gridH);
   const gridData = gctx.getImageData(0, 0, gridW, gridH);
-  const gray = toGrayscale(gridData, state, mode);
+  const gray = toGrayscale(gridData, state);
 
   // Halftone / dither
   let dots;
   if (state.dither === 'floyd_steinberg')
-    dots = floydSteinberg(gray, gridW, gridH, mode, state.threshold);
+    dots = floydSteinberg(gray, gridW, gridH, state.threshold);
   else if (state.dither === 'ordered') dots = orderedDither(gray, gridW, gridH);
   else dots = thresholdDither(gray, gridW, gridH, state.threshold);
 
@@ -392,7 +389,7 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
     dotPx,
     profile.dot_softness,
     profile.ink_density,
-    state.legacyMath ? { legacy: true } : { dpiH, dpiV }
+    { dpiH, dpiV }
   );
   const stamp = baseStamp.data;
   const stampSize = baseStamp.size;
@@ -420,19 +417,14 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
   const wearLayers = Array.isArray(state.wearLayers) ? state.wearLayers : [];
   const layerData = wearLayers
     .filter((l) => l && l.pattern && l.pattern !== 'none' && (l.strength ?? 0) > 0)
-    .map((l) => buildLayerData(l, rng, gridW, gridH, numPins, stepY, mode));
+    .map((l) => buildLayerData(l, rng, gridW, gridH, numPins, stepY));
 
-  // Row banding LUT — symmetric (mean ≈ 1) in v2; one-sided (mean < 1) in v1.
+  // Row banding LUT — symmetric (mean ≈ 1) in v2.
   const rowBands = new Float32Array(gridH);
-  if (mode.rowBands === 'symmetric') {
-    for (let y = 0; y < gridH; y++) rowBands[y] = 1 + bandAmp * (rng() - 0.5) * 2;
-  } else {
-    for (let y = 0; y < gridH; y++) rowBands[y] = 1 - bandAmp * rng();
-  }
+  for (let y = 0; y < gridH; y++) rowBands[y] = 1 + bandAmp * (rng() - 0.5) * 2;
 
   // Sweep height for ghosting (≈ one carriage pass = numPins * stepY).
-  // v1 used `Math.floor(gy / numPins)` which mis-grouped at high pin counts.
-  const sweepRows = Math.max(1, Math.round(numPins * (mode.ghosting === 'sweep' ? 1 : 1)));
+  const sweepRows = Math.max(1, Math.round(numPins));
 
   // Compact list of "on" cells. Int32Array (M6) — 2 ints per cell.
   let onCount = 0;

@@ -132,22 +132,3 @@ describe('wear layers — each renders without throwing', () => {
     expect(countLight(damaged)).toBeGreaterThanOrEqual(countLight(baseline));
   });
 });
-
-describe('legacy vs v2 math — identical seed produces detectably different output', () => {
-  it('legacyMath toggle changes some pixels (rowBands asymmetry)', async () => {
-    const img = { width: 24, height: 24 };
-    state.bandingScale = 3;
-    state.wearLayers = [];
-    state.dither = 'ordered';
-    state.legacyMath = false;
-    const v2 = await render(img);
-    state.legacyMath = true;
-    const v1 = await render(img);
-    state.legacyMath = false;
-    let diff = 0;
-    for (let i = 0; i < v1.imageData.data.length; i++) {
-      if (v1.imageData.data[i] !== v2.imageData.data[i]) diff++;
-    }
-    expect(diff).toBeGreaterThan(0);
-  });
-});

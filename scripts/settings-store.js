@@ -8,7 +8,6 @@ const PERSIST_KEYS = [
   'autoRender',
   'uiSounds',
   'bgAnim',
-  'legacyMath',
   'useWorker',
   'language',
   'theme',

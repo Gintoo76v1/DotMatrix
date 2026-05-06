@@ -57,13 +57,7 @@ export function captureCurrentPreset(name) {
     condensed: state.condensed,
     softBlur: state.softBlur,
     invert: state.invert,
-    dpi: state.dpi,
-    jitterScale: state.jitterScale,
-    bandingScale: state.bandingScale,
-    maxSize: state.maxSize,
-    seed: state.seed,
-    legacyMath: state.legacyMath,
-    wearLayers: (state.wearLayers || []).map((l) => ({ ...l })),
+    wearLayers: state.wearLayers.map((l) => ({ ...l })),
   };
 }
 
@@ -149,7 +143,6 @@ export function applyPreset(p) {
     state.condensed = !!p.condensed;
     state.softBlur = !!p.softBlur;
     state.invert = !!p.invert;
-    if ('legacyMath' in p) state.legacyMath = !!p.legacyMath;
 
     document.querySelectorAll('.check').forEach((c) => {
       const flag = c.dataset.flag;

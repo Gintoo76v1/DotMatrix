@@ -227,15 +227,14 @@ if (profileList) {
   });
 }
 
-// ── Boolean checks (uiSounds, autoRender, legacyMath, useWorker, …) ────────
+// ── Boolean checks (uiSounds, autoRender, useWorker, …) ────────
 
 initChecks(state, (flag) => {
   if (
     flag === 'invert' ||
     flag === 'softBlur' ||
     flag === 'doubleStrike' ||
-    flag === 'condensed' ||
-    flag === 'legacyMath'
+    flag === 'condensed'
   ) {
     triggerUpdate();
   }

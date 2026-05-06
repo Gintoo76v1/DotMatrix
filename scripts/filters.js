@@ -25,46 +25,38 @@ import { clamp } from './utils.js';
  * Converts image data to grayscale, optionally applying brightness, contrast, gamma and math modes.
  * @param {ImageData} imgData - The source image data.
  * @param {object} stateObj - The application state (brightness, contrast, etc.).
- * @param {object} mode - Rendering mode options.
  * @returns {Uint8Array} Grayscale pixel data.
  */
-export function toGrayscale(imgData, stateObj, mode) {
-  const useLuma = !mode || mode.grayscale !== 'rgb';
-  const { width, height, data } = imgData;
-  const out = new Float32Array(width * height);
-  const c = stateObj.contrast / 100 + 1;
-  const intercept = 128 * (1 - c);
-  const b = stateObj.brightness;
-  const g = stateObj.gamma;
-  const inv = stateObj.invert;
+export function toGrayscale(imgData, stateObj) {
+  const data = imgData.data;
+  const w = imgData.width;
+  const h = imgData.height;
+  const gray = new Uint8Array(w * h);
 
-  if (useLuma) {
-    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      let luma = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      luma = luma * c + intercept + b;
-      luma = clamp(luma, 0, 255);
-      if (g !== 1) luma = 255 * Math.pow(luma / 255, g);
-      if (inv) luma = 255 - luma;
-      out[j] = clamp(luma, 0, 255);
-    }
-  } else {
-    // Legacy RGB path — duplicates per-channel math then luminance-mixes.
-    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      let r = data[i],
-        green = data[i + 1],
-        blue = data[i + 2];
-      r = r * c + intercept + b;
-      green = green * c + intercept + b;
-      blue = blue * c + intercept + b;
-      r = 255 * Math.pow(clamp(r, 0, 255) / 255, g);
-      green = 255 * Math.pow(clamp(green, 0, 255) / 255, g);
-      blue = 255 * Math.pow(clamp(blue, 0, 255) / 255, g);
-      let luma = 0.299 * r + 0.587 * green + 0.114 * blue;
-      if (inv) luma = 255 - luma;
-      out[j] = clamp(luma, 0, 255);
-    }
+  const brightness = stateObj.brightness || 0;
+  const contrast = stateObj.contrast || 0;
+  const cFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  const gamma = stateObj.gamma || 1.0;
+  const invert = stateObj.invert || false;
+
+  for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+
+    // Standard luminosity weights
+    let l = 0.299 * r + 0.587 * g + 0.114 * b;
+    
+    // Apply contrast and brightness
+    l = cFactor * (l - 128) + 128 + brightness;
+    // Apply gamma
+    l = 255 * Math.pow(clamp(l, 0, 255) / 255, gamma);
+    
+    if (invert) l = 255 - l;
+    
+    gray[j] = clamp(l, 0, 255);
   }
-  return out;
+  return gray;
 }
 
 // ── Floyd–Steinberg error diffusion ─────────────────────────────────────────
@@ -80,18 +72,16 @@ export function toGrayscale(imgData, stateObj, mode) {
  * @param {Uint8Array|Float32Array} gray - Input grayscale data.
  * @param {number} w - Image width.
  * @param {number} h - Image height.
- * @param {object} mode - Rendering mode options (e.g. classic/serpentine).
  * @param {number} threshold - Decision threshold (0-255).
  * @returns {Uint8Array} A binary 0/1 array representing dots.
  */
-export function floydSteinberg(gray, w, h, mode, threshold) {
-  const serpentine = !mode || mode.floydSteinberg !== 'classic';
-  const t = mode && mode.useFloydThreshold && Number.isFinite(threshold) ? threshold : 128;
+export function floydSteinberg(gray, w, h, threshold) {
+  const t = Number.isFinite(threshold) ? threshold : 128;
   const buf = new Float32Array(gray);
   const out = new Uint8Array(w * h);
 
   for (let y = 0; y < h; y++) {
-    const ltr = !serpentine || (y & 1) === 0;
+    const ltr = (y & 1) === 0;
     const xStart = ltr ? 0 : w - 1;
     const xEnd = ltr ? w : -1;
     const xStep = ltr ? 1 : -1;

@@ -678,20 +678,19 @@
                   <span class="sg-icon">⚡</span><span class="sg-title">Engine</span>
                 </summary>
                 <div class="sg-body">
-                  <div class="checks">
-                    <label class="check" data-flag="legacyMath"
-                      ><span class="box"></span><span>Legacy Math (v1 kompatibel)</span></label
-                    >
-                    <p class="setting-desc check-desc">
-                      Klassisches v1-Rendering für alte Presets.
-                    </p>
-                    <label class="check" data-flag="useWorker"
-                      ><span class="box"></span><span>Worker Rendering</span></label
-                    >
-                    <p class="setting-desc check-desc">
-                      Rendering im Hintergrund-Thread für flüssige UI.
-                    </p>
-                  </div>
+                <div class="checks">
+                  <label class="check" data-flag="useWorker"
+                    ><span class="box"></span><span>Worker Rendering</span></label
+                  >
+                  <p class="setting-desc check-desc">
+                    Rendering im Hintergrund-Thread für flüssige UI.
+                  </p>
+                </div>
+                <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
+                  <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
+                  responsiv). Fällt automatisch auf Inline-Rendering zurück, falls OffscreenCanvas
+                  nicht verfügbar.
+                </div>
                   <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
                     <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
                     klassisches Floyd–Steinberg, RGB-Filter). Aus = neuere, korrektere
