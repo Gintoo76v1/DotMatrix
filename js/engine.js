@@ -27,6 +27,14 @@ import { getMathMode } from './math-mode.js';
 // pin geometry; passing `legacy:true` retains the v1 constant.
 //
 // Stamp values are in [0, density].
+/**
+ * Generates a soft-edged dot stamp for printer simulation.
+ * @param {number} diameterPx - Target diameter in pixels.
+ * @param {number} softness - Softness ratio (0 = hard edge, 1 = maximum blur).
+ * @param {number} density - Peak opacity/density of the ink.
+ * @param {object} opts - Additional options (e.g., legacy mode, DPI info).
+ * @returns {{data: Float32Array, size: number}} The generated stamp and its side length.
+ */
 export function makeDotStamp(diameterPx, softness, density, opts = {}) {
   let size = Math.max(3, Math.round(diameterPx));
   if (size % 2 === 0) size++;
@@ -66,6 +74,17 @@ export function makeDotStamp(diameterPx, softness, density, opts = {}) {
 // Adds a stamp into the ink buffer with clamping at 1.0.  Branch-free inner
 // loop using Math.min (M4).  Out-of-bounds is detected once on entry; the
 // inner loops then run on the clipped intersection only.
+/**
+ * Composites a single dot stamp onto the main ink plane.
+ * @param {Float32Array} ink - The target ink intensity buffer.
+ * @param {number} w - The width of the ink buffer.
+ * @param {number} h - The height of the ink buffer.
+ * @param {Float32Array} stamp - The stamp buffer data.
+ * @param {number} ss - The size (width/height) of the stamp.
+ * @param {number} x0 - X coordinate for the top-left of the stamp.
+ * @param {number} y0 - Y coordinate for the top-left of the stamp.
+ * @param {number} band - Multiplier for banding/wear effects.
+ */
 export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
   x0 = Math.round(x0);
   y0 = Math.round(y0);
@@ -93,6 +112,14 @@ export function stampInto(ink, w, h, stamp, ss, x0, y0, band) {
 // Bilinear interpolation creates linear seams between cells; smoothstep adds
 // C¹ continuity for less mechanical-looking cloud patterns. Both modes are
 // deterministic when fed the same RNG.
+/**
+ * Generates a 2D value noise function for simulating non-uniform wear patterns like "cloudy".
+ * @param {Function} rng - A uniform random number generator function returning [0, 1).
+ * @param {number} noiseW - Grid width of the underlying noise.
+ * @param {number} noiseH - Grid height of the underlying noise.
+ * @param {object} opts - Interpolation options (e.g. { interp: 'bilinear' }).
+ * @returns {Function} A function (x, y, totalW, totalH) -> noise value.
+ */
 export function makeValueNoise(rng, noiseW, noiseH, opts = {}) {
   const grid = new Float32Array(noiseW * noiseH);
   for (let i = 0; i < grid.length; i++) grid[i] = rng();
@@ -258,6 +285,13 @@ function defaultCreateCanvas(w, h) {
 }
 
 // ── Main render ──────────────────────────────────────────────────────────────
+/**
+ * Renders the dot-matrix effect onto the given image.
+ * @param {HTMLImageElement|ImageBitmap} srcImage - The source image to process.
+ * @param {Function} onProgressUpdate - Callback for progress reporting.
+ * @param {object} opts - Additional options (e.g. custom canvas factory).
+ * @returns {Promise<{imageData: ImageData, width: number, height: number}>} The processed image data.
+ */
 export async function render(srcImage, onProgressUpdate, opts = {}) {
   const createCanvas = opts.createCanvas || defaultCreateCanvas;
   const profile = PROFILES[state.profile];
@@ -603,6 +637,12 @@ const ghostsDy = new Float32Array(8);
 const ghostsA = new Float32Array(8);
 
 // ── ASCII preview ────────────────────────────────────────────────────────────
+/**
+ * Generates an ASCII art preview of the image.
+ * @param {HTMLImageElement|ImageBitmap|HTMLCanvasElement} srcImage - The image to convert.
+ * @param {number} width - The target width in characters (default 60).
+ * @returns {string} The ASCII string representation.
+ */
 export function asciiPreview(srcImage, width = 60) {
   const aspect = srcImage.width / srcImage.height;
   let h = Math.round(width / aspect / 2) * 2;

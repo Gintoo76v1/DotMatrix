@@ -21,6 +21,13 @@ import { clamp } from './utils.js';
  *                        three) and visually indistinguishable for typical
  *                        gamma values.
  */
+/**
+ * Converts image data to grayscale, optionally applying brightness, contrast, gamma and math modes.
+ * @param {ImageData} imgData - The source image data.
+ * @param {object} stateObj - The application state (brightness, contrast, etc.).
+ * @param {object} mode - Rendering mode options.
+ * @returns {Uint8Array} Grayscale pixel data.
+ */
 export function toGrayscale(imgData, stateObj, mode) {
   const useLuma = !mode || mode.grayscale !== 'rgb';
   const { width, height, data } = imgData;
@@ -68,6 +75,15 @@ export function toGrayscale(imgData, stateObj, mode) {
 //
 // Legacy ('classic') mode reproduces the v1 left-to-right pass with a fixed
 // 128 threshold for byte-identical output.
+/**
+ * Applies Floyd-Steinberg dithering to grayscale image data.
+ * @param {Uint8Array|Float32Array} gray - Input grayscale data.
+ * @param {number} w - Image width.
+ * @param {number} h - Image height.
+ * @param {object} mode - Rendering mode options (e.g. classic/serpentine).
+ * @param {number} threshold - Decision threshold (0-255).
+ * @returns {Uint8Array} A binary 0/1 array representing dots.
+ */
 export function floydSteinberg(gray, w, h, mode, threshold) {
   const serpentine = !mode || mode.floydSteinberg !== 'classic';
   const t = mode && mode.useFloydThreshold && Number.isFinite(threshold) ? threshold : 128;
@@ -115,6 +131,13 @@ const BAYER4 = new Float32Array([0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 
   (v) => ((v + 0.5) / 16) * 255
 ); // +0.5 centres thresholds in the 0–255 range
 
+/**
+ * Applies Ordered (Bayer 4x4) dithering to grayscale image data.
+ * @param {Uint8Array} gray - Input grayscale data.
+ * @param {number} w - Image width.
+ * @param {number} h - Image height.
+ * @returns {Uint8Array} A binary 0/1 array representing dots.
+ */
 export function orderedDither(gray, w, h) {
   const out = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) {
@@ -127,6 +150,14 @@ export function orderedDither(gray, w, h) {
 }
 
 // ── Plain threshold ────────────────────────────────────────────────────────
+/**
+ * Applies a simple threshold dither to grayscale image data.
+ * @param {Uint8Array} gray - Input grayscale data.
+ * @param {number} w - Image width.
+ * @param {number} h - Image height.
+ * @param {number} t - Decision threshold (0-255).
+ * @returns {Uint8Array} A binary 0/1 array representing dots.
+ */
 export function thresholdDither(gray, w, h, t) {
   const out = new Uint8Array(w * h);
   for (let i = 0; i < gray.length; i++) out[i] = gray[i] < t ? 1 : 0;
@@ -137,6 +168,12 @@ export function thresholdDither(gray, w, h, t) {
 // One horizontal pass + one vertical pass = 6 taps/pixel instead of 9.
 // Result is identical to the dense 2D kernel within FP tolerance for
 // 8-bit input.  Alpha is left as 255.
+/**
+ * Applies a separable 3x3 box blur. Modifies the input array in place.
+ * @param {Uint8ClampedArray} data - RGBA image data to blur.
+ * @param {number} w - Image width.
+ * @param {number} h - Image height.
+ */
 export function boxBlur3x3(data, w, h) {
   const tmp = new Uint8ClampedArray(data.length);
   // Horizontal pass: write to tmp
