@@ -114,6 +114,68 @@ export function makeValueNoise(rng, noiseW, noiseH, opts = {}) {
   };
 }
 
+function _buildMisaligned(ld, rng, gridH) {
+  ld.rowOff = new Float32Array(gridH);
+  let acc = 0;
+  for (let y = 0; y < gridH; y++) {
+    acc += (rng() - 0.5) * 1.4;
+    acc *= 0.91;
+    ld.rowOff[y] = acc;
+  }
+}
+
+function _buildPinSkip(ld, rng, numPins, str) {
+  ld.health = new Float32Array(numPins).fill(1.0);
+  for (let p = 0; p < numPins; p++) {
+    const roll = rng();
+    if (roll < str * 0.22) {
+      ld.health[p] = 0; // dead pin
+    } else if (roll < str * 0.55) {
+      ld.health[p] = Math.max(0.08, 1.0 - str * (0.3 + rng() * 0.5));
+    }
+  }
+}
+
+function _buildSmudge(ld, rng, gridH, str) {
+  ld.rows = new Uint8Array(gridH);
+  let inSmudge = false;
+  for (let y = 0; y < gridH; y++) {
+    if (!inSmudge && rng() < 0.04 * str) inSmudge = true;
+    else if (inSmudge && rng() < 0.22) inSmudge = false;
+    ld.rows[y] = inSmudge ? 1 : 0;
+  }
+}
+
+function _buildRibbonTwist(ld, rng, gridW, str) {
+  ld.col = new Float32Array(gridW).fill(1.0);
+  let val = 0.85 + rng() * 0.15;
+  for (let x = 0; x < gridW; x++) {
+    val += (rng() - 0.5) * 0.06;
+    val = clamp(val, 0.25, 1.0);
+    ld.col[x] = 1.0 - (1.0 - val) * str;
+  }
+}
+
+function _buildInkStarved(ld, rng, gridH, str) {
+  ld.rowDep = new Float32Array(gridH);
+  let dep = 0;
+  for (let y = 0; y < gridH; y++) {
+    dep = Math.min(1.0, dep + rng() * 0.003 * str);
+    ld.rowDep[y] = dep;
+  }
+}
+
+function _buildPaperSlip(ld, rng, gridH, str, stepY, mode) {
+  ld.rowShift = new Float32Array(gridH);
+  let slip = 0;
+  const scale = mode.paperSlip === 'stepScaled' ? stepY * 4 : 4;
+  for (let y = 0; y < gridH; y++) {
+    if (rng() < 0.04 * str) slip += (rng() - 0.5) * scale * str;
+    slip *= 0.85;
+    ld.rowShift[y] = slip;
+  }
+}
+
 // ── Layer pre-computation ───────────────────────────────────────────────────
 // Each wear pattern caches whatever it can compute up-front (row/column
 // LUTs, RNG-derived constants).  Per-cell work in the hot loop is then
@@ -130,71 +192,27 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY, mode) {
       break;
     }
     case 'misaligned': {
-      // Damped random walk → bounded drift along Y axis.
-      ld.rowOff = new Float32Array(gridH);
-      let acc = 0;
-      for (let y = 0; y < gridH; y++) {
-        acc += (rng() - 0.5) * 1.4;
-        acc *= 0.91;
-        ld.rowOff[y] = acc;
-      }
+      _buildMisaligned(ld, rng, gridH);
       break;
     }
     case 'pin_skip': {
-      ld.health = new Float32Array(numPins).fill(1.0);
-      for (let p = 0; p < numPins; p++) {
-        const roll = rng();
-        if (roll < str * 0.22) {
-          ld.health[p] = 0; // dead pin
-        } else if (roll < str * 0.55) {
-          ld.health[p] = Math.max(0.08, 1.0 - str * (0.3 + rng() * 0.5));
-        }
-      }
+      _buildPinSkip(ld, rng, numPins, str);
       break;
     }
     case 'smudge': {
-      ld.rows = new Uint8Array(gridH);
-      let inSmudge = false;
-      for (let y = 0; y < gridH; y++) {
-        if (!inSmudge && rng() < 0.04 * str) inSmudge = true;
-        else if (inSmudge && rng() < 0.22) inSmudge = false;
-        ld.rows[y] = inSmudge ? 1 : 0;
-      }
+      _buildSmudge(ld, rng, gridH, str);
       break;
     }
     case 'ribbon_twist': {
-      ld.col = new Float32Array(gridW).fill(1.0);
-      let val = 0.85 + rng() * 0.15;
-      for (let x = 0; x < gridW; x++) {
-        val += (rng() - 0.5) * 0.06;
-        val = clamp(val, 0.25, 1.0);
-        ld.col[x] = 1.0 - (1.0 - val) * str;
-      }
+      _buildRibbonTwist(ld, rng, gridW, str);
       break;
     }
     case 'ink_starved': {
-      // Depletion accumulates as ribbon unspools through the job.
-      ld.rowDep = new Float32Array(gridH);
-      let dep = 0;
-      for (let y = 0; y < gridH; y++) {
-        dep = Math.min(1.0, dep + rng() * 0.003 * str);
-        ld.rowDep[y] = dep;
-      }
+      _buildInkStarved(ld, rng, gridH, str);
       break;
     }
     case 'paper_slip': {
-      // Random-walk vertical slip (feed roller inconsistency).
-      // v2: directly in grid pixels — stable across paper-format scales.
-      // v1: scaled by stepY which made effect huge in paper mode and tiny in
-      //     original-resolution mode.
-      ld.rowShift = new Float32Array(gridH);
-      let slip = 0;
-      const scale = mode.paperSlip === 'stepScaled' ? stepY * 4 : 4;
-      for (let y = 0; y < gridH; y++) {
-        if (rng() < 0.04 * str) slip += (rng() - 0.5) * scale * str;
-        slip *= 0.85;
-        ld.rowShift[y] = slip;
-      }
+      _buildPaperSlip(ld, rng, gridH, str, stepY, mode);
       break;
     }
     case 'mechanical_resonance': {

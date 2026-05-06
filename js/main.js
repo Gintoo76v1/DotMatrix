@@ -74,6 +74,29 @@ export const triggerUpdate = (() => {
   };
 })();
 
+function _drawRenderDebug(ctx, width, height) {
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(8, 8, 280, 110);
+  ctx.strokeStyle = '#00ff41';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(8, 8, 280, 110);
+  const terminalFont = state._terminalFontStack || 'monospace';
+  ctx.font = `11px ${terminalFont}`;
+  ctx.fillStyle = '#00ff41';
+  const p = PROFILES[state.profile];
+  const lines = [
+    `Profile: ${p?.label || state.profile}`,
+    `Size: ${width}x${height}`,
+    `DPI: ${state.dpi}  Dither: ${state.dither}`,
+    `Gamma: ${state.gamma}  Bright: ${state.brightness}`,
+    `Contrast: ${state.contrast}  Jitter: ${state.jitterScale}`,
+    `Wear: ${state.wearLayers.length} layers`,
+  ];
+  lines.forEach((line, i) => {
+    ctx.fillText(line, 16, 28 + i * 14);
+  });
+}
+
 async function performRender() {
   if (!state.sourceImage || isRendering) return;
   isRendering = true;
@@ -92,26 +115,7 @@ async function performRender() {
       ctx.putImageData(imageData, 0, 0);
 
       if (state.renderDebug) {
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(8, 8, 280, 110);
-        ctx.strokeStyle = '#00ff41';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(8, 8, 280, 110);
-        const terminalFont = state._terminalFontStack || 'monospace';
-        ctx.font = `11px ${terminalFont}`;
-        ctx.fillStyle = '#00ff41';
-        const p = PROFILES[state.profile];
-        const lines = [
-          `Profile: ${p?.label || state.profile}`,
-          `Size: ${width}x${height}`,
-          `DPI: ${state.dpi}  Dither: ${state.dither}`,
-          `Gamma: ${state.gamma}  Bright: ${state.brightness}`,
-          `Contrast: ${state.contrast}  Jitter: ${state.jitterScale}`,
-          `Wear: ${state.wearLayers.length} layers`,
-        ];
-        lines.forEach((line, i) => {
-          ctx.fillText(line, 16, 28 + i * 14);
-        });
+        _drawRenderDebug(ctx, width, height);
       }
 
       outCanvas.toBlob((blob) => {
