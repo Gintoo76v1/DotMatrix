@@ -46,6 +46,8 @@ app.use(session({
 }));
 
 import authRoutes from './api/auth.js';
+import invitesRoutes from './api/invites.js';
+import rolesRoutes from './api/roles.js';
 
 // Basic Route
 app.get('/api/v1/health', (req, res) => {
@@ -54,6 +56,8 @@ app.get('/api/v1/health', (req, res) => {
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/invites', invitesRoutes);
+app.use('/api/v1/roles', rolesRoutes);
 
 // Start Server
 app.listen(PORT, () => {
