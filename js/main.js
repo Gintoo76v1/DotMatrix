@@ -92,7 +92,8 @@ async function performRender() {
         ctx.strokeStyle = '#00ff41';
         ctx.lineWidth = 1;
         ctx.strokeRect(8, 8, 280, 110);
-        ctx.font = '11px monospace';
+        const terminalFont = state._terminalFontStack || 'monospace';
+        ctx.font = `11px ${terminalFont}`;
         ctx.fillStyle = '#00ff41';
         const p = PROFILES[state.profile];
         const lines = [

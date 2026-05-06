@@ -165,7 +165,9 @@ export function applyAppearance() {
 
   body.style.setProperty('--dm-font-sans',      sansStack);
   body.style.setProperty('--dm-font-mono',      monoStack);
-  body.style.setProperty('--dm-font-terminal',   terminalStack);
+  // Terminal-Font wird nicht als CSS-Variable exposet, sondern direkt im State
+  // für Canvas-Render-Debug verwendet (Canvas ctx.font kann kein CSS-Variable lesen)
+  state._terminalFontStack = terminalStack;
 
   // ── Animation ──
   if (appBg) {

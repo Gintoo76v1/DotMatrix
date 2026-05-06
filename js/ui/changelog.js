@@ -62,10 +62,16 @@ function _wireOverlay() {
   backdrop?.addEventListener('click', closeOverlay);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen) closeOverlay(); });
 
-  // Touch swipe-down to close
+  // Touch swipe-down to close — only from header/backdrop, never from scrollable body
   let startY = 0;
-  overlay.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; });
+  let canSwipeClose = false;
+  overlay.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    // Allow swipe-to-close only if touch started on header or backdrop, not on scrollable body
+    canSwipeClose = !!(e.target.closest('.changelog-header, .changelog-backdrop'));
+  }, { passive: true });
   overlay.addEventListener('touchend', (e) => {
+    if (!canSwipeClose) return;
     const dy = e.changedTouches[0].clientY - startY;
     if (dy > 80) closeOverlay();
   });

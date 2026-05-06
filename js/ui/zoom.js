@@ -2,7 +2,7 @@
 // Uses CSS transforms; the canvas itself isn't re-rendered on zoom.
 
 const ZOOM_MIN = 0.2;
-const ZOOM_MAX = 5.0;
+const ZOOM_MAX = 10.0;
 const PINCH_SMOOTHING = 0.4;    // Increased for more responsive feel
 const MOMENTUM_DECAY = 0.90;    // Slightly stronger decay for natural feel
 const MOMENTUM_CUTOFF = 0.1;

@@ -216,14 +216,17 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-html, body {
-  position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh;
-  overflow: hidden; overscroll-behavior: none;
-  -webkit-text-size-adjust: 100%; text-size-adjust: 100%; margin: 0; padding: 0;
+html {
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
 }
 
-html {
-  overscroll-behavior: none;
+body {
+  position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh;
+  overflow: hidden; overscroll-behavior: none;
+  margin: 0; padding: 0;
 }
 
 body {
@@ -263,8 +266,14 @@ h2, .btn, .dropzone .big, .status-large, .er-name, .sli-name, .header-fancy, .fo
   font-family: var(--dm-font-sans); font-weight: 500;
 }
 
-.ascii, .yaml-area, .text-input, .profile-meta, .er-val, .hex-input {
+/* Eingabeschriftart: nur Inputs, Textareas, YAML/Code-Felder */
+input[type="text"], input[type="color"], textarea, .yaml-area, .hex-input, .ascii {
   font-family: var(--dm-font-mono);
+}
+
+/* Metadaten und Werte bleiben in UI-Schrift */
+.profile-meta, .er-val, .changelog-version, .changelog-date {
+  font-family: var(--dm-font-sans);
 }
 
 input[type="file"] { display: none; }
@@ -434,6 +443,7 @@ input[type="file"] { display: none; }
   width: 100%; height: 100%;
   padding: 16px; gap: 16px;
   z-index: 1; position: relative;
+  overflow: hidden;
 }
 
 .app-container {
@@ -650,6 +660,8 @@ canvas {
   max-height: 100%;
   touch-action: none;
   pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 @media (max-width: 767px), (orientation: portrait) {
@@ -792,6 +804,7 @@ h2 {
   overflow-y: auto; overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   border: 1px solid var(--dm-border-base);
   border-radius: 12px;
   background: var(--paper-dark);
