@@ -170,7 +170,7 @@ const sidebarEl = document.querySelector('.sidebar');
 if (sidebarToggleBtn && sidebarEl) {
   sidebarToggleBtn.addEventListener('click', () => {
     sidebarEl.classList.toggle('collapsed');
-    sidebarToggleBtn.textContent = sidebarEl.classList.contains('collapsed') ? '▶' : '◀';
+    sidebarToggleBtn.classList.toggle('collapsed', sidebarEl.classList.contains('collapsed'));
   });
 }
 

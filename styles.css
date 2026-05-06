@@ -281,7 +281,7 @@ input[type="file"] { display: none; }
 /* ── 6. Background & Animations ────────────────────────────────────────────── */
 
 .app-bg {
-  position: absolute; inset: 0; z-index: -2;
+  position: absolute; inset: 0; z-index: -1;
   background: var(--dm-surface-base);
   overflow: hidden; pointer-events: none;
   transition: opacity 0.5s;
@@ -605,6 +605,27 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-c
 
 .spacer { flex-grow: 1; }
 
+/* ── Sidebar Toggle Button (elegant chevron) ─────────────────────────────── */
+.toggle-btn {
+  position: relative;
+}
+.toggle-chevron {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-right: 2.5px solid currentColor;
+  border-bottom: 2.5px solid currentColor;
+  transform: rotate(-135deg);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+  opacity: 0.55;
+}
+.toggle-btn:hover .toggle-chevron {
+  opacity: 1;
+}
+.toggle-btn.collapsed .toggle-chevron {
+  transform: rotate(45deg);
+}
+
 /* ── 11. Sidebar ───────────────────────────────────────────────────────────── */
 
 .sidebar {
@@ -638,14 +659,29 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-c
 .tab-content.active { display: block; }
 
 .sidebar-logo {
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dm-primary);
-  opacity: 0.5;
-  margin-bottom: 16px;
+  opacity: 1;
+  margin-bottom: 18px;
+  padding: 10px 0 14px;
   text-align: center;
+  border-bottom: 1px solid var(--dm-border-base);
+  text-shadow: 0 0 16px var(--dm-primary-soft), 0 0 32px var(--dm-primary-soft);
+  animation: sidebarLogoPulse 3s ease-in-out infinite;
+}
+
+@keyframes sidebarLogoPulse {
+  0%, 100% {
+    opacity: 0.85;
+    text-shadow: 0 0 14px var(--dm-primary-soft), 0 0 28px var(--dm-primary-soft);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 22px var(--dm-primary-soft), 0 0 44px var(--dm-primary);
+  }
 }
 
 /* ── 12. Main Editor ───────────────────────────────────────────────────────── */

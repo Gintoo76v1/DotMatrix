@@ -288,20 +288,16 @@ function _updateFooterGlow() {
   const original = el.dataset.originalText || el.textContent;
   if (!el.dataset.originalText) el.dataset.originalText = original;
 
-  if (state.bgEffects) {
-    if (el.querySelector('.glow-letter')) return; // already split
-    el.textContent = '';
-    original.split('').forEach((ch, i) => {
-      const span = document.createElement('span');
-      span.className = 'glow-letter';
-      span.style.setProperty('--i', String(i));
-      span.textContent = ch === ' ' ? '\u00A0' : ch;
-      el.appendChild(span);
-    });
-  } else {
-    if (!el.querySelector('.glow-letter')) return; // already plain
-    el.textContent = original;
-  }
+  // Always active — not tied to bgEffects toggle per user request
+  if (el.querySelector('.glow-letter')) return; // already split
+  el.textContent = '';
+  original.split('').forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 'glow-letter';
+    span.style.setProperty('--i', String(i));
+    span.textContent = ch === ' ' ? '\u00A0' : ch;
+    el.appendChild(span);
+  });
 }
 
 function _applyAnimPreset() {
