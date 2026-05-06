@@ -479,38 +479,25 @@ input[type="file"] { display: none; }
 
 .footer-accent .glow-letter {
   display: inline-block;
-  animation: letterVibrate 0.25s linear infinite alternate;
+  animation: letterAestheticWave 3s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.1s);
 }
 
-.footer-accent .glow-letter:nth-child(even) {
-  animation-delay: 0.05s;
-  animation-direction: alternate-reverse;
-}
-
-.footer-accent .glow-letter:nth-child(3n) {
-  animation-delay: 0.1s;
-}
-
-@keyframes letterVibrate {
-  0% {
-    transform: translate(0, 0);
+@keyframes letterAestheticWave {
+  0%, 100% {
+    transform: translateY(0);
     text-shadow: 0 0 6px var(--dm-primary-soft), 0 0 12px var(--dm-primary);
     color: var(--dm-primary);
   }
   33% {
-    transform: translate(-1px, 0.5px);
+    transform: translateY(-1px);
     text-shadow: 0 0 8px var(--dm-info-soft), 0 0 16px var(--dm-info);
     color: var(--dm-info);
   }
   66% {
-    transform: translate(1px, -0.5px);
+    transform: translateY(1px);
     text-shadow: 0 0 8px var(--dm-success-soft), 0 0 16px var(--dm-success);
     color: var(--dm-success);
-  }
-  100% {
-    transform: translate(-0.5px, -1px);
-    text-shadow: 0 0 6px var(--dm-primary-soft), 0 0 14px var(--dm-primary);
-    color: var(--dm-primary);
   }
 }
 
