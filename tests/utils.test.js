@@ -65,10 +65,6 @@ describe('gaussian / makeGaussian', () => {
 
   it('cached gaussian uses 2nd box-muller value (consumes fewer rng calls)', () => {
     let calls = 0;
-    const counted = () => {
-      calls++;
-      return mulberry32(1)();
-    };
     // Better: track via wrapper around a real RNG
     const r = mulberry32(99);
     const wrapper = () => {

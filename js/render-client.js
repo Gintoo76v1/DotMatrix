@@ -34,7 +34,7 @@ function killWorker(err) {
   if (workerInstance) {
     try {
       workerInstance.terminate();
-    } catch (e) {
+    } catch {
       // Ignore termination errors
     }
     workerInstance = null;
@@ -68,6 +68,7 @@ function getWorker() {
 }
 
 function snapshotState() {
+  // eslint-disable-next-line no-unused-vars
   const { sourceImage, ...rest } = state;
   return rest;
 }

@@ -161,7 +161,7 @@ export function initZoom() {
     } else if (pointers.length === 0) {
       try {
         canvasWrapper.releasePointerCapture(e.pointerId);
-      } catch (e) {
+      } catch {
         // Ignore errors if pointer capture was already lost
       }
       setTimeout(() => {

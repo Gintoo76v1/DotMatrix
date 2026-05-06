@@ -12,7 +12,6 @@ function installCanvasPolyfill() {
   // a deterministic gradient ImageData.
   const proto = window.HTMLCanvasElement.prototype;
   proto.getContext = function () {
-    const self = this;
     return {
       fillStyle: '#fff',
       fillRect() {},

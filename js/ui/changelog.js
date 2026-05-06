@@ -3,7 +3,7 @@
 // and manages the footer indicator.
 
 import { state } from '../config.js';
-import { saveSettings, loadSettings } from '../settings-store.js';
+import { saveSettings } from '../settings-store.js';
 
 let versionData = null;
 let isOpen = false;

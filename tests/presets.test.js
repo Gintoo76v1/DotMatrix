@@ -4,6 +4,7 @@ import { SYSTEM_PRESETS } from '../js/config.js';
 
 function normalised(p) {
   // Drop fields that the YAML serialiser explicitly skips
+  // eslint-disable-next-line no-unused-vars
   const { id, system, ...rest } = p;
   return rest;
 }

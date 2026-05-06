@@ -15,7 +15,7 @@ function needsQuoting(s) {
   if (s === '') return true;
   if (KEYWORDS.has(s.toLowerCase())) return true;
   if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(s)) return true; // looks like a number
-  if (/[:#,\[\]{}&*!|>'"%@`]/.test(s)) return true; // YAML metacharacters
+  if (/[:#,[\]{}&*!|>'"%@`]/.test(s)) return true; // YAML metacharacters
   if (/^\s|\s$/.test(s)) return true; // leading/trailing ws
   return false;
 }

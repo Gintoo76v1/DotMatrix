@@ -7,15 +7,6 @@ import { state } from '../config.js';
 import { saveSettings } from '../settings-store.js';
 import { applyLanguage } from '../lang.js';
 
-// ── Theme map: ID → human-readable label ────────────────────────────────────
-const THEME_LABELS = {
-  'oc-2': 'OC-2',
-  matrix: 'Matrix',
-  tokyonight: 'Tokyonight',
-  synthwave: 'Synthwave',
-  gruvbox: 'Gruvbox',
-};
-
 // ── Font stacks (CSS font-family values, NOT display names) ────────────────
 const FONT_STACKS = {
   sans: {
@@ -244,11 +235,8 @@ export function applyAppearance() {
 }
 
 /** Toggle bg-anim visibility (used by the bgAnim checkbox in checks.js). */
+// eslint-disable-next-line no-unused-vars
 export function updateBgAnimVisibility(state) {
-  const appBg = document.getElementById('appBg');
-  const field = document.getElementById('bgAnimStyleField');
-  const sel = document.getElementById('bgAnimSelector');
-  if (!appBg) return;
   // In the new system, visibility is controlled by the pattern selector
   // (already handled by applyAppearance reading state.bgAnim)
 }
