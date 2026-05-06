@@ -45,10 +45,15 @@ app.use(session({
   }
 }));
 
+import authRoutes from './api/auth.js';
+
 // Basic Route
 app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Routes
+app.use('/api/v1/auth', authRoutes);
 
 // Start Server
 app.listen(PORT, () => {
