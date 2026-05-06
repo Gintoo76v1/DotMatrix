@@ -173,6 +173,16 @@ export function applyPreset(p) {
 
 // ── Preset list rendering ──────────────────────────────────────────────────
 
+function escapeHTML(str) {
+  if (typeof str !== 'string') return String(str);
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function renderPresetList() {
   const list = document.getElementById('presetList');
   if (!list) return;
@@ -181,10 +191,11 @@ export function renderPresetList() {
   for (const p of all) {
     const el = document.createElement('div');
     el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
+    const safeName = escapeHTML(p.name);
     if (p.system) {
-      el.innerHTML = `<div class="sli-row" style="width:100%"><span class="sli-name">${p.name}</span><span class="sli-badge">SYS</span></div>`;
+      el.innerHTML = `<div class="sli-row" style="width:100%"><span class="sli-name">${safeName}</span><span class="sli-badge">SYS</span></div>`;
     } else {
-      el.innerHTML = `<div class="sli-row" style="width:100%"><span class="sli-name">${p.name}</span><div><span class="sli-badge" style="margin-right:5px">USR</span><button class="sli-del" title="Löschen">×</button></div></div>`;
+      el.innerHTML = `<div class="sli-row" style="width:100%"><span class="sli-name">${safeName}</span><div><span class="sli-badge" style="margin-right:5px">USR</span><button class="sli-del" title="Löschen">×</button></div></div>`;
       el.querySelector('.sli-del').addEventListener('click', (e) => {
         e.stopPropagation();
         if (confirm(`Preset "${p.name}" löschen?`)) {
