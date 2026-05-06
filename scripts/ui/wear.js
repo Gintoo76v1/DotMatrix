@@ -21,8 +21,10 @@ export function initWearLayers(state, onChange) {
     if (head) {
       head.addEventListener('click', () => {
         er.classList.toggle('on');
+        const isOn = er.classList.contains('on');
+        head.setAttribute('aria-expanded', isOn ? 'true' : 'false');
         if (valEl && slider) {
-          valEl.textContent = er.classList.contains('on') ? slider.value + '%' : '0%';
+          valEl.textContent = isOn ? slider.value + '%' : '0%';
         }
         state.wearLayers = collectActiveLayers();
         if (onChange) onChange();
@@ -42,6 +44,8 @@ export function initWearLayers(state, onChange) {
 export function applyWearLayersToUI(state) {
   document.querySelectorAll('#errorList .er').forEach((el) => {
     el.classList.remove('on');
+    const head = el.querySelector('.er-head');
+    if (head) head.setAttribute('aria-expanded', 'false');
     const valEl = el.querySelector('.er-val');
     if (valEl) valEl.textContent = '0%';
   });
@@ -49,6 +53,8 @@ export function applyWearLayersToUI(state) {
     const el = document.querySelector(`#errorList .er[data-pattern="${layer.pattern}"]`);
     if (!el) continue;
     el.classList.add('on');
+    const head = el.querySelector('.er-head');
+    if (head) head.setAttribute('aria-expanded', 'true');
     const s = el.querySelector('.er-slider');
     const v = el.querySelector('.er-val');
     const val = layer.strength ?? 50;

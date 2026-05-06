@@ -6,18 +6,27 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; worker-src 'self' blob:;">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; worker-src 'self' blob:;"
+    />
     <title>DotMatrix Studio</title>
 
     <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="preload" href="assets/fonts/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="assets/fonts/JetBrainsMono-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles/main.css?v=11" />
+    <link rel="stylesheet" href="styles/main.css?v=12" />
   </head>
   <body class="dark-mode">
     <div class="app-bg" id="appBg" data-anim="drift">
@@ -51,57 +60,57 @@
 
               <h2 data-i18n="profileTitle" style="margin-top: 24px">Druckerprofil</h2>
               <div class="scroll-list" id="profileList">
-                <div class="sli" data-profile="epson_fx">
+                <button type="button" class="sli" data-profile="epson_fx">
                   <div class="sli-row">
                     <span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="epson_lq">
+                </button>
+                <button type="button" class="sli" data-profile="epson_lq">
                   <div class="sli-row">
                     <span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="ibm_proprinter">
+                </button>
+                <button type="button" class="sli" data-profile="ibm_proprinter">
                   <div class="sli-row">
                     <span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span>
                   </div>
-                </div>
-                <div class="sli active" data-profile="oki_microline">
+                </button>
+                <button type="button" class="sli active" data-profile="oki_microline">
                   <div class="sli-row">
                     <span class="sli-name">OKI Microline</span><span class="sli-badge">9-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="star_nx1000">
+                </button>
+                <button type="button" class="sli" data-profile="star_nx1000">
                   <div class="sli-row">
                     <span class="sli-name">Star NX-1000</span><span class="sli-badge">9-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="panasonic_kx">
+                </button>
+                <button type="button" class="sli" data-profile="panasonic_kx">
                   <div class="sli-row">
                     <span class="sli-name">Panasonic KX-P</span
                     ><span class="sli-badge">24-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="dec_la75">
+                </button>
+                <button type="button" class="sli" data-profile="dec_la75">
                   <div class="sli-row">
                     <span class="sli-name">DEC LA75</span><span class="sli-badge">9-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="nec_p6">
+                </button>
+                <button type="button" class="sli" data-profile="nec_p6">
                   <div class="sli-row">
                     <span class="sli-name">NEC P6</span><span class="sli-badge">24-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="commodore_mps">
+                </button>
+                <button type="button" class="sli" data-profile="commodore_mps">
                   <div class="sli-row">
                     <span class="sli-name">MPS-803</span><span class="sli-badge">7-PIN</span>
                   </div>
-                </div>
-                <div class="sli" data-profile="apple_imagewriter">
+                </button>
+                <button type="button" class="sli" data-profile="apple_imagewriter">
                   <div class="sli-row">
                     <span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span>
                   </div>
-                </div>
+                </button>
               </div>
               <div class="profile-meta" id="profileMeta"></div>
               <div class="checks" style="margin-top: 12px">
@@ -175,19 +184,41 @@
                     Tinte
                   </div>
                   <div class="swatches" id="inkSwatches">
-                    <div
+                    <button
+                      type="button"
                       class="swatch active"
                       style="background: #19191e"
                       data-ink="25,25,30"
-                    ></div>
-                    <div class="swatch" style="background: #142d82" data-ink="20,45,130"></div>
-                    <div class="swatch" style="background: #a01e23" data-ink="160,30,35"></div>
-                    <div class="swatch" style="background: #4a2c6e" data-ink="74,44,110"></div>
-                    <div
+                      aria-label="Tinte Schwarz"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #142d82"
+                      data-ink="20,45,130"
+                      aria-label="Tinte Blau"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #a01e23"
+                      data-ink="160,30,35"
+                      aria-label="Tinte Rot"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #4a2c6e"
+                      data-ink="74,44,110"
+                      aria-label="Tinte Violett"
+                    ></button>
+                    <button
+                      type="button"
                       class="swatch custom-swatch"
                       id="customInkSwatch"
                       style="background: #19191e"
-                    ></div>
+                      aria-label="Eigene Tinte"
+                    ></button>
                     <div
                       class="swatch swatch-add"
                       id="inkAddSwatch"
@@ -216,20 +247,48 @@
                     Papier
                   </div>
                   <div class="swatches" id="paperSwatches">
-                    <div class="swatch" style="background: #f8f5e8" data-paper="248,245,232"></div>
-                    <div
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #f8f5e8"
+                      data-paper="248,245,232"
+                      aria-label="Papier Creme"
+                    ></button>
+                    <button
+                      type="button"
                       class="swatch active"
                       style="background: #ffffff"
                       data-paper="255,255,255"
-                    ></div>
-                    <div class="swatch" style="background: #eadfb8" data-paper="234,223,184"></div>
-                    <div class="swatch" style="background: #d8c8a0" data-paper="216,200,160"></div>
-                    <div class="swatch" style="background: #f0f0f0" data-paper="240,240,240"></div>
-                    <div
+                      aria-label="Papier Weiß"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #eadfb8"
+                      data-paper="234,223,184"
+                      aria-label="Papier Alt"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #d8c8a0"
+                      data-paper="216,200,160"
+                      aria-label="Papier Gelblich"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #f0f0f0"
+                      data-paper="240,240,240"
+                      aria-label="Papier Hellgrau"
+                    ></button>
+                    <button
+                      type="button"
                       class="swatch custom-swatch"
                       id="customPaperSwatch"
                       style="background: #ffffff"
-                    ></div>
+                      aria-label="Eigenes Papier"
+                    ></button>
                     <div
                       class="swatch swatch-add"
                       id="paperAddSwatch"
@@ -302,109 +361,109 @@
               <h2 data-i18n="errorsTitle">Hardware Fehler</h2>
               <div class="error-container scroll-list" id="errorList">
                 <div class="er" data-pattern="cloudy">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Cloudy</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="ghosting">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Ghosting</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="misaligned">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Wobble</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="pin_skip">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Pin Skip</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="smudge">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Smudge</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="ribbon_twist">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Ribbon Twist</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="head_gap">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Head Gap</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="ink_starved">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Ink Starved</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="paper_slip">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Paper Slip</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="static_noise">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Static</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="double_feed">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Double Feed</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
                 </div>
                 <div class="er" data-pattern="mechanical_resonance">
-                  <div class="er-head">
+                  <button type="button" class="er-head" aria-expanded="false">
                     <span class="er-check"></span><span class="er-name">Resonance</span
                     ><span class="er-val">0%</span>
-                  </div>
+                  </button>
                   <div class="er-body">
                     <input type="range" class="er-slider" min="0" max="100" value="50" />
                   </div>
@@ -678,19 +737,19 @@
                   <span class="sg-icon">⚡</span><span class="sg-title">Engine</span>
                 </summary>
                 <div class="sg-body">
-                <div class="checks">
-                  <label class="check" data-flag="useWorker"
-                    ><span class="box"></span><span>Worker Rendering</span></label
-                  >
-                  <p class="setting-desc check-desc">
-                    Rendering im Hintergrund-Thread für flüssige UI.
-                  </p>
-                </div>
-                <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
-                  <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
-                  responsiv). Fällt automatisch auf Inline-Rendering zurück, falls OffscreenCanvas
-                  nicht verfügbar.
-                </div>
+                  <div class="checks">
+                    <label class="check" data-flag="useWorker"
+                      ><span class="box"></span><span>Worker Rendering</span></label
+                    >
+                    <p class="setting-desc check-desc">
+                      Rendering im Hintergrund-Thread für flüssige UI.
+                    </p>
+                  </div>
+                  <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
+                    <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
+                    responsiv). Fällt automatisch auf Inline-Rendering zurück, falls OffscreenCanvas
+                    nicht verfügbar.
+                  </div>
                   <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
                     <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
                     klassisches Floyd–Steinberg, RGB-Filter). Aus = neuere, korrektere
@@ -805,6 +864,6 @@
       </div>
     </div>
 
-    <script type="module" src="scripts/main.js?v=11"></script>
+    <script type="module" src="scripts/main.js?v=12"></script>
   </body>
 </html>

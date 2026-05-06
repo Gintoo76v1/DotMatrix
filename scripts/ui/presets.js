@@ -182,7 +182,8 @@ export function renderPresetList() {
   list.innerHTML = '';
   const all = [...(SYSTEM_PRESETS || []), ...loadUserPresets()];
   for (const p of all) {
-    const el = document.createElement('div');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.className = 'sli' + (p.id === activePresetId ? ' active' : '');
     const safeName = escapeHTML(p.name);
     if (p.system) {

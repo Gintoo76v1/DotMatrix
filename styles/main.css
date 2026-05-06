@@ -1210,7 +1210,14 @@ h2 {
 }
 
 .sli {
+  display: block;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-family: inherit;
   padding: 14px 16px;
+  border: none;
   border-top: 1px solid var(--dm-border-base);
   cursor: pointer;
   transition: 0.2s;
@@ -1284,6 +1291,8 @@ h2 {
   gap: 14px;
   cursor: pointer;
   font-size: 11px;
+  font-family: inherit;
+  text-align: left;
   text-transform: uppercase;
   padding: 8px 12px;
   transition:
@@ -1292,6 +1301,8 @@ h2 {
   font-weight: 500;
   border-radius: 8px;
   border: 1.5px solid transparent;
+  color: inherit;
+  background: transparent;
 }
 
 .check.on {
@@ -1391,6 +1402,11 @@ h2 {
 
 .er-head {
   display: flex;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  border: none;
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
@@ -1621,6 +1637,7 @@ input[type='range']::-webkit-slider-thumb {
 .swatch {
   width: 34px;
   height: 34px;
+  padding: 0;
   border: 1px solid var(--dm-border-base);
   cursor: pointer;
   border-radius: 8px;
