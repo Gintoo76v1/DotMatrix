@@ -1,127 +1,36 @@
 # Changelog
 
-## v1.3.0 — 2026-05-05
+## [1.0.0-rc.1] - 2026-05-06
+### Phase 8: UI / UX / Visual Optimization & Accessibility
+- **a11y**: Ersetzung aller iterativen `<div onclick>` Elemente (Profile, Checks, Swatches) durch semantische `<button>`-Tags.
+- **a11y**: Tastaturnavigierbarkeit via `Tab`, `Space`, `Enter` für alle Kernfunktionen wiederhergestellt.
+- **a11y**: ARIA-Attribute (`aria-checked`, `aria-expanded`, `aria-label`) für dynamische UI-States implementiert.
+- **style**: "Vibration Shake Color Animation" für das Footer-Logo (Aesthetic Wave).
+- **style**: Rahmenüberschneidungen bei aktiven Elementen durch `inset box-shadow` korrigiert.
 
-### 🎨 UI & Design (OpenCode Theme-System)
+### Phase 6 & 7: Architecture & Testing
+- **refactor**: Ordnerstruktur bereinigt (`js/` → `scripts/`, `styles.css` → `styles/main.css`).
+- **test**: E2E-Smoke-Tests via Playwright (`playwright.config.js`, `tests/e2e/smoke.spec.js`) aufgesetzt.
+- **test**: Integrationstests mit `jsdom` (`tests/integration.test.js`, `tests/events.test.js`) implementiert.
+- **refactor**: Komplettes Entfernen der `math-mode.js` (Legacy-Rendering) zur Drückung der Komplexität.
 
-- **5 neue Themes** inspiriert von OpenCode Desktop:
-  - **OC-2** — Warmes Peach (`#fab283`) auf Dunkelgrau (`#1C1C1C`). Haupt-Theme.
-  - **Matrix** — Neon-Grün (`#00ff41`) auf Schwarz (`#0a0a0a`). Hacker-Terminal-Ästhetik.
-  - **Tokyonight** — Blau-Lila (`#7aa2f7`) auf Dunkelblau (`#1a1b26`). Kalt, technisch.
-  - **Synthwave** — Neon-Pink/Cyan (`#ff00ff` / `#00ffff`) auf Violett (`#2b213a`). Retro-Neon.
-  - **Gruvbox** — Warmes Gelb (`#fabd2f`) auf Braun (`#282828`). Retro, warm.
-- **Token-basiertes CSS-Design-System** — 26 Custom Properties pro Theme
-  - Surfaces: `surface-base`, `surface-raised`, `surface-overlay`, `surface-hover`
-  - Text: `text-strong`, `text-base`, `text-weak`, `text-weaker`
-  - Semantic: `primary`, `success`, `warning`, `error`, `info`, `interactive`
-  - Borders: `border-base`, `border-hover`, `border-active`
-- **3 individualisierbare Fonts**:
-  - UI-Schriftart (Sans): Inter, System Sans, SF Pro, Roboto, Open Sans, Custom
-  - Code-Schriftart (Mono): JetBrains Mono, Fira Code, Cascadia Code, IBM Plex Mono, Custom
-  - Terminal Font: JetBrainsMono Nerd Font Mono, Fira Code, Hack, Custom
-  - Custom-Input für jede Font-Kategorie
-- **Animation-System** mit 4 Patterns:
-  - **Aurora** — Weicher Farbverlauf-Drift mit Filter-Blur (OpenCode-Style)
-  - **Pulse** — Subtile Atmung der Hintergrund-Orbs
-  - **Orbit** — Sanfte Kreisbewegung
-  - **Off** — Statischer Hintergrund
-  - Einstellbar: Geschwindigkeit, Intensität, Größe (je Slider 0-100%)
+### Phase 5: Performance
+- **perf**: Preloading für lokal gehosteten Font (`JetBrainsMono-Regular.woff2`) hinzugefügt.
+- **config**: `Caddyfile.example` mit Caching-Headern (`Cache-Control: immutable`) für statische Assets hinzugefügt.
 
-### ⚡ Performance
+### Phase 4: Code Quality Upgrade
+- **refactor**: Massive Reduktion der "Cyclomatic Complexity" in `engine.js` (Helper wie `_buildPinSkip`, `_buildSmudge` extrahiert).
+- **docs**: JSDoc-Kommentare für alle Public Functions in `engine.js` und `filters.js` ergänzt.
+- **chore**: Unused Variables, Dead Imports und unnötige RegExp-Escapes eliminiert.
 
-- **OffscreenCanvas Web-Worker** — Rendering läuft im Hintergrund
-  - UI bleibt bei großen Bildern (>4K) responsiv
-  - Automatischer Fallback auf Inline-Rendering wenn Worker nicht verfügbar
-  - Zero-Copy via Transferable ImageBitmap & ArrayBuffer
-- **Math-Optimierungen**:
-  - `toGrayscale` Luma-First: ~3× schneller (1 `pow` statt 3 pro Pixel)
-  - `gaussian` Box-Muller-Cache: ~2× weniger RNG-Calls
-  - `boxBlur3x3` separable: Zwei 1D-Passes statt 9-Tap 2D
-  - `stampInto` branch-frei mit `Math.min`
-  - `onCells` als `Int32Array` (weniger GC-Druck)
+### Phase 3: Bug Hunt
+- **fix**: Race Condition beim asynchronen Starten von Web-Workern (`render-client.js`) behoben.
+- **perf/fix**: Memory Leak durch nicht abgeräumte `ImageBitmap` Objekte gefixt (`msg.bitmap.close()`).
+- **fix**: Klick-Blockade für Touch-Devices (iOS Safari) durch Setzen von `body { position: relative }` und Korrektur der Z-Indices repariert.
+- **fix**: TypeError-Absturz beim Einlesen defekter Farbcodes (`!Array.isArray(rgb)`) abgefangen.
+- **fix**: Error-Boundary beim Upload korrupter Bilddaten implementiert.
 
-### 🧪 Testing
-
-- **120 Unit-Tests** mit 93% Coverage auf Math/Engine/Config/Presets
-  - `mulberry32`: Determinismus, Uniformität, Unkorreliertheit
-  - `gaussian`: μ≈0, σ≈1 über 10k Samples, Box-Muller-Cache-Verifikation
-  - `toGrayscale`: Weiß→255, Schwarz→0, Gamma, Invert, Clamp
-  - `floydSteinberg`: Energieerhaltung, Serpentine vs. Classic, Threshold
-  - `orderedDither`: Bayer-Pattern-Korrektheit
-  - `boxBlur3x3`: Konstante-Bild unverändert, StdDev-Reduktion
-  - `makeDotStamp`: Radial-Symmetrie, Density-Skalierung, Anisotropie
-  - `stampInto`: Bounds, Clipping, Akkumulation, Band-Multiplikator
-  - `render`: Synthetische Bilder, alle 12 Wear-Patterns, Legacy-Parity
-  - `presets`: YAML-Roundtrip für alle SYSTEM_PRESETS, Edge-Cases
-  - `config`: Profile-Sanity, Preset-Schema, PAPER_SIZES_MM
-
-### 🔧 Bugfixes
-
-- **13 Render-Engine-Bugs** behoben:
-  - Ghosting-Richtung: Carriage-Sweep-basiert statt Pin-Reihe
-  - `rowBands` symmetrisch (oszilliert um 1.0 statt einseitig)
-  - `makeDotStamp` Anisotropie aus `dpi_h/dpi_v` abgeleitet
-  - `paper_slip` Skala in Grid-Pixeln (stabil über Paper-Formate)
-  - `mechanical_resonance` Random-Phase pro Rendering
-  - `floydSteinberg` Serpentine-Scan + `state.threshold`
-  - `toGrayscale` Luma-First (3× schneller, mathematisch äquivalent)
-  - Pin-Offsets pro Pass (Double-Strike funktioniert korrekt)
-  - `ribbon_fade` als Profile-Property (konfigurierbar)
-- **9 UI/State-Bugs** behoben:
-  - Slider-Sync nach Bildanalyse (`analyzeAndAdaptImage`)
-  - `applyPreset` Faktor-10-Verschiebung bei jitter/banding
-  - `setS` schrieb falschen state-Key (String-Manipulation-Fehler)
-  - `state.autoRender` Default + UI-Toggle
-  - `bgAnim`/`uiSounds`/`legacyMath`/`useWorker` Persistenz
-  - `setS` Null-Checks (defensiv für Test-Umgebungen)
-  - YAML-Parser: String-Quoting, strenge Number-Detection, Kommentare
-  - `presetToYaml` quotet Edge-Cases
-  - Event-Handler-Konsistenz (`addEventListener` statt `onclick`)
-
-### 🏗️ Architektur
-
-- `main.js` reduziert von 581 auf ~180 Zeilen (-68%)
-- 12 UI-Module unter `js/ui/` (eines pro Bereich)
-- `math-mode.js` — Zentralisierter Legacy/Modern-Toggle
-- `render-client.js` + `render-worker.js` — Worker-Abstraktion
-- `settings-store.js` — LocalStorage Persistenz für alle UI-Flags
-- `preset-yaml.js` — Hand-rolled YAML Serializer/Parser
-
----
-
-## v1.2.0 — 2026-04-20
-
-### 🔧 Bugfixes
-
-- Wear-Layer-Liste scrollbar gemacht (`max-height: 55vh`, `overflow-y: auto`)
-- Touch-Scroll-Whitelist erweitert um `.error-container`
-- `main.js` in 12 UI-Module aufgesplittet
-- YAML-Preset-Parser robuster gemacht
-- State-Persistenz via `settings-store.js`
-- Math-Mode-Helper für Legacy/Modern-Toggle
-
----
-
-## v1.1.0 — 2026-03-15
-
-### ✨ Features
-
-- Preset-System mit Import/Export (YAML + JSON)
-- User-Presets in localStorage
-- Multi-Touch Pinch-Zoom mit Low-Pass-Filter
-- UI Click-Sounds via WebAudio API
-- Click-Shockwave Animation
-- 12 Hardware-Fehler-Layer (Wear-Patterns)
-
----
-
-## v1.0.0 — 2026-02-01
-
-### 🚀 Release
-
-- 10 Drucker-Profile (Epson FX-80, LQ-850, IBM Proprinter, OKI Microline, etc.)
-- 3 Dither-Algorithmen: Floyd-Steinberg, Ordered Bayer 4×4, Threshold
-- Dot-Matrix Render-Engine mit Pin-Offset, Jitter, Banding
-- Bild-Upload mit Drag & Drop
-- Pan & Zoom auf Canvas
-- Dark/Light Mode
+### Phase 1 & 2: Static Analysis & Security
+- **chore**: Setup von ESLint, Prettier und Stylelint. Alle Dateien formatiert.
+- **security**: XSS-Schutz beim Auslesen von Preset-Namen (`escapeHTML`) implementiert.
+- **security**: `Content-Security-Policy` (CSP) Header für den Client ergänzt (`script-src 'self' 'unsafe-inline'`).
