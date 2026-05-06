@@ -1,0 +1,24 @@
+app.alireda.co {
+    handle_path /dotmatrix* {
+        root * /path/to/dotmatrix/repo  # TODO: Pfad auf dem Server anpassen
+        file_server
+
+        # Security Headers (Phase 2)
+        header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        header X-Content-Type-Options "nosniff"
+        header X-Frame-Options "SAMEORIGIN"
+        header Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Caching Strategy (Phase 5)
+        @static {
+            path *.js *.css *.woff2 *.png *.json
+        }
+        header @static Cache-Control "public, max-age=31536000, immutable"
+
+        # HTML darf nicht gecacht werden, damit Updates sofort sichtbar sind
+        @html {
+            path *.html
+        }
+        header @html Cache-Control "no-cache, no-store, must-revalidate"
+    }
+}

@@ -5,7 +5,7 @@ import {
   orderedDither,
   thresholdDither,
   boxBlur3x3,
-} from '../js/filters.js';
+} from '../scripts/filters.js';
 import { makeImageData, defaultGrayState, mean } from './helpers.js';
 
 describe('toGrayscale (luma path, default)', () => {

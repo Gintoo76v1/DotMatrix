@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { presetToYaml, yamlToPreset } from '../js/preset-yaml.js';
-import { SYSTEM_PRESETS } from '../js/config.js';
+import { presetToYaml, yamlToPreset } from '../scripts/preset-yaml.js';
+import { SYSTEM_PRESETS } from '../scripts/config.js';
 
 function normalised(p) {
   // Drop fields that the YAML serialiser explicitly skips

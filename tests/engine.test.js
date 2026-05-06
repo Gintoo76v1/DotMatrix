@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { makeDotStamp, stampInto, makeValueNoise, render } from '../js/engine.js';
-import { state } from '../js/config.js';
-import { mulberry32 } from '../js/utils.js';
+import { makeDotStamp, stampInto, makeValueNoise, render } from '../scripts/engine.js';
+import { state } from '../scripts/config.js';
+import { mulberry32 } from '../scripts/utils.js';
 
 // jsdom does not implement canvas2d. Patch a minimal API the engine uses:
 //   • createElement('canvas') with width/height

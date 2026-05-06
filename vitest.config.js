@@ -8,15 +8,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'json-summary'],
-      include: ['js/**/*.js'],
+      include: ['scripts/**/*.js'],
       exclude: [
-        'js/main.js',
-        'js/render-worker.js',
-        'js/render-client.js',
-        'js/ui/**',
-        'js/lang.js',
-        'js/settings-store.js',
-        'js/render-client.js',
+        'scripts/main.js',
+        'scripts/render-worker.js',
+        'scripts/render-client.js',
+        'scripts/ui/**',
+        'scripts/lang.js',
+        'scripts/settings-store.js',
       ],
       thresholds: {
         lines: 70,

@@ -6,7 +6,7 @@ import {
   PAPER_SIZES_MM,
   MM_PER_INCH,
   state,
-} from '../js/config.js';
+} from '../scripts/config.js';
 
 describe('PROFILES sanity', () => {
   const required = [

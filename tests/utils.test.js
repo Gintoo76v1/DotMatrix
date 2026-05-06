@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mulberry32, gaussian, makeGaussian, smoothstep, clamp, yieldUI } from '../js/utils.js';
+import { mulberry32, gaussian, makeGaussian, smoothstep, clamp, yieldUI } from '../scripts/utils.js';
 import { mean, stddev, correlation } from './helpers.js';
 
 describe('mulberry32', () => {

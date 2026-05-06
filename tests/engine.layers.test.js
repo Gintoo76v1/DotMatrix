@@ -4,8 +4,8 @@
 // crash and must perceptibly affect the output for at least one cell.
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { state } from '../js/config.js';
-import { render } from '../js/engine.js';
+import { state } from '../scripts/config.js';
+import { render } from '../scripts/engine.js';
 
 beforeEach(() => {
   // Canvas + ImageData polyfills (shared logic with engine.test.js)
