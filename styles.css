@@ -638,7 +638,7 @@ button, .icon-btn, .sli, .check, .swatch, .er-head, input[type="range"], .zoom-c
   overflow: hidden;
   touch-action: none;
   cursor: grab;
-  padding: 30px;
+  padding: 30px 30px 160px 30px;
   position: relative;
 }
 
@@ -1610,7 +1610,7 @@ html.changelog-open body {
   .tab-content { padding: 16px; }
   .scroll-list { max-height: 220px; }
   h2 { font-size: 11px; margin-bottom: 10px; }
-  .canvas-wrapper { padding: 20px; }
+  .canvas-wrapper { padding: 20px 20px 140px 20px; }
 }
 
 /* Mobile / Small Tablet: < 768px */
@@ -1633,7 +1633,7 @@ html.changelog-open body {
   .app-footer { flex-direction: column; text-align: center; gap: 4px; padding: 8px; font-size: 10px; }
   .footer-accent { font-size: 11px; }
   .changelog-panel { max-height: 90vh; border-radius: 16px; }
-  .canvas-wrapper { padding: 12px; }
+  .canvas-wrapper { padding: 12px 12px 130px 12px; }
   .zoom-controls span { width: 36px; font-size: 10px; }
   .zoom-controls button { padding: 4px 8px; }
   .toolbar { padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
