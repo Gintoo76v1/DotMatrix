@@ -50,9 +50,16 @@ export function initUpload(state, opts) {
       }
 
       if (renderBtn) renderBtn.disabled = false;
-      if (opts.onLoad) opts.onLoad();
+      document.getElementById('ascii')?.classList.add('empty');
+      URL.revokeObjectURL(img.src);
+
+      opts.onLoad();
     };
-    img.onerror = () => showError('[Bild Fehler]: Das Bild konnte nicht gelesen werden.');
+    img.onerror = () => {
+      showError('Das Bild konnte nicht geladen werden (eventuell korrupt).');
+      if (opts.setStatus) opts.setStatus('Ladefehler');
+      URL.revokeObjectURL(img.src);
+    };
     img.src = url;
   }
 

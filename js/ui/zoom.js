@@ -161,7 +161,9 @@ export function initZoom() {
     } else if (pointers.length === 0) {
       try {
         canvasWrapper.releasePointerCapture(e.pointerId);
-      } catch {}
+      } catch (e) {
+        // Ignore errors if pointer capture was already lost
+      }
       setTimeout(() => {
         dragState.hasDragged = false;
       }, 50);

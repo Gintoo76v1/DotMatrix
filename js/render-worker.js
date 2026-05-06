@@ -40,5 +40,9 @@ self.onmessage = async (ev) => {
     );
   } catch (e) {
     self.postMessage({ type: 'error', message: e.message, stack: e.stack });
+  } finally {
+    if (msg.bitmap && typeof msg.bitmap.close === 'function') {
+      msg.bitmap.close();
+    }
   }
 };

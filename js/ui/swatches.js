@@ -15,7 +15,7 @@ export function wireSwatches(containerId, state, stateKey, attrKey, onChange) {
 
 export function setSwatchValue(containerId, attrKey, rgb) {
   const box = document.getElementById(containerId);
-  if (!box) return;
+  if (!box || !Array.isArray(rgb)) return;
   const target = rgb.join(',');
   box.querySelectorAll('.swatch').forEach((s) => {
     s.classList.toggle('active', s.dataset[attrKey] === target);

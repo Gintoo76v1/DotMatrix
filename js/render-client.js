@@ -34,7 +34,9 @@ function killWorker(err) {
   if (workerInstance) {
     try {
       workerInstance.terminate();
-    } catch {}
+    } catch (e) {
+      // Ignore termination errors
+    }
     workerInstance = null;
   }
 }
@@ -75,8 +77,18 @@ async function renderInWorker(srcImage, onProgress) {
     activeJob.reject(new Error('superseded'));
     activeJob = null;
   }
-  const w = getWorker();
+  
   const bitmap = srcImage instanceof ImageBitmap ? srcImage : await createImageBitmap(srcImage);
+
+  // Re-check activeJob after await (prevent race condition)
+  if (activeJob) {
+    activeJob.reject(new Error('superseded'));
+    activeJob = null;
+  }
+  
+  const w = getWorker();
+  const isNewBitmap = !(srcImage instanceof ImageBitmap);
+  const transferList = isNewBitmap ? [bitmap] : [];
 
   return new Promise((resolve, reject) => {
     activeJob = { resolve, reject, onProgress };
@@ -86,7 +98,7 @@ async function renderInWorker(srcImage, onProgress) {
         state: snapshotState(),
         bitmap,
       },
-      [bitmap]
+      transferList
     );
   });
 }
