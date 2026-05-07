@@ -1,21 +1,19 @@
 app.alireda.co {
-    # ── API: Proxy zu Node.js (strip /dotmatrix-Prefix vor Weiterleitung) ────
-    # MUSS vor handle_path /dotmatrix* stehen, sonst greift der file_server zuerst.
-    handle /dotmatrix/api/* {
-        uri strip_prefix /dotmatrix
+    # ── API & WebSocket: Proxy to Node.js on port 3000 ───────────────────────
+    # Diese Blöcke MÜSSEN vor dem file_server stehen, damit API-Anfragen
+    # den Node.js-Server erreichen und nicht als statische Dateien behandelt werden.
+
+    handle /api/* {
         reverse_proxy localhost:3000
     }
 
-    # ── WebSocket: Proxy zu Node.js ───────────────────────────────────────────
-    handle /dotmatrix/ws {
-        uri strip_prefix /dotmatrix
+    handle /ws {
         reverse_proxy localhost:3000
     }
 
-    # ── Statische Dateien ─────────────────────────────────────────────────────
-    handle_path /dotmatrix* {
+    # ── Statische Dateien ────────────────────────────────────────────────────
+    handle {
         root * /path/to/dotmatrix/repo  # TODO: Pfad auf dem Server anpassen
-        file_server
 
         # Security Headers
         header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
@@ -23,7 +21,7 @@ app.alireda.co {
         header X-Frame-Options "SAMEORIGIN"
         header Referrer-Policy "strict-origin-when-cross-origin"
 
-        # JS/CSS/Fonts/Bilder: aggressiv cachen (immutable)
+        # Caching: JS/CSS/Fonts/Bilder können lange gecacht werden
         @static {
             path *.js *.css *.woff2 *.png *.json
         }
@@ -34,5 +32,35 @@ app.alireda.co {
             path *.html
         }
         header @html Cache-Control "no-cache, no-store, must-revalidate"
+
+        file_server
     }
 }
+
+# ── Alternativ: App unter einem Unterpfad (z.B. /dotmatrix/) ─────────────────
+# Falls die App unter app.alireda.co/dotmatrix/ gehostet wird:
+#
+# app.alireda.co {
+#     handle /dotmatrix/api/* {
+#         uri strip_prefix /dotmatrix
+#         reverse_proxy localhost:3000
+#     }
+#
+#     handle /dotmatrix/ws {
+#         uri strip_prefix /dotmatrix
+#         reverse_proxy localhost:3000
+#     }
+#
+#     handle_path /dotmatrix* {
+#         root * /path/to/dotmatrix/repo
+#         header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+#         header X-Content-Type-Options "nosniff"
+#         header X-Frame-Options "SAMEORIGIN"
+#         header Referrer-Policy "strict-origin-when-cross-origin"
+#         @static { path *.js *.css *.woff2 *.png *.json }
+#         header @static Cache-Control "public, max-age=31536000, immutable"
+#         @html { path *.html }
+#         header @html Cache-Control "no-cache, no-store, must-revalidate"
+#         file_server
+#     }
+# }
