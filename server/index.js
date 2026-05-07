@@ -6,11 +6,20 @@ import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import pg from 'pg';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = path.join(__dirname, '..');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Trust reverse proxy (Caddy, nginx) for correct IP and HTTPS detection
+app.set('trust proxy', 1);
 
 // Security Middleware
 app.use(
@@ -97,6 +106,18 @@ app.use('/api/v1/me/settings', settingsRoutes);
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/security', securityRoutes);
+
+// Root redirect: unauthenticated users go to login, authenticated to app
+app.get('/', (req, res) => {
+  if (req.session?.userId) {
+    res.redirect('/index.html');
+  } else {
+    res.redirect('/login.html');
+  }
+});
+
+// Serve static files from project root (fallback if not behind Caddy)
+app.use(express.static(ROOT_DIR));
 
 // Create Server
 const server = http.createServer(app);
