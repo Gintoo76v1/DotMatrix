@@ -51,7 +51,12 @@ async function request(endpoint, options = {}) {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      throw new APIError(response.status, data?.error || 'Unknown error');
+      // data is null when the server returned HTML instead of JSON (e.g. Caddy 404/502)
+      const message =
+        data?.error ||
+        data?.message ||
+        `Serverfehler ${response.status}${response.status === 404 ? ' – API-Proxy nicht konfiguriert?' : ''}`;
+      throw new APIError(response.status, message);
     }
 
     return data;
