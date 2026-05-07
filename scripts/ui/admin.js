@@ -90,7 +90,25 @@ async function loadAdminData() {
       res.invites.forEach(inv => {
         const el = document.createElement('div');
         el.className = 'sli';
-        el.innerHTML = `<div class="sli-row"><span>${inv.code}</span><span class="sli-badge">${inv.usedCount}/${inv.maxUses}</span></div>`;
+        const isRevoked = inv.isRevoked;
+        el.innerHTML = `
+          <div class="sli-row">
+            <span style="${isRevoked ? 'text-decoration:line-through; opacity:0.5;' : ''}">${inv.code}</span>
+            <div>
+              <span class="sli-badge" style="margin-right:5px">${inv.usedCount}/${inv.maxUses}</span>
+              ${!isRevoked ? '<button class="sli-del" data-id="'+inv.id+'" title="Widerrufen">×</button>' : ''}
+            </div>
+          </div>`;
+        
+        const delBtn = el.querySelector('.sli-del');
+        if (delBtn) {
+          delBtn.addEventListener('click', async () => {
+            if (confirm('Diesen Code wirklich widerrufen?')) {
+               await api.invites.revoke(inv.id);
+               loadAdminData();
+            }
+          });
+        }
         inviteList.appendChild(el);
       });
     }
@@ -102,7 +120,26 @@ async function loadAdminData() {
       res.users.forEach(u => {
         const el = document.createElement('div');
         el.className = 'sli';
-        el.innerHTML = `<div class="sli-row"><span>${u.username}</span><span class="sli-badge">${u.status}</span></div>`;
+        const isActive = u.status === 'active';
+        el.innerHTML = `
+          <div class="sli-row">
+            <span style="${!isActive ? 'opacity:0.5;' : ''}">${u.username}</span>
+            <button class="btn-sm" style="font-size:9px; padding:2px 6px; border-color:${isActive ? 'var(--dm-border-base)' : 'var(--dm-error)'}">
+              ${isActive ? 'Sperren' : 'Aktivieren'}
+            </button>
+          </div>`;
+        
+        el.querySelector('button').addEventListener('click', async () => {
+          const nextStatus = isActive ? 'suspended' : 'active';
+          if (confirm(`User ${u.username} wirklich ${isActive ? 'sperren' : 'aktivieren'}?`)) {
+            try {
+              await api.users.updateStatus(u.id, nextStatus);
+              loadAdminData();
+            } catch (err) {
+              alert(err.message);
+            }
+          }
+        });
         userList.appendChild(el);
       });
     }

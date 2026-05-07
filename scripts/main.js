@@ -6,7 +6,7 @@
 
 import { state, PROFILES } from './config.js';
 import { renderImage } from './render-client.js';
-import { hydrateState } from './settings-store.js';
+import { hydrateState, saveSettings } from './settings-store.js';
 
 import { initErrorPopup, showError } from './ui/error.js';
 import { initAudio, playClickSound, playToggleSound } from './ui/audio.js';
@@ -22,6 +22,8 @@ import { initAppearance } from './ui/appearance.js';
 import { initChangelog } from './ui/changelog.js';
 import { api } from './api.js';
 import { initAdminUI } from './ui/admin.js';
+import { queueSaveProject, initSyncManager } from './sync.js';
+import { captureCurrentPreset, applyPreset } from './ui/presets.js';
 
 // ── Authentication Check ───────────────────────────────────────────────────
 
@@ -34,7 +36,7 @@ try {
   currentPermissions = data.permissions || [];
 } catch {
   // Wait for redirect to happen
-  await new Promise(() => {}); 
+  await new Promise(() => {});
 }
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
@@ -43,7 +45,13 @@ const persisted = await hydrateState(state);
 initErrorPopup();
 initAudio();
 initZoom();
+initSyncManager();
 await initAdminUI(currentPermissions);
+
+// Initialize a session-based project if none exists (Auto-Save Phase F)
+if (!state.currentProjectId) {
+  state.currentProjectId = 'session_' + Date.now();
+}
 
 /* initTabs wurde aus dem gelöschten theme.js hierher migriert */
 function initTabs() {
@@ -83,13 +91,48 @@ function setStatus(text, working = false) {
 
 export const triggerUpdate = (() => {
   let t;
+  let s;
   return () => {
+    // 1. Debounced Render
     clearTimeout(t);
     t = setTimeout(() => {
       if (state.autoRender) performRender();
     }, 300);
+
+    // 2. Debounced Auto-Save (Phase F)
+    if (state.currentProjectId) {
+      clearTimeout(s);
+      s = setTimeout(async () => {
+        state.syncStatus = 'saving';
+        _updateSyncUI();
+        try {
+          const content = captureCurrentPreset();
+          await queueSaveProject(
+            state.currentProjectId,
+            state.currentProjectVersion,
+            content
+          );
+          state.syncStatus = 'synced';
+        } catch {
+          state.syncStatus = 'error';
+        } finally {
+          _updateSyncUI();
+        }
+      }, 2000);
+    }
   };
 })();
+
+function _updateSyncUI() {
+  const el = document.getElementById('status');
+  if (!el) return;
+  // Visual hint in status bar about saving state
+  if (state.syncStatus === 'saving') {
+    el.classList.add('saving');
+  } else {
+    el.classList.remove('saving');
+  }
+}
 
 function _drawRenderDebug(ctx, width, height) {
   ctx.fillStyle = 'rgba(0,0,0,0.7)';

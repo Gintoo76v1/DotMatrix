@@ -3,6 +3,7 @@
 import { setSliderValue } from './sliders.js';
 import { detectAndSetPaperColor, analyzeAndAdaptImage } from './analyze.js';
 import { showError } from './error.js';
+import { queueBlobUpload } from '../sync.js';
 
 const A4_LONG_INCH = 297 / 25.4;
 
@@ -52,6 +53,13 @@ export function initUpload(state, opts) {
       if (renderBtn) renderBtn.disabled = false;
       document.getElementById('ascii')?.classList.add('empty');
       URL.revokeObjectURL(img.src);
+
+      // Queue image for cloud sync (Phase F)
+      if (state.currentProjectId) {
+        queueBlobUpload(state.currentProjectId, 'source_image', file, file.name, file.type).catch(
+          console.error
+        );
+      }
 
       opts.onLoad();
     };

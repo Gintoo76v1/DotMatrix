@@ -552,13 +552,11 @@ export const state = {
   fontMonoCustom: '',
   fontTerminal: 'JetBrainsMono Nerd Font Mono',
   fontTerminalCustom: '',
-  animPattern: 'aurora', // aurora, pulse, orbit, drift, breathe, off
-  animSpeed: 50, // 10-200
-  animIntensity: 30, // 0-100
-  animSize: 50, // 20-100
-  // ── Version / Changelog ────────────────────────────────────────────────────
-  lastSeenVersion: '',
-  autoCheckUpdates: true,
+  // ── Sync & Persistance (Phase F) ───────────────────────────────────────────
+  currentProjectId: null,
+  currentProjectVersion: 0,
+  syncStatus: 'synced', // 'synced', 'saving', 'offline', 'error'
+  lastSyncTime: null,
 };
 
 export const PRESETS = {

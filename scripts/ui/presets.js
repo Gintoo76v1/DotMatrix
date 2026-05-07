@@ -11,6 +11,7 @@ import { showError } from './error.js';
 import { api } from '../api.js';
 import { localDB } from '../db.js';
 import { queueCreateProject, queueDeleteProject } from '../sync.js';
+import { loadProjectHistory } from './history.js';
 
 let activePresetId = null;
 let onAfterApply = null;
@@ -239,6 +240,7 @@ export async function renderPresetList() {
       document.querySelectorAll('#presetList .sli').forEach((s) => s.classList.remove('active'));
       el.classList.add('active');
       applyPreset(p);
+      if (!p.system) loadProjectHistory(p.id);
     });
     list.appendChild(el);
   }

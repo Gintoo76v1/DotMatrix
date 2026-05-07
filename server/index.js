@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import pg from 'pg';
@@ -12,7 +13,26 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "img-src": ["'self'", "data:", "blob:", "https://*.amazonaws.com"], // Allow S3/MinIO
+      "connect-src": ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+    },
+  },
+}));
+
+// Global Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100, // 100 requests per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', globalLimiter);
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
   credentials: true,
@@ -52,6 +72,9 @@ import projectsRoutes from './api/projects.js';
 import settingsRoutes from './api/settings.js';
 import usersRoutes from './api/users.js';
 import auditRoutes from './api/audit.js';
+import securityRoutes from './api/security.js';
+import { WebSocketServer } from 'ws';
+import http from 'http';
 
 // Basic Route
 app.get('/api/v1/health', (req, res) => {
@@ -66,8 +89,59 @@ app.use('/api/v1/projects', projectsRoutes);
 app.use('/api/v1/me/settings', settingsRoutes);
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/audit', auditRoutes);
+app.use('/api/v1/security', securityRoutes);
+
+// Create Server
+const server = http.createServer(app);
+
+// WebSocket Server
+const wss = new WebSocketServer({ server, path: '/ws' });
+
+const clients = new Map(); // userId -> Set of connections
+
+wss.on('connection', (ws, req) => {
+  // Simple session parsing from cookie if needed, but for now we rely on a manual auth message
+  let currentUserId = null;
+
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      
+      if (data.type === 'auth') {
+        currentUserId = data.userId;
+        if (!clients.has(currentUserId)) clients.set(currentUserId, new Set());
+        clients.get(currentUserId).add(ws);
+      }
+
+      if (data.type === 'sync' && currentUserId) {
+        // Broadcast to other devices of the same user
+        const userClients = clients.get(currentUserId);
+        if (userClients) {
+          userClients.forEach(client => {
+            if (client !== ws && client.readyState === 1) {
+              client.send(JSON.stringify({
+                type: 'update',
+                state: data.state,
+                source: 'remote-device'
+              }));
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error('WS Error', e);
+    }
+  });
+
+  ws.on('close', () => {
+    if (currentUserId && clients.has(currentUserId)) {
+      clients.get(currentUserId).delete(ws);
+      if (clients.get(currentUserId).size === 0) clients.delete(currentUserId);
+    }
+  });
+});
 
 // Start Server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });

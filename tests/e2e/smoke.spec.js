@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test('has title', async ({ page }) => {
+test('redirects to login when unauthorized', async ({ page }) => {
   await page.goto('/');
-  await expect(page).toHaveTitle(/DotMatrix Studio/);
+  await expect(page).toHaveURL(/login\.html/);
 });
 
 test('tabs switch correctly', async ({ page }) => {

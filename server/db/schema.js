@@ -56,8 +56,21 @@ export const users = pgTable('users', {
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   lastActiveAt: timestamp('last_active_at', { withTimezone: true }),
+  twoFactorSecret: text('two_factor_secret'),
+  twoFactorEnabled: boolean('two_factor_enabled').default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+// ── API KEYS ─────────────────────────────────────────────────────────────
+
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 100 }).notNull(),
+  keyHash: varchar('key_hash', { length: 255 }).notNull().unique(),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
 // ── SESSIONS (handled by connect-pg-simple) ──────────────────────────────

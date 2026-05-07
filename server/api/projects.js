@@ -106,4 +106,48 @@ router.post('/:id/upload-url', requireAuth, requirePermission('projects.update.o
   }
 });
 
+// ── SNAPSHOTS & HISTORY ──────────────────────────────────────────────────
+
+router.get('/:id/snapshots', requireAuth, requirePermission('projects.read.own'), async (req, res) => {
+  try {
+    const snaps = await db.select({
+      id: projectSnapshots.id,
+      version: projectSnapshots.version,
+      createdAt: projectSnapshots.createdAt,
+    }).from(projectSnapshots)
+      .where(eq(projectSnapshots.projectId, req.params.id))
+      .orderBy(sql`${projectSnapshots.version} DESC`);
+    
+    res.json({ snapshots: snaps });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch snapshots' });
+  }
+});
+
+router.post('/:id/snapshots/:snapId/restore', requireAuth, requirePermission('projects.update.own'), async (req, res) => {
+  try {
+    const snap = await db.select()
+      .from(projectSnapshots)
+      .where(and(eq(projectSnapshots.id, req.params.snapId), eq(projectSnapshots.projectId, req.params.id)))
+      .limit(1).then(r => r[0]);
+    
+    if (!snap) return res.status(404).json({ error: 'Snapshot not found' });
+
+    const [updated] = await db.update(projects)
+      .set({ 
+        contentJson: snap.contentJson, 
+        version: snap.version + 1, // Increment from snapshot version
+        updatedAt: new Date() 
+      })
+      .where(and(eq(projects.id, req.params.id), eq(projects.ownerId, req.session.userId)))
+      .returning();
+
+    await logAction(req, 'project.restore_snapshot', 'projects', updated.id, { snapshotId: snap.id });
+
+    res.json({ project: updated });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to restore snapshot' });
+  }
+});
+
 export default router;

@@ -39,6 +39,7 @@
         <nav class="activity-bar glass-panel">
           <div class="icon-btn active" data-tab="tab-source" title="Quelle">🖨️</div>
           <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
+          <div class="icon-btn" data-tab="tab-history" title="Historie">⏳</div>
           <div class="icon-btn" data-tab="tab-errors" title="Hardware">🔧</div>
           <div class="spacer"></div>
           <div class="icon-btn toggle-btn" id="sidebarToggleBtn" title="Sidebar umschalten">
@@ -355,6 +356,8 @@
                 Aus Textfeld anwenden
               </button>
             </div>
+
+            <div class="tab-content" id="tab-history"></div>
 
             <div class="tab-content" id="tab-errors">
               <div class="sidebar-logo">DotMatrix Studio</div>
@@ -763,6 +766,15 @@
 
               <details class="settings-group">
                 <summary>
+                  <span class="sg-icon">🛡️</span><span class="sg-title">Sicherheit</span>
+                </summary>
+                <div class="sg-body" id="securitySettings">
+                  <!-- Dynamisch via security.js -->
+                </div>
+              </details>
+
+              <details class="settings-group">
+                <summary>
                   <span class="sg-icon">🌐</span><span class="sg-title">Sprache</span>
                 </summary>
                 <div class="sg-body">
@@ -831,6 +843,10 @@
           <span class="footer-accent">DotMatrix Studio</span>
           <span class="footer-badge">Pro Edition</span>
           <span class="footer-divider">|</span> Author: Gintoo76v1
+          <span class="footer-divider">|</span>
+          <div id="syncStatus" class="sync-status" title="Sync Status">
+            <span class="status-dot saved"></span> Saved
+          </div>
         </div>
         <div
           class="footer-right"

@@ -1,9 +1,23 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  usernameOrEmail: z.string().min(1, 'Username or Email is required'),
-  password: z.string().min(1, 'Password is required'),
+  usernameOrEmail: z.string().min(1),
+  password: z.string().min(8),
 });
+
+export const registerSchema = z.object({
+  inviteCode: z.string().min(1),
+  username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores and hyphens'),
+  password: z.string().min(8),
+  email: z.string().email().optional().or(z.literal('')),
+  displayName: z.string().max(100).optional(),
+});
+
+export const projectSchema = z.object({
+  name: z.string().min(1).max(255),
+  contentJson: z.record(z.any()).optional(),
+});
+
 
 export const registerSchema = z.object({
   inviteCode: z.string().min(1, 'Invite code is required'),

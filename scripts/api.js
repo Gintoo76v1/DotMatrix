@@ -66,6 +66,18 @@ export const api = {
     update: (id, version, contentJson) => request(`/projects/${id}`, { method: 'PATCH', body: { version, contentJson } }),
     delete: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
     getUploadUrl: (id, filename, contentType) => request(`/projects/${id}/upload-url`, { method: 'POST', body: { filename, contentType } }),
+    snapshots: (id) => request(`/projects/${id}/snapshots`),
+    restoreSnapshot: (id, snapId) => request(`/projects/${id}/snapshots/${snapId}/restore`, { method: 'POST' }),
+  },
+  security: {
+    get2FASetup: () => request('/security/2fa/setup'),
+    enable2FA: (token) => request('/security/2fa/enable', { method: 'POST', body: { token } }),
+    disable2FA: (token) => request('/security/2fa/disable', { method: 'POST', body: { token } }),
+    apiKeys: {
+      list: () => request('/security/api-keys'),
+      create: (name) => request('/security/api-keys', { method: 'POST', body: { name } }),
+      revoke: (id) => request(`/security/api-keys/${id}`, { method: 'DELETE' }),
+    }
   },
   invites: {
     list: () => request('/invites'),
@@ -74,6 +86,7 @@ export const api = {
   },
   users: {
     list: () => request('/users'),
+    updateStatus: (id, status) => request(`/users/${id}/status`, { method: 'PATCH', body: { status } }),
   },
   roles: {
     list: () => request('/roles'),

@@ -4,6 +4,8 @@ import { api } from './api.js';
 // eslint-disable-next-line no-unused-vars
 let syncInterval = null;
 let isSyncing = false;
+let ws = null;
+let currentUserId = null;
 
 async function processQueue() {
   if (isSyncing || !navigator.onLine) return;
@@ -53,11 +55,50 @@ async function processQueue() {
   }
 }
 
-export function initSyncManager() {
+export function initSyncManager(userId) {
+  currentUserId = userId;
   window.addEventListener('online', processQueue);
   
   // Periodically check queue
   syncInterval = setInterval(processQueue, 10000);
+
+  // WebSocket Sync
+  initWebSocket();
+}
+
+function initWebSocket() {
+  if (!currentUserId) return;
+  
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${protocol}//${window.location.host}/ws`;
+  
+  ws = new WebSocket(url);
+  
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'auth', userId: currentUserId }));
+  };
+  
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'update' && data.state) {
+        // Trigger external sync (avoids circular dependency by using CustomEvent)
+        document.dispatchEvent(new CustomEvent('dm:remoteUpdate', { detail: data.state }));
+      }
+    } catch (e) {
+      console.error('WS Sync Error', e);
+    }
+  };
+  
+  ws.onclose = () => {
+    setTimeout(initWebSocket, 5000); // Reconnect
+  };
+}
+
+export function broadcastState(state) {
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'sync', state }));
+  }
 }
 
 export async function queueSaveProject(projectId, version, contentJson) {

@@ -6,6 +6,7 @@ import { eq, or, sql } from 'drizzle-orm';
 import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema } from '../utils/schemas.js';
 import rateLimit from 'express-rate-limit';
+import { logAction } from '../utils/audit.js';
 
 const router = express.Router();
 
@@ -70,6 +71,8 @@ router.post('/register', validate(registerSchema), async (req, res) => {
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
       });
+
+      await logAction(req, 'auth.register', 'users', newUser.id, { username: newUser.username });
 
       // Optional: Auto-login after registration
       req.session.userId = newUser.id;
@@ -140,6 +143,8 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
     req.session.userId = user.id;
     req.session.roleId = user.roleId;
 
+    await logAction(req, 'auth.login', 'users', user.id);
+
     res.json({ message: 'Login successful', user: { id: user.id, username: user.username } });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
@@ -147,8 +152,15 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
+  const userId = req.session.userId;
+  req.session.destroy(async (err) => {
     if (err) return res.status(500).json({ error: 'Logout failed' });
+    
+    if (userId) {
+       // Manual log since session is gone
+       await logAction({ session: { userId }, ip: req.ip }, 'auth.logout', 'users', userId);
+    }
+
     res.clearCookie('connect.sid');
     res.json({ message: 'Logged out successfully' });
   });
@@ -182,7 +194,15 @@ router.get('/me', async (req, res) => {
       }
     }
 
-    res.json({ user: { id: user.id, username: user.username, role: roleName }, permissions: userPermissions });
+    res.json({ 
+      user: { 
+        id: user.id, 
+        username: user.username, 
+        role: roleName,
+        twoFactorEnabled: user.twoFactorEnabled 
+      }, 
+      permissions: userPermissions 
+    });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }

@@ -31,6 +31,28 @@ const PERSIST_KEYS = [
   'navExpanded',
   'lastSeenVersion',
   'autoCheckUpdates',
+  // Simulation parameters
+  'profile',
+  'dither',
+  'threshold',
+  'ink',
+  'paper',
+  'paperFormat',
+  'orientation',
+  'doubleStrike',
+  'condensed',
+  'brightness',
+  'contrast',
+  'gamma',
+  'invert',
+  'dpi',
+  'jitterScale',
+  'bandingScale',
+  'maxSize',
+  'wearLayers',
+  'seed',
+  'softBlur',
+  'legacyMath',
 ];
 
 export function loadSettings() {
