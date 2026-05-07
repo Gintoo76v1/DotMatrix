@@ -1,6 +1,7 @@
 import { localDB } from './db.js';
 import { api } from './api.js';
 
+// eslint-disable-next-line no-unused-vars
 let syncInterval = null;
 let isSyncing = false;
 
@@ -14,9 +15,13 @@ async function processQueue() {
       try {
         if (task.type === 'project_update') {
           await api.projects.update(task.projectId, task.version, task.contentJson);
+        } else if (task.type === 'project_create') {
+          await api.projects.create(task.name, task.contentJson);
+        } else if (task.type === 'project_delete') {
+          await api.projects.delete(task.projectId);
         } else if (task.type === 'blob_upload') {
           // 1. Get presigned URL
-          const { uploadUrl, key } = await api.projects.getUploadUrl(task.projectId, task.filename, task.contentType);
+          const { uploadUrl } = await api.projects.getUploadUrl(task.projectId, task.filename, task.contentType);
           // 2. Fetch blob from localDB
           const blob = await localDB.getBlob(task.blobId);
           if (blob) {
@@ -58,6 +63,17 @@ export function initSyncManager() {
 export async function queueSaveProject(projectId, version, contentJson) {
   await localDB.saveProject({ id: projectId, version, contentJson, updatedAt: Date.now() });
   await localDB.enqueueSyncTask({ type: 'project_update', projectId, version, contentJson });
+  processQueue();
+}
+
+export async function queueCreateProject(name, contentJson) {
+  await localDB.enqueueSyncTask({ type: 'project_create', name, contentJson });
+  processQueue();
+}
+
+export async function queueDeleteProject(projectId) {
+  await localDB.deleteProject(projectId);
+  await localDB.enqueueSyncTask({ type: 'project_delete', projectId });
   processQueue();
 }
 

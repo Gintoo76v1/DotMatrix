@@ -21,15 +21,17 @@ import { initPresets, renderPresetList } from './ui/presets.js';
 import { initAppearance } from './ui/appearance.js';
 import { initChangelog } from './ui/changelog.js';
 import { api } from './api.js';
+import { initAdminUI } from './ui/admin.js';
 
 // ── Authentication Check ───────────────────────────────────────────────────
 
 // Verify session before initializing the app. If unauthorized, api.js will redirect to login.html.
 export let currentUser = null;
+let currentPermissions = [];
 try {
   const data = await api.auth.me();
   currentUser = data.user;
-  // TODO: Store permissions or user info for UI gating
+  currentPermissions = data.permissions || [];
 } catch {
   // Wait for redirect to happen
   await new Promise(() => {}); 
@@ -37,10 +39,11 @@ try {
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 
-const persisted = hydrateState(state);
+const persisted = await hydrateState(state);
 initErrorPopup();
 initAudio();
 initZoom();
+await initAdminUI(currentPermissions);
 
 /* initTabs wurde aus dem gelöschten theme.js hierher migriert */
 function initTabs() {
@@ -333,6 +336,6 @@ if (downloadBtn)
     a.click();
   });
 
-renderPresetList();
+await renderPresetList();
 updateProfileMeta();
 syncAllFromState(state);

@@ -8,33 +8,68 @@ import { setSwatchValue } from './swatches.js';
 import { applyWearLayersToUI } from './wear.js';
 import { detectAndSetPaperColor } from './analyze.js';
 import { showError } from './error.js';
-
-const STORAGE_KEY = 'dotmatrix_user_presets';
+import { api } from '../api.js';
+import { localDB } from '../db.js';
+import { queueCreateProject, queueDeleteProject } from '../sync.js';
 
 let activePresetId = null;
 let onAfterApply = null;
 
 // ── User preset persistence ────────────────────────────────────────────────
 
-function loadUserPresets() {
+// Wir nutzen jetzt localDB für Offline-First und API für den Sync
+async function loadUserPresets() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const res = await api.projects.list();
+    if (res && res.projects) {
+      // Speichere die geladenen Projekte lokal als Fallback
+      for (const p of res.projects) {
+        await localDB.saveProject(p);
+      }
+      return res.projects.map(p => ({
+        id: p.id,
+        name: p.name,
+        system: false,
+        ...p.contentJson
+      }));
+    }
+  } catch (err) {
+    console.warn('Could not fetch projects from server, falling back to localDB', err);
+  }
+
+  // Fallback auf lokale Datenbank
+  try {
+    const localProjects = await localDB.getAllProjects();
+    return localProjects.map(p => ({
+      id: p.id,
+      name: p.name,
+      system: false,
+      ...p.contentJson
+    }));
   } catch {
     return [];
   }
 }
 
-function saveUserPresets(presets) {
+async function saveUserPreset(preset) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+    const { id, name, system, ...contentJson } = preset;
+    // Neue Presets haben noch keine echte UUID (nur usr_timestamp). 
+    // Wir übergeben sie der API als Create-Aufruf.
+    await queueCreateProject(name, contentJson);
+    await renderPresetList();
   } catch (e) {
     showError(`[Speicher Fehler]: ${e.message}`);
   }
 }
 
-function deleteUserPreset(id) {
-  saveUserPresets(loadUserPresets().filter((p) => p.id !== id));
-  renderPresetList();
+async function deleteUserPreset(id) {
+  try {
+    await queueDeleteProject(id);
+    await renderPresetList();
+  } catch (e) {
+    showError(`[Löschen Fehler]: ${e.message}`);
+  }
 }
 
 // ── Capture current state as a preset ──────────────────────────────────────
@@ -176,11 +211,12 @@ function escapeHTML(str) {
     .replace(/'/g, '&#39;');
 }
 
-export function renderPresetList() {
+export async function renderPresetList() {
   const list = document.getElementById('presetList');
   if (!list) return;
   list.innerHTML = '';
-  const all = [...(SYSTEM_PRESETS || []), ...loadUserPresets()];
+  const userPresets = await loadUserPresets();
+  const all = [...(SYSTEM_PRESETS || []), ...userPresets];
   for (const p of all) {
     const el = document.createElement('button');
     el.type = 'button';
@@ -266,16 +302,13 @@ export function initPresets({ onApply, onSetStatus } = {}) {
     });
 
   if (saveBtn)
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
       const name = nameIn ? nameIn.value.trim() : '';
       if (!name) return showError('Name für das Preset ist erforderlich.');
       const preset = captureCurrentPreset(name);
-      preset.id = 'usr_' + Date.now();
-      const presets = loadUserPresets();
-      presets.push(preset);
-      saveUserPresets(presets);
+      preset.id = 'usr_' + Date.now(); // local fallback ID
+      await saveUserPreset(preset);
       activePresetId = preset.id;
-      renderPresetList();
       if (onSetStatus) onSetStatus('Gespeichert.');
     });
 

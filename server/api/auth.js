@@ -1,7 +1,7 @@
 import express from 'express';
 import argon2 from 'argon2';
 import { db } from '../db/index.js';
-import { users, inviteCodes, inviteRedemptions } from '../db/schema.js';
+import { users, inviteCodes, inviteRedemptions, roles, rolePermissions, permissions } from '../db/schema.js';
 import { eq, or, sql } from 'drizzle-orm';
 import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema } from '../utils/schemas.js';
@@ -159,8 +159,33 @@ router.get('/me', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // TODO: Fetch user details and permissions
-  res.json({ user: { id: req.session.userId } });
+  try {
+    const user = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1).then(r => r[0]);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    let userPermissions = [];
+    let roleName = 'none';
+
+    if (user.roleId) {
+      const role = await db.select().from(roles).where(eq(roles.id, user.roleId)).limit(1).then(r => r[0]);
+      if (role) {
+        roleName = role.name;
+        if (role.name === 'admin') {
+          userPermissions = ['*'];
+        } else {
+          const perms = await db.select()
+            .from(rolePermissions)
+            .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+            .where(eq(rolePermissions.roleId, user.roleId));
+          userPermissions = perms.map(p => p.permissions.key);
+        }
+      }
+    }
+
+    res.json({ user: { id: user.id, username: user.username, role: roleName }, permissions: userPermissions });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 export default router;

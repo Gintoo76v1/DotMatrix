@@ -64,6 +64,18 @@ export const api = {
     list: () => request('/projects'),
     create: (name, contentJson) => request('/projects', { method: 'POST', body: { name, contentJson } }),
     update: (id, version, contentJson) => request(`/projects/${id}`, { method: 'PATCH', body: { version, contentJson } }),
+    delete: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
     getUploadUrl: (id, filename, contentType) => request(`/projects/${id}/upload-url`, { method: 'POST', body: { filename, contentType } }),
+  },
+  invites: {
+    list: () => request('/invites'),
+    create: (roleId, maxUses, expiresAt, note) => request('/invites', { method: 'POST', body: { roleId, maxUses, expiresAt, note } }),
+    revoke: (id) => request(`/invites/${id}`, { method: 'DELETE' }),
+  },
+  users: {
+    list: () => request('/users'),
+  },
+  roles: {
+    list: () => request('/roles'),
   }
 };

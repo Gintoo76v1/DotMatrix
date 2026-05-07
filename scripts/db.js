@@ -44,10 +44,27 @@ export const localDB = {
     });
   },
 
+  async getAllProjects() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('projects', 'readonly');
+      const req = tx.objectStore('projects').getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
   async saveProject(project) {
     const db = await openDB();
     const tx = db.transaction('projects', 'readwrite');
     tx.objectStore('projects').put(project);
+    await txPromise(tx);
+  },
+
+  async deleteProject(id) {
+    const db = await openDB();
+    const tx = db.transaction('projects', 'readwrite');
+    tx.objectStore('projects').delete(id);
     await txPromise(tx);
   },
 
