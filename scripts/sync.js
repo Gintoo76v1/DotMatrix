@@ -3,43 +3,15 @@ import { api } from './api.js';
 
 // eslint-disable-next-line no-unused-vars
 let syncInterval = null;
-let isSyncing = false;
-let ws = null;
-let currentUserId = null;
 
-async function processQueue() {
-  if (isSyncing || !navigator.onLine) return;
-  isSyncing = true;
-
-  try {
-    const queue = await localDB.getSyncQueue();
-    for (const task of queue) {
-      try {
-        if (task.type === 'project_update') {
-          await api.projects.update(task.projectId, task.version, task.contentJson);
-        } else if (task.type === 'project_create') {
-          await api.projects.create(task.name, task.contentJson);
-        } else if (task.type === 'project_delete') {
-          await api.projects.delete(task.projectId);
-        } else if (task.type === 'blob_upload') {
-          // 1. Get presigned URL
-          const { uploadUrl } = await api.projects.getUploadUrl(
-            task.projectId,
-            task.filename,
-            task.contentType
-          );
-          // 2. Fetch blob from localDB
-          const blob = await localDB.getBlob(task.blobId);
-          if (blob) {
-            // 3. Upload to S3
-            await fetch(uploadUrl, {
-              method: 'PUT',
-              body: blob,
-              headers: { 'Content-Type': task.contentType },
-            });
-            // Cleanup blob from local DB if desired
-            // await localDB.saveBlob(task.blobId, null); // Or delete
-          }
+export function initSyncManager() {
+  window.removeEventListener('online', processQueue);
+  window.addEventListener('online', processQueue);
+  
+  if (syncInterval) clearInterval(syncInterval);
+  // Periodically check queue
+  syncInterval = setInterval(processQueue, 10000);
+}
         } else if (task.type === 'settings_update') {
           await api.settings.update(task.settingsJson);
         }

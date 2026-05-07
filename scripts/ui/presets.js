@@ -70,6 +70,7 @@ async function deleteUserPreset(id) {
     await renderPresetList();
   } catch (e) {
     showError(`[Löschen Fehler]: ${e.message}`);
+    console.error(e);
   }
 }
 
