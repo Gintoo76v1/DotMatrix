@@ -1,6 +1,7 @@
 // ── API Client Layer ─────────────────────────────────────────────────────────
 
-const API_BASE = '/api/v1';
+// Use a relative path so it works when hosted in a subfolder like /dotmatrix/
+const API_BASE = 'api/v1';
 
 export class APIError extends Error {
   constructor(status, message) {
@@ -10,16 +11,24 @@ export class APIError extends Error {
 }
 
 async function request(endpoint, options = {}) {
-  const url = `${API_BASE}${endpoint}`;
+  // Ensure we don't have double slashes if endpoint starts with /
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  
+  // Calculate base path from current location to support subfolders
+  // If we are at /dotmatrix/index.html, we want /dotmatrix/api/v1
+  // Using relative path 'api/v1' directly in fetch() will resolve correctly 
+  // IF the current URL ends with a slash or is a file in the directory.
+  const url = `${window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)}${API_BASE}/${cleanEndpoint}`;
+  
   const headers = {
     'Content-Type': 'application/json',
-    ...(options.headers || {})
+    ...(options.headers || {}),
   };
 
   const config = {
     ...options,
     headers,
-    credentials: 'same-origin' // Ensures session cookies are sent
+    credentials: 'same-origin', // Ensures session cookies are sent
   };
 
   if (options.body && typeof options.body === 'object') {
@@ -28,10 +37,11 @@ async function request(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, config);
-    
+
     if (response.status === 401) {
-      // Unauthorized, redirect to login
-      window.location.href = '/login.html';
+      // Unauthorized, redirect to login. Use relative path.
+      const baseUrl = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+      window.location.href = `${baseUrl}login.html`;
       throw new APIError(401, 'Unauthorized');
     }
 

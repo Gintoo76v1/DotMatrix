@@ -1,25 +1,25 @@
 # PROJECT MANIFEST
 
 ## Projektbeschreibung
-DotMatrix Studio ist ein Vanilla-Web-basierter Emulator für Nadeldrucker-Effekte. Es ermöglicht Nutzern, Bilder hochzuladen, diese mit authentischen Drucker-Artefakten (Dithering, Banding, Wear-Pattern) zu versehen und als PNG zu exportieren. 
+DotMatrix Studio ist eine vollwertige Webapplikation (Full-Stack) zur Emulation von Nadeldrucker-Effekten. Die App erlaubt den Upload von Bildern, asynchrones Rendering via Web-Worker und die persistente Speicherung von Projekten (inkl. Quellbildern) in einer Cloud-Infrastruktur.
 
 ## Architektur & Datenfluss
-- **Architektur**: Vanilla JS ES-Modules (`type="module"`).
-- **Entry Point**: `index.html` → `js/main.js`.
-- **Rendering**: Heavy-Lifting ist in einen Web-Worker (`js/render-worker.js`) ausgelagert. Kern-Verarbeitung in `js/engine.js` und `js/filters.js`.
-- **State-Management**: Globaler `state` in `js/config.js`. Updates triggern UI-Refreshes (`triggerUpdate()` / Event `dm:triggerRender`).
-- **Persistenz**: Browser `localStorage` via `js/settings-store.js` (Sichert Themes, Presets, Settings).
-- **Datenformate**: Presets werden als YAML verarbeitet (`js/preset-yaml.js`).
+- **Frontend**: Vanilla HTML/CSS/JS (ES-Modules). Nutzt **IndexedDB** für Offline-Fähigkeit und einen **Sync-Manager** für die Synchronisation mit dem Backend.
+- **Backend**: **Node.js/Express** Server mit REST-API.
+- **Persistenz**: 
+  - Metadaten & User-Settings: **PostgreSQL** (via Drizzle ORM).
+  - Session-Management: Server-seitig (in Postgres gespeichert).
+  - Bild-Blobs: **S3-kompatibler Object Storage** (MinIO/AWS).
+- **Datenfluss**: Client -> Caddy (Reverse Proxy) -> Node.js API -> PostgreSQL / S3.
 
 ## Toolchain
-- **Client**: Vanilla (kein Build-Step, kein Vite/Webpack).
-- **Testing**: `vitest` (mit `jsdom` für UI-Smoke-Tests). Test-Coverage via `@vitest/coverage-v8`.
-- **Serving**: `python3 -m http.server 8080`.
+- **Frontend**: Kein Bundler. Native ES-Modules.
+- **Backend**: Node.js v20+, NPM.
+- **Testing**: Vitest (Unit), Playwright (E2E).
+- **Deployment**: Docker Compose (App, DB, MinIO) + Caddy.
 
-## Assets & Dependencies
-- **CSS**: Eine monolithische Datei: `styles.css`.
-- **Fonts**: Lokale Fonts (`JetBrainsMono-Regular.woff2`) + Google Fonts via `<link>` (`Inter`, `Roboto`, `Open Sans`, etc.).
-- **NPM-Pakete**: Nur Dev-Dependencies (Vitest, JSDOM). Keine Client-Libraries über NPM.
-
-## Dead Code Kandidaten
-- `js/math-mode.js` (Legacy v1 Kompatibilität, potenziell entfernbar, falls Hard-Breaking-Change erlaubt).
+## Sicherheitskonzept
+- **Authentifizierung**: Invite-Only System.
+- **RBAC**: Rollenbasiertes Berechtigungssystem (Admin/User).
+- **Verschlüsselung**: Argon2id für Passwörter, TLS via Caddy.
+- **Sicherheits-Header**: Strikte CSP, HSTS, X-Content-Type-Options.
