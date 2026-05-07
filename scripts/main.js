@@ -20,6 +20,20 @@ import { initUpload } from './ui/upload.js';
 import { initPresets, renderPresetList } from './ui/presets.js';
 import { initAppearance } from './ui/appearance.js';
 import { initChangelog } from './ui/changelog.js';
+import { api } from './api.js';
+
+// ── Authentication Check ───────────────────────────────────────────────────
+
+// Verify session before initializing the app. If unauthorized, api.js will redirect to login.html.
+export let currentUser = null;
+try {
+  const data = await api.auth.me();
+  currentUser = data.user;
+  // TODO: Store permissions or user info for UI gating
+} catch {
+  // Wait for redirect to happen
+  await new Promise(() => {}); 
+}
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 
