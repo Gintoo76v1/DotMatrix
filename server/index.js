@@ -13,16 +13,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security Middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "script-src": ["'self'", "'unsafe-inline'"],
-      "img-src": ["'self'", "data:", "blob:", "https://*.amazonaws.com"], // Allow S3/MinIO
-      "connect-src": ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        'script-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", 'data:', 'blob:', 'https://*.amazonaws.com'], // Allow S3/MinIO
+        'connect-src': ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
+      },
     },
-  },
-}));
+  })
+);
 
 // Global Rate Limiting
 const globalLimiter = rateLimit({
@@ -33,10 +35,12 @@ const globalLimiter = rateLimit({
 });
 app.use('/api/', globalLimiter);
 
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
+    credentials: true,
+  })
+);
 
 // Body Parsing
 app.use(express.json());
@@ -45,25 +49,28 @@ app.use(express.urlencoded({ extended: true }));
 // Session Setup
 const PgSession = connectPgSimple(session);
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
+  connectionString:
+    process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
 });
 
-app.use(session({
-  store: new PgSession({
-    pool,
-    tableName: 'session',
-    createTableIfMissing: true
-  }),
-  secret: process.env.SESSION_SECRET || 'super_secret_fallback_key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-  }
-}));
+app.use(
+  session({
+    store: new PgSession({
+      pool,
+      tableName: 'session',
+      createTableIfMissing: true,
+    }),
+    secret: process.env.SESSION_SECRET || 'super_secret_fallback_key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    },
+  })
+);
 
 import authRoutes from './api/auth.js';
 import invitesRoutes from './api/invites.js';
@@ -106,7 +113,7 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
-      
+
       if (data.type === 'auth') {
         currentUserId = data.userId;
         if (!clients.has(currentUserId)) clients.set(currentUserId, new Set());
@@ -117,13 +124,15 @@ wss.on('connection', (ws, req) => {
         // Broadcast to other devices of the same user
         const userClients = clients.get(currentUserId);
         if (userClients) {
-          userClients.forEach(client => {
+          userClients.forEach((client) => {
             if (client !== ws && client.readyState === 1) {
-              client.send(JSON.stringify({
-                type: 'update',
-                state: data.state,
-                source: 'remote-device'
-              }));
+              client.send(
+                JSON.stringify({
+                  type: 'update',
+                  state: data.state,
+                  source: 'remote-device',
+                })
+              );
             }
           });
         }

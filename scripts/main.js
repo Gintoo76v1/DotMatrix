@@ -107,11 +107,7 @@ export const triggerUpdate = (() => {
         _updateSyncUI();
         try {
           const content = captureCurrentPreset();
-          await queueSaveProject(
-            state.currentProjectId,
-            state.currentProjectVersion,
-            content
-          );
+          await queueSaveProject(state.currentProjectId, state.currentProjectVersion, content);
           state.syncStatus = 'synced';
         } catch {
           state.syncStatus = 'error';
@@ -290,12 +286,7 @@ if (profileList) {
 // ── Boolean checks (uiSounds, autoRender, useWorker, …) ────────
 
 initChecks(state, (flag) => {
-  if (
-    flag === 'invert' ||
-    flag === 'softBlur' ||
-    flag === 'doubleStrike' ||
-    flag === 'condensed'
-  ) {
+  if (flag === 'invert' || flag === 'softBlur' || flag === 'doubleStrike' || flag === 'condensed') {
     triggerUpdate();
   }
 });

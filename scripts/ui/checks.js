@@ -43,7 +43,7 @@ export function initChecks(state, onChange) {
 /** Sync a single flag's DOM check from state. */
 export function syncCheck(flag, on) {
   document.querySelectorAll(`.check[data-flag="${flag}"]`).forEach((el) => {
-    el.classList.toggle('on', !!on);
-    el.setAttribute('aria-checked', !!on ? 'true' : 'false');
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-checked', on ? 'true' : 'false');
   });
 }

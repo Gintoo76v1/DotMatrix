@@ -251,7 +251,6 @@ html {
   height: 100%;
   overscroll-behavior: none;
   text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 body {
@@ -591,7 +590,6 @@ input[type='file'] {
 
 .glass-panel {
   background: var(--dm-glass-bg);
-  backdrop-filter: blur(25px) saturate(120%);
   backdrop-filter: blur(25px) saturate(120%);
   border: 1px solid var(--dm-border-base);
   border-top-color: var(--dm-border-hover);
@@ -1063,7 +1061,6 @@ canvas {
   background: var(--paper-dark);
   border: 1px solid var(--dm-border-base);
   backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
 }
 
 .status-large {
@@ -1374,7 +1371,6 @@ h2 {
   background: var(--paper-dark);
   border: 1px solid var(--dm-border-base);
   border-radius: 12px;
-  overflow: hidden;
   max-height: 55vh;
   overflow: hidden auto;
   overscroll-behavior: contain;
@@ -1984,7 +1980,6 @@ html.changelog-open body {
   position: absolute;
   inset: 0;
   background: rgb(0 0 0 / 50%);
-  backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -2628,6 +2623,13 @@ html.changelog-open body {
 }
 
 @keyframes sync-pulse {
-  from { opacity: 0.4; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1.1); }
+  from {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }

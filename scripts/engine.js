@@ -385,12 +385,7 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
   const ink = new Float32Array(outW * outH);
   // Bug R — keep dot diameter ≥3 (matches makeDotStamp's own minimum)
   const dotPx = Math.max(3, Math.round((profile.dot_diameter_mm / MM_PER_INCH) * effDpi));
-  const baseStamp = makeDotStamp(
-    dotPx,
-    profile.dot_softness,
-    profile.ink_density,
-    { dpiH, dpiV }
-  );
+  const baseStamp = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density, { dpiH, dpiV });
   const stamp = baseStamp.data;
   const stampSize = baseStamp.size;
   const stampR = (stampSize - 1) / 2;
@@ -644,12 +639,10 @@ export function asciiPreview(srcImage, width = 60) {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, width, h);
   ctx.drawImage(srcImage, 0, 0, width, h);
-  const mode = getMathMode(state);
-  const gray = toGrayscale(ctx.getImageData(0, 0, width, h), state, mode);
+  const gray = toGrayscale(ctx.getImageData(0, 0, width, h), state);
 
   let dots;
-  if (state.dither === 'floyd_steinberg')
-    dots = floydSteinberg(gray, width, h, mode, state.threshold);
+  if (state.dither === 'floyd_steinberg') dots = floydSteinberg(gray, width, h, state.threshold);
   else if (state.dither === 'ordered') dots = orderedDither(gray, width, h);
   else dots = thresholdDither(gray, width, h, state.threshold);
 

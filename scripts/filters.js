@@ -46,14 +46,14 @@ export function toGrayscale(imgData, stateObj) {
 
     // Standard luminosity weights
     let l = 0.299 * r + 0.587 * g + 0.114 * b;
-    
+
     // Apply contrast and brightness
     l = cFactor * (l - 128) + 128 + brightness;
     // Apply gamma
     l = 255 * Math.pow(clamp(l, 0, 255) / 255, gamma);
-    
+
     if (invert) l = 255 - l;
-    
+
     gray[j] = clamp(l, 0, 255);
   }
   return gray;

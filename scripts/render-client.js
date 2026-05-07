@@ -78,7 +78,7 @@ async function renderInWorker(srcImage, onProgress) {
     activeJob.reject(new Error('superseded'));
     activeJob = null;
   }
-  
+
   const bitmap = srcImage instanceof ImageBitmap ? srcImage : await createImageBitmap(srcImage);
 
   // Re-check activeJob after await (prevent race condition)
@@ -86,7 +86,7 @@ async function renderInWorker(srcImage, onProgress) {
     activeJob.reject(new Error('superseded'));
     activeJob = null;
   }
-  
+
   const w = getWorker();
   const isNewBitmap = !(srcImage instanceof ImageBitmap);
   const transferList = isNewBitmap ? [bitmap] : [];

@@ -14,8 +14,13 @@ const router = express.Router();
 
 router.get('/2fa/setup', requireAuth, async (req, res) => {
   try {
-    const user = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1).then(r => r[0]);
-    
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.session.userId))
+      .limit(1)
+      .then((r) => r[0]);
+
     // Generate secret if not exists
     let secret = user.twoFactorSecret;
     if (!secret) {
@@ -35,7 +40,12 @@ router.get('/2fa/setup', requireAuth, async (req, res) => {
 router.post('/2fa/enable', requireAuth, async (req, res) => {
   const { token } = req.body;
   try {
-    const user = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1).then(r => r[0]);
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.session.userId))
+      .limit(1)
+      .then((r) => r[0]);
     if (!user.twoFactorSecret) return res.status(400).json({ error: 'Setup 2FA first' });
 
     const isValid = authenticator.verify({ token, secret: user.twoFactorSecret });
@@ -53,12 +63,20 @@ router.post('/2fa/enable', requireAuth, async (req, res) => {
 router.post('/2fa/disable', requireAuth, async (req, res) => {
   const { token } = req.body;
   try {
-    const user = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1).then(r => r[0]);
-    
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.session.userId))
+      .limit(1)
+      .then((r) => r[0]);
+
     const isValid = authenticator.verify({ token, secret: user.twoFactorSecret });
     if (!isValid) return res.status(400).json({ error: 'Invalid token' });
 
-    await db.update(users).set({ twoFactorEnabled: false, twoFactorSecret: null }).where(eq(users.id, user.id));
+    await db
+      .update(users)
+      .set({ twoFactorEnabled: false, twoFactorSecret: null })
+      .where(eq(users.id, user.id));
     await logAction(req, 'auth.2fa_disabled', 'users', user.id);
 
     res.json({ message: '2FA disabled successfully' });
@@ -71,12 +89,15 @@ router.post('/2fa/disable', requireAuth, async (req, res) => {
 
 router.get('/api-keys', requireAuth, async (req, res) => {
   try {
-    const keys = await db.select({
-      id: apiKeys.id,
-      name: apiKeys.name,
-      lastUsedAt: apiKeys.lastUsedAt,
-      createdAt: apiKeys.createdAt
-    }).from(apiKeys).where(eq(apiKeys.userId, req.session.userId));
+    const keys = await db
+      .select({
+        id: apiKeys.id,
+        name: apiKeys.name,
+        lastUsedAt: apiKeys.lastUsedAt,
+        createdAt: apiKeys.createdAt,
+      })
+      .from(apiKeys)
+      .where(eq(apiKeys.userId, req.session.userId));
     res.json({ keys });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch API keys' });
@@ -91,11 +112,14 @@ router.post('/api-keys', requireAuth, async (req, res) => {
     const rawKey = `dm_${crypto.randomBytes(24).toString('hex')}`;
     const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
 
-    const [apiKey] = await db.insert(apiKeys).values({
-      userId: req.session.userId,
-      name,
-      keyHash
-    }).returning();
+    const [apiKey] = await db
+      .insert(apiKeys)
+      .values({
+        userId: req.session.userId,
+        name,
+        keyHash,
+      })
+      .returning();
 
     await logAction(req, 'security.api_key_created', 'api_keys', apiKey.id);
 
@@ -107,12 +131,13 @@ router.post('/api-keys', requireAuth, async (req, res) => {
 
 router.delete('/api-keys/:id', requireAuth, async (req, res) => {
   try {
-    const [deleted] = await db.delete(apiKeys)
+    const [deleted] = await db
+      .delete(apiKeys)
       .where(and(eq(apiKeys.id, req.params.id), eq(apiKeys.userId, req.session.userId)))
       .returning();
-    
+
     if (!deleted) return res.status(404).json({ error: 'Key not found' });
-    
+
     await logAction(req, 'security.api_key_revoked', 'api_keys', req.params.id);
     res.json({ message: 'API key revoked' });
   } catch (error) {

@@ -36,6 +36,7 @@ npm run test:ui              # Vitest-UI im Browser
 ```
 
 Coverage-Ziele (siehe `vitest.config.js`):
+
 - 70 % Lines / 65 % Branches global
 - Aktuell **>93 %** auf den Math/Engine-Modulen
 
@@ -97,14 +98,14 @@ Final ImageData
 Der `legacyMath`-Toggle (Settings → Math Engine) schaltet zwischen zwei
 Render-Pipelines:
 
-| Bereich              | v1 (legacyMath = true)       | v2 (default)                   |
-|----------------------|------------------------------|--------------------------------|
-| Grayscale            | Per-RGB-Channel              | Luma-First (~3× schneller)     |
-| Floyd-Steinberg      | Klassisch L→R, Threshold 128 | Serpentine + state.threshold   |
-| Row Banding          | Asymmetrisch (`1 - amp·rng`) | Symmetrisch (`1 + amp·(rng-½)·2`) |
-| Ghosting Direction   | Per Pin-Reihe                | Per Carriage-Sweep (≈ realistisch) |
-| Paper Slip Skala     | Mit `stepY` skaliert         | In Grid-Pixeln (stabil)        |
-| Value Noise          | Bilinear                     | Smoothstep (C¹-stetig)         |
+| Bereich            | v1 (legacyMath = true)       | v2 (default)                       |
+| ------------------ | ---------------------------- | ---------------------------------- |
+| Grayscale          | Per-RGB-Channel              | Luma-First (~3× schneller)         |
+| Floyd-Steinberg    | Klassisch L→R, Threshold 128 | Serpentine + state.threshold       |
+| Row Banding        | Asymmetrisch (`1 - amp·rng`) | Symmetrisch (`1 + amp·(rng-½)·2`)  |
+| Ghosting Direction | Per Pin-Reihe                | Per Carriage-Sweep (≈ realistisch) |
+| Paper Slip Skala   | Mit `stepY` skaliert         | In Grid-Pixeln (stabil)            |
+| Value Noise        | Bilinear                     | Smoothstep (C¹-stetig)             |
 
 ## Preset-Format
 

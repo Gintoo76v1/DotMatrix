@@ -75,7 +75,7 @@ OffscreenCanvas-Worker-Rendering und modularer Refaktorierung.
   Klassisches Verhalten in Legacy-Mode.
 
 - **Bug M — `toGrayscale` Luma-First (M1)** ✅
-  Luma wird *vor* Brightness/Contrast/Gamma berechnet → ~3× schneller
+  Luma wird _vor_ Brightness/Contrast/Gamma berechnet → ~3× schneller
   (1 `pow` pro Pixel statt 3). Gamma ist zwar nicht-linear, der visuelle
   Unterschied liegt aber unter 1 LSB für übliche Werte.
   Legacy-RGB-Pfad bleibt verfügbar.
@@ -125,7 +125,7 @@ OffscreenCanvas-Worker-Rendering und modularer Refaktorierung.
 
 - **`main.js` reduziert** von 581 auf 184 Zeilen (-68 %)
 - **12 neue Module** unter `js/ui/` und `js/`
-- Klare Trennung: Math (engine/filters/utils) vs. UI (ui/*) vs. State (config/settings-store)
+- Klare Trennung: Math (engine/filters/utils) vs. UI (ui/\*) vs. State (config/settings-store)
 
 ### OffscreenCanvas Worker
 
@@ -140,19 +140,17 @@ OffscreenCanvas-Worker-Rendering und modularer Refaktorierung.
 - Liefert ein einziges Config-Objekt — keine `if(state.legacyMath)`
   Streuung im Hot-Loop
 
-
-
 ## Test-Suite
 
-| Datei                            | Tests | Coverage-Bereich            |
-|----------------------------------|------:|-----------------------------|
-| tests/utils.test.js              |    15 | mulberry32, gaussian, smoothstep |
-| tests/filters.test.js            |    20 | grayscale, dither, blur     |
-| tests/engine.test.js             |    18 | makeDotStamp, stampInto, render |
-| tests/engine.layers.test.js      |    16 | 12 Wear-Patterns + legacy   |
-| tests/config.test.js             |    28 | Profile-Sanity, Presets     |
-| tests/presets.test.js            |    23 | YAML-Roundtrip, Edge-Cases  |
-| **Σ**                            | **120** | **>93 % Math-Coverage**   |
+| Datei                       |   Tests | Coverage-Bereich                 |
+| --------------------------- | ------: | -------------------------------- |
+| tests/utils.test.js         |      15 | mulberry32, gaussian, smoothstep |
+| tests/filters.test.js       |      20 | grayscale, dither, blur          |
+| tests/engine.test.js        |      18 | makeDotStamp, stampInto, render  |
+| tests/engine.layers.test.js |      16 | 12 Wear-Patterns + legacy        |
+| tests/config.test.js        |      28 | Profile-Sanity, Presets          |
+| tests/presets.test.js       |      23 | YAML-Roundtrip, Edge-Cases       |
+| **Σ**                       | **120** | **>93 % Math-Coverage**          |
 
 ## Stats
 

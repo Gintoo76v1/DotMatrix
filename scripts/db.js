@@ -107,5 +107,5 @@ export const localDB = {
     const tx = db.transaction('syncQueue', 'readwrite');
     tx.objectStore('syncQueue').delete(id);
     await txPromise(tx);
-  }
+  },
 };

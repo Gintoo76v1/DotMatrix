@@ -85,7 +85,7 @@ export function saveSettings(partial) {
 export async function hydrateState(state) {
   // 1. Load local fallback
   let localSettings = loadSettings();
-  
+
   // 2. Try to fetch settings from server
   let serverSettings = {};
   let serverFetchSuccess = false;
@@ -118,7 +118,7 @@ export async function hydrateState(state) {
   for (const k of PERSIST_KEYS) {
     if (k in finalSettings) state[k] = finalSettings[k];
   }
-  
+
   // 6. Update local storage cache
   try {
     localStorage.setItem(KEY, JSON.stringify(finalSettings));

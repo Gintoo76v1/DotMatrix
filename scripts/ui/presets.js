@@ -27,11 +27,11 @@ async function loadUserPresets() {
       for (const p of res.projects) {
         await localDB.saveProject(p);
       }
-      return res.projects.map(p => ({
+      return res.projects.map((p) => ({
         id: p.id,
         name: p.name,
         system: false,
-        ...p.contentJson
+        ...p.contentJson,
       }));
     }
   } catch (err) {
@@ -41,11 +41,11 @@ async function loadUserPresets() {
   // Fallback auf lokale Datenbank
   try {
     const localProjects = await localDB.getAllProjects();
-    return localProjects.map(p => ({
+    return localProjects.map((p) => ({
       id: p.id,
       name: p.name,
       system: false,
-      ...p.contentJson
+      ...p.contentJson,
     }));
   } catch {
     return [];
@@ -55,7 +55,7 @@ async function loadUserPresets() {
 async function saveUserPreset(preset) {
   try {
     const { id, name, system, ...contentJson } = preset;
-    // Neue Presets haben noch keine echte UUID (nur usr_timestamp). 
+    // Neue Presets haben noch keine echte UUID (nur usr_timestamp).
     // Wir übergeben sie der API als Create-Aufruf.
     await queueCreateProject(name, contentJson);
     await renderPresetList();
@@ -333,11 +333,8 @@ function importFromText(text, onSetStatus) {
     if (preset.name !== 'Imported') {
       preset.id = 'usr_' + Date.now();
       preset.system = false;
-      const presets = loadUserPresets();
-      presets.push(preset);
-      saveUserPresets(presets);
+      saveUserPreset(preset).catch((e) => showError(`[Import Save Fehler]: ${e.message}`));
       activePresetId = preset.id;
-      renderPresetList();
     }
   } catch (err) {
     showError(`[YAML Import Fehler]: Das Format des Codes ist ungültig. (${err.message})`);

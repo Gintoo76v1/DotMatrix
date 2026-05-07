@@ -8,20 +8,25 @@ dotenv.config();
 
 const { Pool } = pg;
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
+  connectionString:
+    process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
 });
 
 const db = drizzle(pool, { schema });
 
 async function seed() {
   console.log('Seeding initial admin role and invite code...');
-  
+
   // Create admin role
-  const [adminRole] = await db.insert(schema.roles).values({
-    name: 'admin',
-    description: 'System Administrator',
-    isSystem: true
-  }).onConflictDoNothing().returning();
+  const [adminRole] = await db
+    .insert(schema.roles)
+    .values({
+      name: 'admin',
+      description: 'System Administrator',
+      isSystem: true,
+    })
+    .onConflictDoNothing()
+    .returning();
 
   if (!adminRole) {
     console.log('Admin role already exists.');
@@ -30,7 +35,7 @@ async function seed() {
 
   // Create an initial invite code
   const code = crypto.randomBytes(6).toString('hex').toUpperCase().match(/.{4}/g).join('-');
-  
+
   await db.insert(schema.inviteCodes).values({
     code,
     roleId: adminRole.id,
@@ -43,11 +48,11 @@ async function seed() {
   console.log('\n==============================');
   console.log(`       ${code}`);
   console.log('==============================\n');
-  
+
   process.exit(0);
 }
 
-seed().catch(err => {
+seed().catch((err) => {
   console.error('Seeding failed:', err);
   process.exit(1);
 });

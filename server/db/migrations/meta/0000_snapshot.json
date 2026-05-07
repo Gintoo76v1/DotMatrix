@@ -65,12 +65,8 @@
           "name": "audit_log_actor_user_id_users_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "users",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -157,12 +153,8 @@
           "name": "invite_codes_role_id_roles_id_fk",
           "tableFrom": "invite_codes",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -170,12 +162,8 @@
           "name": "invite_codes_created_by_users_id_fk",
           "tableFrom": "invite_codes",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -185,9 +173,7 @@
         "invite_codes_code_unique": {
           "name": "invite_codes_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -243,12 +229,8 @@
           "name": "invite_redemptions_invite_code_id_invite_codes_id_fk",
           "tableFrom": "invite_redemptions",
           "tableTo": "invite_codes",
-          "columnsFrom": [
-            "invite_code_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invite_code_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -256,12 +238,8 @@
           "name": "invite_redemptions_user_id_users_id_fk",
           "tableFrom": "invite_redemptions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -303,9 +281,7 @@
         "permissions_key_unique": {
           "name": "permissions_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -361,12 +337,8 @@
           "name": "project_snapshots_project_id_projects_id_fk",
           "tableFrom": "project_snapshots",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -374,12 +346,8 @@
           "name": "project_snapshots_created_by_users_id_fk",
           "tableFrom": "project_snapshots",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -448,12 +416,8 @@
           "name": "projects_owner_id_users_id_fk",
           "tableFrom": "projects",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -487,12 +451,8 @@
           "name": "role_permissions_role_id_roles_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -500,12 +460,8 @@
           "name": "role_permissions_permission_id_permissions_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "permissions",
-          "columnsFrom": [
-            "permission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["permission_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -513,10 +469,7 @@
       "compositePrimaryKeys": {
         "role_permissions_role_id_permission_id_pk": {
           "name": "role_permissions_role_id_permission_id_pk",
-          "columns": [
-            "role_id",
-            "permission_id"
-          ]
+          "columns": ["role_id", "permission_id"]
         }
       },
       "uniqueConstraints": {},
@@ -569,9 +522,7 @@
         "roles_name_unique": {
           "name": "roles_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -640,12 +591,8 @@
           "name": "user_settings_user_id_users_id_fk",
           "tableFrom": "user_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -750,12 +697,8 @@
           "name": "users_role_id_roles_id_fk",
           "tableFrom": "users",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -765,16 +708,12 @@
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         },
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},

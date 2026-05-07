@@ -1,24 +1,27 @@
 import { api } from '../api.js';
 
 export async function initAdminUI(permissions) {
-  const isAdmin = permissions.includes('*') || permissions.includes('roles.manage') || permissions.includes('invites.read.any');
+  const isAdmin =
+    permissions.includes('*') ||
+    permissions.includes('roles.manage') ||
+    permissions.includes('invites.read.any');
   if (!isAdmin) return;
 
   // Add the tab button
   const nav = document.querySelector('.activity-bar');
   const systemBtn = document.querySelector('.icon-btn[data-tab="tab-system"]');
-  
+
   const adminBtn = document.createElement('div');
   adminBtn.className = 'icon-btn';
   adminBtn.dataset.tab = 'tab-admin';
   adminBtn.title = 'Admin';
   adminBtn.textContent = '🛡️';
-  
+
   nav.insertBefore(adminBtn, systemBtn);
 
   // Add the tab content
   const sidebar = document.querySelector('.sidebar-scrollable');
-  
+
   const adminTab = document.createElement('div');
   adminTab.className = 'tab-content';
   adminTab.id = 'tab-admin';
@@ -37,12 +40,14 @@ export async function initAdminUI(permissions) {
       <div id="userList" class="scroll-list" style="max-height:200px;"></div>
     </div>
   `;
-  
+
   sidebar.appendChild(adminTab);
 
   // Wire tab switching specifically for the new button
   adminBtn.addEventListener('click', () => {
-    document.querySelectorAll('.activity-bar .icon-btn').forEach((b) => b.classList.remove('active'));
+    document
+      .querySelectorAll('.activity-bar .icon-btn')
+      .forEach((b) => b.classList.remove('active'));
     adminBtn.classList.add('active');
     document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
     adminTab.classList.add('active');
@@ -70,7 +75,7 @@ async function getDefaultRoleId() {
   if (defaultRoleId) return defaultRoleId;
   try {
     const res = await api.roles.list();
-    const userRole = res.roles.find(r => r.name === 'user') || res.roles[0];
+    const userRole = res.roles.find((r) => r.name === 'user') || res.roles[0];
     defaultRoleId = userRole.id;
     return defaultRoleId;
   } catch {
@@ -85,9 +90,10 @@ async function loadAdminData() {
       const res = await api.invites.list();
       inviteList.innerHTML = '';
       if (res.invites.length === 0) {
-        inviteList.innerHTML = '<div style="padding:10px; color:var(--dm-text-weak); text-align:center;">Keine Invites</div>';
+        inviteList.innerHTML =
+          '<div style="padding:10px; color:var(--dm-text-weak); text-align:center;">Keine Invites</div>';
       }
-      res.invites.forEach(inv => {
+      res.invites.forEach((inv) => {
         const el = document.createElement('div');
         el.className = 'sli';
         const isRevoked = inv.isRevoked;
@@ -96,16 +102,16 @@ async function loadAdminData() {
             <span style="${isRevoked ? 'text-decoration:line-through; opacity:0.5;' : ''}">${inv.code}</span>
             <div>
               <span class="sli-badge" style="margin-right:5px">${inv.usedCount}/${inv.maxUses}</span>
-              ${!isRevoked ? '<button class="sli-del" data-id="'+inv.id+'" title="Widerrufen">×</button>' : ''}
+              ${!isRevoked ? '<button class="sli-del" data-id="' + inv.id + '" title="Widerrufen">×</button>' : ''}
             </div>
           </div>`;
-        
+
         const delBtn = el.querySelector('.sli-del');
         if (delBtn) {
           delBtn.addEventListener('click', async () => {
             if (confirm('Diesen Code wirklich widerrufen?')) {
-               await api.invites.revoke(inv.id);
-               loadAdminData();
+              await api.invites.revoke(inv.id);
+              loadAdminData();
             }
           });
         }
@@ -117,7 +123,7 @@ async function loadAdminData() {
     if (userList) {
       const res = await api.users.list();
       userList.innerHTML = '';
-      res.users.forEach(u => {
+      res.users.forEach((u) => {
         const el = document.createElement('div');
         el.className = 'sli';
         const isActive = u.status === 'active';
@@ -128,7 +134,7 @@ async function loadAdminData() {
               ${isActive ? 'Sperren' : 'Aktivieren'}
             </button>
           </div>`;
-        
+
         el.querySelector('button').addEventListener('click', async () => {
           const nextStatus = isActive ? 'suspended' : 'active';
           if (confirm(`User ${u.username} wirklich ${isActive ? 'sperren' : 'aktivieren'}?`)) {

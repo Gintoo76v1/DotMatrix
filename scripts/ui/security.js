@@ -69,8 +69,8 @@ async function render2FA() {
   const statusEl = document.getElementById('2faStatus');
   // Note: auth.me doesn't return 2fa state yet, let's assume we add it to the user object in auth.js
   const isEnabled = userRes.user.twoFactorEnabled;
-  statusEl.innerHTML = isEnabled 
-    ? '<span style="color:var(--dm-success)">● Aktiviert</span>' 
+  statusEl.innerHTML = isEnabled
+    ? '<span style="color:var(--dm-success)">● Aktiviert</span>'
     : '<span style="color:var(--dm-text-weak)">○ Deaktiviert</span>';
 }
 
@@ -78,8 +78,9 @@ async function renderAPIKeys() {
   const res = await api.security.apiKeys.list();
   const list = document.getElementById('apiKeyList');
   list.innerHTML = '';
-  if (res.keys.length === 0) list.innerHTML = '<div style="padding:10px; opacity:0.5; text-align:center;">Keine Keys</div>';
-  res.keys.forEach(k => {
+  if (res.keys.length === 0)
+    list.innerHTML = '<div style="padding:10px; opacity:0.5; text-align:center;">Keine Keys</div>';
+  res.keys.forEach((k) => {
     const el = document.createElement('div');
     el.className = 'sli';
     el.innerHTML = `<div class="sli-row"><span>${k.name}</span><button class="sli-del" data-id="${k.id}">×</button></div>`;

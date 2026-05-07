@@ -24,12 +24,12 @@ test('tabs switch correctly', async ({ page }) => {
 
 test('sidebar toggle button collapses sidebar', async ({ page }) => {
   await page.goto('/');
-  
+
   const sidebar = page.locator('.sidebar');
   await expect(sidebar).not.toHaveClass(/collapsed/);
-  
+
   const toggleBtn = page.locator('#sidebarToggleBtn');
   await toggleBtn.click();
-  
+
   await expect(sidebar).toHaveClass(/collapsed/);
 });

@@ -1,7 +1,14 @@
 import express from 'express';
 import argon2 from 'argon2';
 import { db } from '../db/index.js';
-import { users, inviteCodes, inviteRedemptions, roles, rolePermissions, permissions } from '../db/schema.js';
+import {
+  users,
+  inviteCodes,
+  inviteRedemptions,
+  roles,
+  rolePermissions,
+  permissions,
+} from '../db/schema.js';
 import { eq, or, sql } from 'drizzle-orm';
 import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema } from '../utils/schemas.js';
@@ -13,7 +20,7 @@ const router = express.Router();
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Limit each IP to 5 login requests per `window`
-  message: { error: 'Too many login attempts, please try again later.' }
+  message: { error: 'Too many login attempts, please try again later.' },
 });
 
 router.post('/register', validate(registerSchema), async (req, res) => {
@@ -22,12 +29,13 @@ router.post('/register', validate(registerSchema), async (req, res) => {
   try {
     // 1. Validate Invite Code within a transaction
     await db.transaction(async (tx) => {
-      const invite = await tx.select()
+      const invite = await tx
+        .select()
         .from(inviteCodes)
         .where(eq(inviteCodes.code, inviteCode))
         .for('update') // Pessimistic lock
         .limit(1)
-        .then(res => res[0]);
+        .then((res) => res[0]);
 
       if (!invite) {
         throw new Error('Invalid invite code');
@@ -47,20 +55,24 @@ router.post('/register', validate(registerSchema), async (req, res) => {
         type: argon2.argon2id,
         memoryCost: 65536,
         timeCost: 3,
-        parallelism: 4
+        parallelism: 4,
       });
 
       // 3. Create User
-      const [newUser] = await tx.insert(users).values({
-        username,
-        email,
-        passwordHash,
-        displayName,
-        roleId: invite.roleId,
-      }).returning();
+      const [newUser] = await tx
+        .insert(users)
+        .values({
+          username,
+          email,
+          passwordHash,
+          displayName,
+          roleId: invite.roleId,
+        })
+        .returning();
 
       // 4. Update Invite uses
-      await tx.update(inviteCodes)
+      await tx
+        .update(inviteCodes)
         .set({ usedCount: sql`${inviteCodes.usedCount} + 1` })
         .where(eq(inviteCodes.id, invite.id));
 
@@ -78,7 +90,12 @@ router.post('/register', validate(registerSchema), async (req, res) => {
       req.session.userId = newUser.id;
       req.session.roleId = newUser.roleId;
 
-      res.status(201).json({ message: 'Registration successful', user: { id: newUser.id, username: newUser.username } });
+      res
+        .status(201)
+        .json({
+          message: 'Registration successful',
+          user: { id: newUser.id, username: newUser.username },
+        });
     });
   } catch (error) {
     if (error.code === '23505') {
@@ -93,14 +110,12 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
   const { usernameOrEmail, password } = req.body;
 
   try {
-    const user = await db.select()
+    const user = await db
+      .select()
       .from(users)
-      .where(or(
-        eq(users.username, usernameOrEmail),
-        eq(users.email, usernameOrEmail)
-      ))
+      .where(or(eq(users.username, usernameOrEmail), eq(users.email, usernameOrEmail)))
       .limit(1)
-      .then(res => res[0]);
+      .then((res) => res[0]);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -123,7 +138,8 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
       if (failedCount >= 5) {
         lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // Lock for 15 mins
       }
-      await db.update(users)
+      await db
+        .update(users)
         .set({ failedLoginCount: failedCount, lockedUntil })
         .where(eq(users.id, user.id));
 
@@ -131,12 +147,13 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
     }
 
     // Success login
-    await db.update(users)
-      .set({ 
-        failedLoginCount: 0, 
-        lockedUntil: null, 
+    await db
+      .update(users)
+      .set({
+        failedLoginCount: 0,
+        lockedUntil: null,
         lastLoginAt: new Date(),
-        lastActiveAt: new Date()
+        lastActiveAt: new Date(),
       })
       .where(eq(users.id, user.id));
 
@@ -155,10 +172,10 @@ router.post('/logout', (req, res) => {
   const userId = req.session.userId;
   req.session.destroy(async (err) => {
     if (err) return res.status(500).json({ error: 'Logout failed' });
-    
+
     if (userId) {
-       // Manual log since session is gone
-       await logAction({ session: { userId }, ip: req.ip }, 'auth.logout', 'users', userId);
+      // Manual log since session is gone
+      await logAction({ session: { userId }, ip: req.ip }, 'auth.logout', 'users', userId);
     }
 
     res.clearCookie('connect.sid');
@@ -172,36 +189,47 @@ router.get('/me', async (req, res) => {
   }
 
   try {
-    const user = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1).then(r => r[0]);
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.session.userId))
+      .limit(1)
+      .then((r) => r[0]);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
     let userPermissions = [];
     let roleName = 'none';
 
     if (user.roleId) {
-      const role = await db.select().from(roles).where(eq(roles.id, user.roleId)).limit(1).then(r => r[0]);
+      const role = await db
+        .select()
+        .from(roles)
+        .where(eq(roles.id, user.roleId))
+        .limit(1)
+        .then((r) => r[0]);
       if (role) {
         roleName = role.name;
         if (role.name === 'admin') {
           userPermissions = ['*'];
         } else {
-          const perms = await db.select()
+          const perms = await db
+            .select()
             .from(rolePermissions)
             .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
             .where(eq(rolePermissions.roleId, user.roleId));
-          userPermissions = perms.map(p => p.permissions.key);
+          userPermissions = perms.map((p) => p.permissions.key);
         }
       }
     }
 
-    res.json({ 
-      user: { 
-        id: user.id, 
-        username: user.username, 
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
         role: roleName,
-        twoFactorEnabled: user.twoFactorEnabled 
-      }, 
-      permissions: userPermissions 
+        twoFactorEnabled: user.twoFactorEnabled,
+      },
+      permissions: userPermissions,
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });

@@ -5,6 +5,7 @@ export default defineConfig({
   out: './server/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
+    url:
+      process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
   },
 });

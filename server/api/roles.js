@@ -17,14 +17,17 @@ router.get('/', requireAuth, requirePermission('roles.manage'), async (req, res)
 
 router.post('/', requireAuth, requirePermission('roles.manage'), async (req, res) => {
   const { name, description } = req.body;
-  
+
   if (!name) return res.status(400).json({ error: 'name is required' });
 
   try {
-    const [role] = await db.insert(roles).values({
-      name,
-      description
-    }).returning();
+    const [role] = await db
+      .insert(roles)
+      .values({
+        name,
+        description,
+      })
+      .returning();
 
     res.status(201).json({ role });
   } catch (error) {

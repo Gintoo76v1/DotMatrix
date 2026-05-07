@@ -9,7 +9,7 @@ import {
   inet,
   jsonb,
   primaryKey,
-  check
+  check,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -32,8 +32,12 @@ export const permissions = pgTable('permissions', {
 export const rolePermissions = pgTable(
   'role_permissions',
   {
-    roleId: uuid('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
-    permissionId: uuid('permission_id').notNull().references(() => permissions.id, { onDelete: 'cascade' }),
+    roleId: uuid('role_id')
+      .notNull()
+      .references(() => roles.id, { onDelete: 'cascade' }),
+    permissionId: uuid('permission_id')
+      .notNull()
+      .references(() => permissions.id, { onDelete: 'cascade' }),
   },
   (table) => {
     return {
@@ -66,7 +70,9 @@ export const users = pgTable('users', {
 
 export const apiKeys = pgTable('api_keys', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 100 }).notNull(),
   keyHash: varchar('key_hash', { length: 255 }).notNull().unique(),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
@@ -109,7 +115,9 @@ export const inviteRedemptions = pgTable('invite_redemptions', {
 // ── APP DATA ─────────────────────────────────────────────────────────────
 
 export const userSettings = pgTable('user_settings', {
-  userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
   settingsJson: jsonb('settings_json').notNull().default({}),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

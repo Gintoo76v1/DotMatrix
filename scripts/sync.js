@@ -23,19 +23,27 @@ async function processQueue() {
           await api.projects.delete(task.projectId);
         } else if (task.type === 'blob_upload') {
           // 1. Get presigned URL
-          const { uploadUrl } = await api.projects.getUploadUrl(task.projectId, task.filename, task.contentType);
+          const { uploadUrl } = await api.projects.getUploadUrl(
+            task.projectId,
+            task.filename,
+            task.contentType
+          );
           // 2. Fetch blob from localDB
           const blob = await localDB.getBlob(task.blobId);
           if (blob) {
             // 3. Upload to S3
-            await fetch(uploadUrl, { method: 'PUT', body: blob, headers: { 'Content-Type': task.contentType } });
+            await fetch(uploadUrl, {
+              method: 'PUT',
+              body: blob,
+              headers: { 'Content-Type': task.contentType },
+            });
             // Cleanup blob from local DB if desired
             // await localDB.saveBlob(task.blobId, null); // Or delete
           }
         } else if (task.type === 'settings_update') {
           await api.settings.update(task.settingsJson);
         }
-        
+
         // Remove task upon success
         await localDB.removeSyncTask(task.id);
       } catch (err) {
@@ -58,7 +66,7 @@ async function processQueue() {
 export function initSyncManager(userId) {
   currentUserId = userId;
   window.addEventListener('online', processQueue);
-  
+
   // Periodically check queue
   syncInterval = setInterval(processQueue, 10000);
 
@@ -68,16 +76,16 @@ export function initSyncManager(userId) {
 
 function initWebSocket() {
   if (!currentUserId) return;
-  
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const url = `${protocol}//${window.location.host}/ws`;
-  
+
   ws = new WebSocket(url);
-  
+
   ws.onopen = () => {
     ws.send(JSON.stringify({ type: 'auth', userId: currentUserId }));
   };
-  
+
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
@@ -89,7 +97,7 @@ function initWebSocket() {
       console.error('WS Sync Error', e);
     }
   };
-  
+
   ws.onclose = () => {
     setTimeout(initWebSocket, 5000); // Reconnect
   };

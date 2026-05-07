@@ -8,7 +8,8 @@ dotenv.config();
 const { Pool } = pg;
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
+  connectionString:
+    process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
 });
 
 export const db = drizzle(pool, { schema });

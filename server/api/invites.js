@@ -12,7 +12,7 @@ const router = express.Router();
 const inviteCreateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 20, // Limit each IP to 20 invites per hour
-  message: { error: 'Too many invites created. Please try again later.' }
+  message: { error: 'Too many invites created. Please try again later.' },
 });
 
 function generateInviteCode() {
@@ -31,36 +31,49 @@ router.get('/', requireAuth, requirePermission('invites.read.any'), async (req, 
 });
 
 // Create new invite
-router.post('/', requireAuth, requirePermission('invites.create'), inviteCreateLimiter, async (req, res) => {
-  const { roleId, maxUses, expiresAt, note } = req.body;
-  
-  if (!roleId) return res.status(400).json({ error: 'roleId is required' });
+router.post(
+  '/',
+  requireAuth,
+  requirePermission('invites.create'),
+  inviteCreateLimiter,
+  async (req, res) => {
+    const { roleId, maxUses, expiresAt, note } = req.body;
 
-  try {
-    const code = generateInviteCode();
-    const [invite] = await db.insert(inviteCodes).values({
-      code,
-      roleId,
-      createdBy: req.session.userId,
-      maxUses: maxUses || 1,
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
-      note
-    }).returning();
+    if (!roleId) return res.status(400).json({ error: 'roleId is required' });
 
-    await logAction(req, 'invite.create', 'invite_codes', invite.id, { roleId, code: invite.code });
+    try {
+      const code = generateInviteCode();
+      const [invite] = await db
+        .insert(inviteCodes)
+        .values({
+          code,
+          roleId,
+          createdBy: req.session.userId,
+          maxUses: maxUses || 1,
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+          note,
+        })
+        .returning();
 
-    res.status(201).json({ invite });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+      await logAction(req, 'invite.create', 'invite_codes', invite.id, {
+        roleId,
+        code: invite.code,
+      });
+
+      res.status(201).json({ invite });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
   }
-});
+);
 
 // Revoke/Delete invite
 router.delete('/:id', requireAuth, requirePermission('invites.revoke'), async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [invite] = await db.update(inviteCodes)
+    const [invite] = await db
+      .update(inviteCodes)
       .set({ isRevoked: true })
       .where(eq(inviteCodes.id, id))
       .returning();
