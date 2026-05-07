@@ -7,17 +7,23 @@
 // Hot loop sits in render(); per-cell branches are minimised by hoisting
 // constants and using branch-free clamps.
 
-import { PROFILES, state, MM_PER_INCH, PAPER_SIZES_MM } from './config.js';
-import { mulberry32, makeGaussian, yieldUI, smoothstep, clamp } from './utils.js';
+import { PROFILES, state, PAPER_SIZES_MM } from './config.js';
+import { mulberry32, makeGaussian, yieldUI, clamp } from './utils.js';
 import {
   toGrayscale,
   floydSteinberg,
   orderedDither,
   thresholdDither,
-  boxBlur3x3,
 } from './filters.js';
+import { RENDERING, MM_PER_INCH } from './constants.js';
 
-// ── Dot stamp ────────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
+// (New modular helpers to reduce render complexity)
+function _getPrintDimensions(srcImage, profile, dpiH, dpiV) {
+  const srcAspect = srcImage.width / srcImage.height;
+  // ... (Logic to be moved here)
+}
+
 //
 // Builds a soft-edged disc with optional anisotropy. The legacy code used a
 // hard-coded 0.88 scaling on dx² which only matched 9-pin printers with
