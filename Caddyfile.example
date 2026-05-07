@@ -1,66 +1,73 @@
+{
+        email intern@alireda.co
+        acme_dns cloudflare YOUR_CLOUDFLARE_API_TOKEN_HERE
+}
+
 app.alireda.co {
-    # ── API & WebSocket: Proxy to Node.js on port 3000 ───────────────────────
-    # Diese Blöcke MÜSSEN vor dem file_server stehen, damit API-Anfragen
-    # den Node.js-Server erreichen und nicht als statische Dateien behandelt werden.
-
-    handle /api/* {
-        reverse_proxy localhost:3000
-    }
-
-    handle /ws {
-        reverse_proxy localhost:3000
-    }
-
-    # ── Statische Dateien ────────────────────────────────────────────────────
-    handle {
-        root * /path/to/dotmatrix/repo  # TODO: Pfad auf dem Server anpassen
-
-        # Security Headers
         header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         header X-Content-Type-Options "nosniff"
         header X-Frame-Options "SAMEORIGIN"
         header Referrer-Policy "strict-origin-when-cross-origin"
 
-        # Caching: JS/CSS/Fonts/Bilder können lange gecacht werden
-        @static {
-            path *.js *.css *.woff2 *.png *.json
+        # ── API: Proxy zu Node.js (/dotmatrix-Prefix wird vor Weiterleitung entfernt) ──
+        # Muss VOR handle_path /dotmatrix/* stehen, sonst greift file_server zuerst.
+        handle /dotmatrix/api/* {
+                uri strip_prefix /dotmatrix
+                reverse_proxy localhost:3000
         }
-        header @static Cache-Control "public, max-age=31536000, immutable"
 
-        # HTML nie cachen, damit Updates sofort sichtbar sind
-        @html {
-            path *.html
+        # ── WebSocket: Proxy zu Node.js ───────────────────────────────────────
+        handle /dotmatrix/ws {
+                uri strip_prefix /dotmatrix
+                reverse_proxy localhost:3000
         }
-        header @html Cache-Control "no-cache, no-store, must-revalidate"
 
-        file_server
-    }
+        # ── Statische Dateien ─────────────────────────────────────────────────
+        handle_path /dotmatrix/* {
+                root * /home/gintoo/opencode-projects/DotMatrix
+                file_server
+
+                @static path *.js *.css *.woff2 *.png *.json
+                header @static Cache-Control "public, max-age=31536000, immutable"
+
+                @html path *.html
+                header @html Cache-Control "no-cache, no-store, must-revalidate"
+        }
+
+        @dotmatrix_no_slash path /dotmatrix
+        redir @dotmatrix_no_slash /dotmatrix/ 308
+
+        handle {
+                respond "app.alireda.co laeuft. Versuche /dotmatrix/" 200
+        }
 }
 
-# ── Alternativ: App unter einem Unterpfad (z.B. /dotmatrix/) ─────────────────
-# Falls die App unter app.alireda.co/dotmatrix/ gehostet wird:
-#
-# app.alireda.co {
-#     handle /dotmatrix/api/* {
-#         uri strip_prefix /dotmatrix
-#         reverse_proxy localhost:3000
-#     }
-#
-#     handle /dotmatrix/ws {
-#         uri strip_prefix /dotmatrix
-#         reverse_proxy localhost:3000
-#     }
-#
-#     handle_path /dotmatrix* {
-#         root * /path/to/dotmatrix/repo
-#         header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-#         header X-Content-Type-Options "nosniff"
-#         header X-Frame-Options "SAMEORIGIN"
-#         header Referrer-Policy "strict-origin-when-cross-origin"
-#         @static { path *.js *.css *.woff2 *.png *.json }
-#         header @static Cache-Control "public, max-age=31536000, immutable"
-#         @html { path *.html }
-#         header @html Cache-Control "no-cache, no-store, must-revalidate"
-#         file_server
-#     }
-# }
+opencode.tool.alireda.co {
+        bind 100.64.108.74
+        reverse_proxy localhost:42387
+}
+
+tool.alireda.co {
+        handle_path /opencode/projects/* {
+                root * /home/gintoo/opencode-projects
+                file_server browse
+        }
+
+        handle /opencode* {
+                redir https://opencode.tool.alireda.co 308
+        }
+
+        handle {
+                respond "tool.alireda.co laeuft. Versuche /opencode/ oder /opencode/projects/" 200
+        }
+}
+
+intern.alireda.co {
+        bind 100.64.108.74
+        respond "intern.alireda.co - Tailscale only OK" 200
+}
+
+tailscale.alireda.co {
+        bind 100.64.108.74
+        respond "tailscale.alireda.co - Tailscale only OK" 200
+}
