@@ -1,5 +1,16 @@
 import { api, APIError } from './api.js';
 
+// Bereits eingeloggt? Direkt zur App weiterleiten (ohne Browser-History-Eintrag)
+(async () => {
+  try {
+    await api.auth.me();
+    const base = window.location.pathname.replace(/[^/]*$/, '');
+    window.location.replace(`${base}index.html`);
+  } catch {
+    // Nicht authentifiziert – Formular normal anzeigen
+  }
+})();
+
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const errorMsg = document.getElementById('errorMsg');

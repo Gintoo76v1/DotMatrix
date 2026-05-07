@@ -25,7 +25,11 @@ app.alireda.co {
         # ── Statische Dateien ─────────────────────────────────────────────────
         handle_path /dotmatrix/* {
                 root * /home/gintoo/opencode-projects/DotMatrix
-                file_server
+                # login.html als Standard-Startseite – index.html ist die App und
+                # darf nur nach erfolgreichem Login aufgerufen werden.
+                file_server {
+                        index login.html
+                }
 
                 @static path *.js *.css *.woff2 *.png *.json
                 header @static Cache-Control "public, max-age=31536000, immutable"
