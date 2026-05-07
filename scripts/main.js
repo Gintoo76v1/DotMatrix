@@ -35,7 +35,12 @@ try {
   currentUser = data.user;
   currentPermissions = data.permissions || [];
 } catch {
-  // Wait for redirect to happen
+  // Redirect to login on any auth failure (api.js handles 401, this covers network/other errors)
+  const baseUrl = window.location.pathname.substring(
+    0,
+    window.location.pathname.lastIndexOf('/') + 1
+  );
+  window.location.href = `${baseUrl}login.html`;
   await new Promise(() => {});
 }
 

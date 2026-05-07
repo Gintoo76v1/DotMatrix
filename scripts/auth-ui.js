@@ -38,12 +38,11 @@ if (loginForm) {
 
     try {
       await api.auth.login(usernameOrEmail, password);
-      // Redirect to main app on success. Use relative path.
       const baseUrl = window.location.pathname.substring(
         0,
         window.location.pathname.lastIndexOf('/') + 1
       );
-      window.location.href = baseUrl;
+      window.location.href = `${baseUrl}index.html`;
     } catch (error) {
       if (error instanceof APIError) {
         showError(error.message);
@@ -69,13 +68,11 @@ if (registerForm) {
 
     try {
       await api.auth.register(inviteCode, username, password, email);
-      // Optional: Since our backend does auto-login (sets session cookie),
-      // we can redirect directly to the app. Use relative path.
       const baseUrl = window.location.pathname.substring(
         0,
         window.location.pathname.lastIndexOf('/') + 1
       );
-      window.location.href = baseUrl;
+      window.location.href = `${baseUrl}index.html`;
     } catch (error) {
       if (error instanceof APIError) {
         showError(error.message);
