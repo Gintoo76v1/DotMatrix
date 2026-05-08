@@ -1,32 +1,50 @@
 import { localDB } from './db.js';
 import { api } from './api.js';
 
-// eslint-disable-next-line no-unused-vars
 let syncInterval = null;
+let isSyncing = false;
+let ws = null;
+let currentUserId = null;
 
-export function initSyncManager() {
-  window.removeEventListener('online', processQueue);
-  window.addEventListener('online', processQueue);
-  
-  if (syncInterval) clearInterval(syncInterval);
-  // Periodically check queue
-  syncInterval = setInterval(processQueue, 10000);
-}
+async function processQueue() {
+  if (isSyncing || !navigator.onLine) return;
+  isSyncing = true;
+
+  try {
+    const queue = await localDB.getSyncQueue();
+    for (const task of queue) {
+      try {
+        if (task.type === 'project_update') {
+          await api.projects.update(task.projectId, task.version, task.contentJson);
+        } else if (task.type === 'project_create') {
+          await api.projects.create(task.name, task.contentJson);
+        } else if (task.type === 'project_delete') {
+          await api.projects.delete(task.projectId);
+        } else if (task.type === 'blob_upload') {
+          const { uploadUrl } = await api.projects.getUploadUrl(
+            task.projectId,
+            task.filename,
+            task.contentType
+          );
+          const blob = await localDB.getBlob(task.blobId);
+          if (blob) {
+            await fetch(uploadUrl, {
+              method: 'PUT',
+              body: blob,
+              headers: { 'Content-Type': task.contentType },
+            });
+          }
         } else if (task.type === 'settings_update') {
           await api.settings.update(task.settingsJson);
         }
 
-        // Remove task upon success
         await localDB.removeSyncTask(task.id);
       } catch (err) {
-        // If 401, stop syncing. If 409, handle conflict.
         if (err.status === 401) break;
         if (err.status === 409) {
           console.error('Conflict detected during sync', err);
-          // For now, remove task to avoid blocking queue, ideally we'd trigger a merge UI
           await localDB.removeSyncTask(task.id);
         }
-        // Other errors: keep in queue and retry later
         console.warn('Sync task failed, will retry', err);
       }
     }
@@ -36,14 +54,15 @@ export function initSyncManager() {
 }
 
 export function initSyncManager(userId) {
-  currentUserId = userId;
+  currentUserId = userId || null;
+
+  window.removeEventListener('online', processQueue);
   window.addEventListener('online', processQueue);
 
-  // Periodically check queue
+  if (syncInterval) clearInterval(syncInterval);
   syncInterval = setInterval(processQueue, 10000);
 
-  // WebSocket Sync
-  initWebSocket();
+  if (currentUserId) initWebSocket();
 }
 
 function initWebSocket() {
@@ -62,7 +81,6 @@ function initWebSocket() {
     try {
       const data = JSON.parse(event.data);
       if (data.type === 'update' && data.state) {
-        // Trigger external sync (avoids circular dependency by using CustomEvent)
         document.dispatchEvent(new CustomEvent('dm:remoteUpdate', { detail: data.state }));
       }
     } catch (e) {
@@ -71,7 +89,7 @@ function initWebSocket() {
   };
 
   ws.onclose = () => {
-    setTimeout(initWebSocket, 5000); // Reconnect
+    setTimeout(initWebSocket, 5000);
   };
 }
 

@@ -22,7 +22,7 @@ import { initAppearance } from './ui/appearance.js';
 import { initChangelog } from './ui/changelog.js';
 import { api } from './api.js?v=13';
 import { initAdminUI } from './ui/admin.js';
-import { queueSaveProject, initSyncManager } from './sync.js';
+import { queueSaveProject, initSyncManager } from './sync.js?v=2';
 import { captureCurrentPreset, applyPreset } from './ui/presets.js';
 
 // ── Authentication Check ───────────────────────────────────────────────────
