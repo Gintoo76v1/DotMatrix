@@ -780,6 +780,25 @@ input[type='file'] {
   box-shadow: 0 0 5px var(--dm-error);
 }
 
+.online-dot.has-updates {
+  animation: onlineDotPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes onlineDotPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 5px var(--dm-success);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow:
+      0 0 10px var(--dm-success),
+      0 0 20px var(--dm-success);
+    transform: scale(1.35);
+  }
+}
+
 .version-text {
   font-weight: 600;
   color: var(--dm-text-base);

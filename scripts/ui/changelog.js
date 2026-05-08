@@ -111,6 +111,7 @@ export function closeOverlay() {
 function _updateFooter() {
   const versionText = document.getElementById('versionText');
   const badges = document.getElementById('updateBadges');
+  const onlineDot = document.getElementById('onlineDot');
 
   if (versionText && versionData) {
     const ver = versionData.current;
@@ -127,6 +128,10 @@ function _updateFooter() {
         return `<span class="update-badge ${cls}">${_escape(tag)}</span>`;
       })
       .join('');
+  }
+
+  if (onlineDot) {
+    onlineDot.classList.toggle('has-updates', hasUnreadUpdates());
   }
 }
 
@@ -169,7 +174,7 @@ function _renderEntry(entry, isCurrent, collapsible = false) {
   const version = _escape(entry.version);
   const commit = entry.commit ? _escape(entry.commit) : null;
   const versionLabel = commit ? `v${version}<span style="font-size:9px;opacity:0.5;font-weight:400;margin-left:4px;">${commit}</span>` : `v${version}`;
-  const inProgressBadge = commit ? `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgb(255 165 0 / 15%);color:orange;font-weight:600;letter-spacing:0.05em;">IN BEARBEITUNG</span>` : '';
+  const inProgressBadge = (isCurrent && commit) ? `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgb(255 165 0 / 15%);color:orange;font-weight:600;letter-spacing:0.05em;">IN BEARBEITUNG</span>` : '';
   const date = _escape(entry.date);
   const summary = _escape(entry.summary || '');
 
