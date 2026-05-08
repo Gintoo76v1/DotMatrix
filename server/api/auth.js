@@ -18,10 +18,10 @@ import { logAction } from '../utils/audit.js';
 const router = express.Router();
 
 const loginLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 30,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
   skipSuccessfulRequests: true, // only failed attempts count
-  message: { error: 'Zu viele Anmeldeversuche – bitte 5 Minuten warten.' },
+  message: { error: 'Zu viele Anmeldeversuche – bitte später erneut versuchen.' },
 });
 
 router.post('/register', validate(registerSchema), async (req, res) => {

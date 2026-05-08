@@ -38,7 +38,7 @@ app.use(
 // Global Rate Limiting
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100, // 100 requests per 15 minutes
+  max: 500, // 500 requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
 });

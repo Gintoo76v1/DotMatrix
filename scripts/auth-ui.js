@@ -1,4 +1,5 @@
 import { api, APIError } from './api.js?v=14';
+import { showError } from './ui/toast.js';
 
 // Bereits eingeloggt? Direkt zur App weiterleiten (ohne Browser-History-Eintrag)
 (async () => {
@@ -11,24 +12,9 @@ import { api, APIError } from './api.js?v=14';
   }
 })();
 
-const loginForm = document.getElementById('loginForm');
+const loginForm    = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
-const errorMsg = document.getElementById('errorMsg');
-const submitBtn = document.getElementById('submitBtn');
-
-function showError(msg) {
-  if (errorMsg) {
-    errorMsg.textContent = msg;
-    errorMsg.style.display = 'block';
-  }
-}
-
-function clearError() {
-  if (errorMsg) {
-    errorMsg.textContent = '';
-    errorMsg.style.display = 'none';
-  }
-}
+const submitBtn    = document.getElementById('submitBtn');
 
 function setLoading(isLoading) {
   if (!submitBtn) return;
@@ -49,28 +35,16 @@ function showRedirectSplash() {
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    clearError();
     setLoading(true);
-
-    const formData = new FormData(loginForm);
-    const usernameOrEmail = formData.get('username');
-    const password = formData.get('password');
-
+    const fd = new FormData(loginForm);
     try {
-      await api.auth.login(usernameOrEmail, password);
-      const baseUrl = window.location.pathname.substring(
-        0,
-        window.location.pathname.lastIndexOf('/') + 1
-      );
+      await api.auth.login(fd.get('username'), fd.get('password'));
+      const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
       sessionStorage.setItem('dm_login_at', String(Date.now()));
       showRedirectSplash();
-      window.location.href = `${baseUrl}index.html`;
-    } catch (error) {
-      if (error instanceof APIError) {
-        showError(error.message);
-      } else {
-        showError('Ein Netzwerkfehler ist aufgetreten.');
-      }
+      window.location.href = `${base}index.html`;
+    } catch (err) {
+      showError(err instanceof APIError ? err.message : 'Ein Netzwerkfehler ist aufgetreten.');
       setLoading(false);
     }
   });
@@ -79,30 +53,21 @@ if (loginForm) {
 if (registerForm) {
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    clearError();
     setLoading(true);
-
-    const formData = new FormData(registerForm);
-    const inviteCode = formData.get('inviteCode');
-    const username = formData.get('username');
-    const password = formData.get('password');
-    const email = formData.get('email') || undefined; // Optional
-
+    const fd = new FormData(registerForm);
     try {
-      await api.auth.register(inviteCode, username, password, email);
-      const baseUrl = window.location.pathname.substring(
-        0,
-        window.location.pathname.lastIndexOf('/') + 1
+      await api.auth.register(
+        fd.get('inviteCode'),
+        fd.get('username'),
+        fd.get('password'),
+        fd.get('email') || undefined
       );
+      const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
       sessionStorage.setItem('dm_login_at', String(Date.now()));
       showRedirectSplash();
-      window.location.href = `${baseUrl}index.html`;
-    } catch (error) {
-      if (error instanceof APIError) {
-        showError(error.message);
-      } else {
-        showError('Ein Netzwerkfehler ist aufgetreten.');
-      }
+      window.location.href = `${base}index.html`;
+    } catch (err) {
+      showError(err instanceof APIError ? err.message : 'Ein Netzwerkfehler ist aufgetreten.');
       setLoading(false);
     }
   });
