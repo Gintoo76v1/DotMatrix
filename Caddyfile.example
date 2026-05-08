@@ -39,6 +39,16 @@ app.alireda.co {
         @dotmatrix_no_slash path /dotmatrix
         redir @dotmatrix_no_slash /dotmatrix/ 308
 
+        # ── 404-Fehlerseite für statische Dateien ────────────────────────────
+        handle_errors {
+                @notfound expression `{err.status_code} == 404`
+                handle @notfound {
+                        root * /home/gintoo/opencode-projects/DotMatrix
+                        rewrite * /404.html
+                        file_server
+                }
+        }
+
         handle {
                 respond "app.alireda.co laeuft. Versuche /dotmatrix/" 200
         }

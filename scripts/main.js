@@ -403,6 +403,44 @@ if (_splash) {
   _splash.addEventListener('transitionend', () => _splash.remove(), { once: true });
 }
 
+// ── User session display & logout ─────────────────────────────────────────
+
+function _initUserSession(user) {
+  const nameEl = document.getElementById('sessionUsername');
+  const timeEl = document.getElementById('sessionTime');
+  const btn = document.getElementById('logoutBtn');
+
+  if (nameEl) nameEl.textContent = user.username;
+
+  let loginAt = parseInt(sessionStorage.getItem('dm_login_at') || '0', 10);
+  if (!loginAt) {
+    loginAt = Date.now();
+    sessionStorage.setItem('dm_login_at', String(loginAt));
+  }
+
+  function _tick() {
+    if (!timeEl) return;
+    const mins = Math.floor((Date.now() - loginAt) / 60000);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    timeEl.textContent = h > 0 ? `· ${h}h ${m}m` : mins > 0 ? `· ${mins}m` : '· < 1m';
+  }
+  _tick();
+  setInterval(_tick, 60000);
+
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = '…';
+      try { await api.auth.logout(); } catch {}
+      sessionStorage.removeItem('dm_login_at');
+      const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+      window.location.href = `${base}login.html`;
+    });
+  }
+}
+_initUserSession(currentUser);
+
 // ── Online / Offline indicator (footer-right green dot) ───────────────────
 
 function _updateOnlineDot() {

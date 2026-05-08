@@ -707,6 +707,47 @@ input[type='file'] {
   color: var(--dm-text-base);
 }
 
+.user-session {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-session-name {
+  color: var(--dm-primary);
+  font-weight: 600;
+}
+
+.user-session-time {
+  color: var(--dm-text-weak);
+  opacity: 0.7;
+}
+
+.logout-btn {
+  background: none;
+  border: 1px solid var(--dm-border-base);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--dm-text-weak);
+  font-size: 10px;
+  font-family: var(--dm-font-mono);
+  padding: 1px 6px;
+  opacity: 0.65;
+  transition:
+    opacity 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+}
+
+.logout-btn:hover {
+  opacity: 1;
+  color: var(--dm-error);
+  border-color: var(--dm-error);
+}
+
 /* ── 9. Version / Update Indicator ─────────────────────────────────────────── */
 
 .footer-right {

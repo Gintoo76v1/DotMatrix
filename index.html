@@ -26,7 +26,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles/main.css?v=14" />
+    <link rel="stylesheet" href="styles/main.css?v=15" />
   </head>
   <body class="dark-mode">
     <div id="appSplash" class="app-splash">
@@ -855,10 +855,15 @@
         <div class="footer-left">
           <span class="footer-accent">DotMatrix Studio</span>
           <span class="footer-badge">Pro Edition</span>
-          <span class="footer-divider">|</span> Author: Gintoo76v1
           <span class="footer-divider">|</span>
           <div id="syncStatus" class="sync-status" title="Sync Status">
             <span class="status-dot saved"></span> Saved
+          </div>
+          <span class="footer-divider">|</span>
+          <div class="user-session" id="userSession">
+            <span class="user-session-name" id="sessionUsername"></span>
+            <span class="user-session-time" id="sessionTime"></span>
+            <button class="logout-btn" id="logoutBtn" title="Abmelden">Abmelden</button>
           </div>
         </div>
         <div

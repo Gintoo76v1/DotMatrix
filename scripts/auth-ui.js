@@ -62,6 +62,7 @@ if (loginForm) {
         0,
         window.location.pathname.lastIndexOf('/') + 1
       );
+      sessionStorage.setItem('dm_login_at', String(Date.now()));
       showRedirectSplash();
       window.location.href = `${baseUrl}index.html`;
     } catch (error) {
@@ -93,6 +94,7 @@ if (registerForm) {
         0,
         window.location.pathname.lastIndexOf('/') + 1
       );
+      sessionStorage.setItem('dm_login_at', String(Date.now()));
       showRedirectSplash();
       window.location.href = `${baseUrl}index.html`;
     } catch (error) {
