@@ -1,10 +1,24 @@
 {
   "$schema": "./version.schema.json",
-  "current": "1.4.3",
-  "commit": "009692f",
+  "current": "1.4.4",
+  "commit": "744ddb7",
   "buildDate": "2026-05-08",
-  "lastUpdated": "2026-05-08T16:30:00Z",
+  "lastUpdated": "2026-05-08T17:00:00Z",
   "changelog": [
+    {
+      "version": "1.4.4",
+      "commit": "744ddb7",
+      "date": "2026-05-08",
+      "tags": ["Feature", "UX"],
+      "summary": "User-Session im Footer, Logout, 404-Seite",
+      "highlights": [
+        "Footer zeigt Benutzername + Sitzungsdauer (live, jede Minute aktualisiert)",
+        "Abmelden-Button im Footer: ruft Logout-API auf, leitet zu login.html",
+        "Login-Zeitstempel in sessionStorage — überlebt Seitenneuladen",
+        "404.html im DotMatrix-UI-Stil (Glass-Panel, Orbs, Zurück + Zur App Buttons)",
+        "Caddyfile: handle_errors leitet 404 auf 404.html um"
+      ]
+    },
     {
       "version": "1.4.3",
       "commit": "009692f",
