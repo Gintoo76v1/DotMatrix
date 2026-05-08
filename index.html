@@ -1,1 +1,903 @@
-<FULL HTML CONTENT TRUNCATED - File is 893 lines long>
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; worker-src 'self' blob:;"
+    />
+    <title>DotMatrix Studio</title>
+
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link
+      rel="preload"
+      href="assets/fonts/JetBrainsMono-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/main.css?v=16" />
+  </head>
+  <body class="dark-mode">
+    <div id="appSplash" class="app-splash">
+      <div class="splash-inner">
+        <div class="splash-logo">DotMatrix Studio</div>
+        <div class="splash-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+    <div class="app-bg" id="appBg" data-anim="drift">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+    </div>
+
+    <div class="app-layout">
+      <div class="app-container">
+        <nav class="activity-bar glass-panel">
+          <div class="icon-btn active" data-tab="tab-source" title="Quelle">&#x1F5A8;&#xFE0F;</div>
+          <div class="icon-btn" data-tab="tab-presets" title="Presets">&#x1F4C2;</div>
+          <div class="icon-btn" data-tab="tab-history" title="Historie">&#x23F3;</div>
+          <div class="icon-btn" data-tab="tab-errors" title="Hardware">&#x1F527;</div>
+          <div class="spacer"></div>
+          <div class="icon-btn toggle-btn" id="sidebarToggleBtn" title="Sidebar umschalten">
+            <span class="toggle-chevron"></span>
+          </div>
+          <div class="icon-btn" data-tab="tab-system" title="System">&#x2699;&#xFE0F;</div>
+        </nav>
+
+        <aside class="sidebar glass-panel">
+          <div class="sidebar-scrollable">
+            <div class="tab-content active" id="tab-source">
+              <div class="sidebar-logo">DotMatrix Studio</div>
+              <h2 data-i18n="sourceTitle">Bildquelle</h2>
+              <div id="dropzone" class="dropzone">
+                <div class="big" id="dzBig" data-i18n="dropzoneBig">Bild ausw&#xE4;hlen</div>
+                <div class="small" id="dzSmall">PNG &#xB7; JPG &#xB7; HEIC &#xB7; WebP</div>
+                <input type="file" id="fileInput" accept="image/*" />
+              </div>
+
+              <h2 data-i18n="profileTitle" style="margin-top: 24px">Druckerprofil</h2>
+              <div class="scroll-list" id="profileList">
+                <button type="button" class="sli" data-profile="epson_fx">
+                  <div class="sli-row">
+                    <span class="sli-name">Epson FX-80</span><span class="sli-badge">9-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="epson_lq">
+                  <div class="sli-row">
+                    <span class="sli-name">Epson LQ-850</span><span class="sli-badge">24-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="ibm_proprinter">
+                  <div class="sli-row">
+                    <span class="sli-name">IBM Proprinter</span><span class="sli-badge">9-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli active" data-profile="oki_microline">
+                  <div class="sli-row">
+                    <span class="sli-name">OKI Microline</span><span class="sli-badge">9-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="star_nx1000">
+                  <div class="sli-row">
+                    <span class="sli-name">Star NX-1000</span><span class="sli-badge">9-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="panasonic_kx">
+                  <div class="sli-row">
+                    <span class="sli-name">Panasonic KX-P</span
+                    ><span class="sli-badge">24-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="dec_la75">
+                  <div class="sli-row">
+                    <span class="sli-name">DEC LA75</span><span class="sli-badge">9-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="nec_p6">
+                  <div class="sli-row">
+                    <span class="sli-name">NEC P6</span><span class="sli-badge">24-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="commodore_mps">
+                  <div class="sli-row">
+                    <span class="sli-name">MPS-803</span><span class="sli-badge">7-PIN</span>
+                  </div>
+                </button>
+                <button type="button" class="sli" data-profile="apple_imagewriter">
+                  <div class="sli-row">
+                    <span class="sli-name">ImageWriter II</span><span class="sli-badge">9-PIN</span>
+                  </div>
+                </button>
+              </div>
+              <div class="profile-meta" id="profileMeta"></div>
+              <div class="checks" style="margin-top: 12px">
+                <label class="check" data-flag="doubleStrike"
+                  ><span class="box"></span
+                  ><span data-i18n="doubleStrike">Double-strike</span></label
+                >
+                <label class="check" data-flag="condensed"
+                  ><span class="box"></span
+                  ><span data-i18n="condensedMode">Condensed Mode</span></label
+                >
+              </div>
+
+              <h2 data-i18n="adjustTitle" style="margin-top: 24px">Bildanpassung</h2>
+              <label class="field"
+                ><span class="name"
+                  ><span data-i18n="brightness">Helligkeit</span><b id="brightnessVal">0</b></span
+                ><input type="range" id="brightnessSlider" min="-100" max="100" value="0"
+              /></label>
+              <label class="field"
+                ><span class="name"
+                  ><span data-i18n="contrast">Kontrast</span><b id="contrastVal">20</b></span
+                ><input type="range" id="contrastSlider" min="-100" max="100" value="20"
+              /></label>
+              <label class="field"
+                ><span class="name"
+                  ><span data-i18n="gamma">Gamma</span><b id="gammaVal">1.0</b></span
+                ><input type="range" id="gammaSlider" min="0.1" max="3.0" step="0.1" value="1.0"
+              /></label>
+              <div class="checks" style="margin-top: 12px">
+                <label class="check" data-flag="invert"
+                  ><span class="box"></span><span data-i18n="invert">Invert Image</span></label
+                >
+              </div>
+
+              <h2 data-i18n="halftoneTitle" style="margin-top: 24px">Halftone</h2>
+              <div class="segmented" id="ditherBtns">
+                <button data-dither="floyd_steinberg">Floyd-S</button>
+                <button data-dither="ordered">Ordered</button>
+                <button data-dither="threshold" class="active">Thresh</button>
+              </div>
+              <label class="field" id="thresholdField" style="display: block; margin-top: 12px">
+                <span class="name"><span>Threshold</span><b id="thresholdVal">128</b></span>
+                <input type="range" id="thresholdSlider" min="0" max="255" value="128" />
+              </label>
+
+              <h2 data-i18n="paperFormatTitle" style="margin-top: 24px">Paper &amp; Format</h2>
+              <div class="segmented scrollable" id="paperFormatBtns" style="margin-bottom: 12px">
+                <button data-format="Original" class="active">Orig</button>
+                <button data-format="Fit">Auto</button>
+                <button data-format="A4">A4</button>
+                <button data-format="A5">A5</button>
+                <button data-format="Letter">Letter</button>
+              </div>
+              <div class="segmented" id="orientationBtns">
+                <button data-orient="Portrait" class="active">Portrait</button>
+                <button data-orient="Landscape">Landscape</button>
+              </div>
+
+              <div class="grid-2" style="margin-top: 24px">
+                <div>
+                  <div
+                    style="
+                      font-size: 10px;
+                      text-transform: uppercase;
+                      margin-bottom: 8px;
+                      font-weight: 600;
+                    "
+                    data-i18n="inkTitle"
+                  >
+                    Tinte
+                  </div>
+                  <div class="swatches" id="inkSwatches">
+                    <button
+                      type="button"
+                      class="swatch active"
+                      style="background: #19191e"
+                      data-ink="25,25,30"
+                      aria-label="Tinte Schwarz"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #142d82"
+                      data-ink="20,45,130"
+                      aria-label="Tinte Blau"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #a01e23"
+                      data-ink="160,30,35"
+                      aria-label="Tinte Rot"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #4a2c6e"
+                      data-ink="74,44,110"
+                      aria-label="Tinte Violett"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch custom-swatch"
+                      id="customInkSwatch"
+                      style="background: #19191e"
+                      aria-label="Eigene Tinte"
+                    ></button>
+                    <div
+                      class="swatch swatch-add"
+                      id="inkAddSwatch"
+                      title="Benutzerdefinierte Farbe"
+                    >
+                      <span>+</span>
+                      <input
+                        type="color"
+                        id="inkColorPickerAdd"
+                        class="color-picker-hidden"
+                        value="#19191e"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div
+                    style="
+                      font-size: 10px;
+                      text-transform: uppercase;
+                      margin-bottom: 8px;
+                      font-weight: 600;
+                    "
+                    data-i18n="paperTitle"
+                  >
+                    Papier
+                  </div>
+                  <div class="swatches" id="paperSwatches">
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #f8f5e8"
+                      data-paper="248,245,232"
+                      aria-label="Papier Creme"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch active"
+                      style="background: #ffffff"
+                      data-paper="255,255,255"
+                      aria-label="Papier Wei&#xDF;"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #eadfb8"
+                      data-paper="234,223,184"
+                      aria-label="Papier Alt"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #d8c8a0"
+                      data-paper="216,200,160"
+                      aria-label="Papier Gelblich"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch"
+                      style="background: #f0f0f0"
+                      data-paper="240,240,240"
+                      aria-label="Papier Hellgrau"
+                    ></button>
+                    <button
+                      type="button"
+                      class="swatch custom-swatch"
+                      id="customPaperSwatch"
+                      style="background: #ffffff"
+                      aria-label="Eigenes Papier"
+                    ></button>
+                    <div
+                      class="swatch swatch-add"
+                      id="paperAddSwatch"
+                      title="Benutzerdefinierte Farbe"
+                    >
+                      <span>+</span>
+                      <input
+                        type="color"
+                        id="paperColorPickerAdd"
+                        class="color-picker-hidden"
+                        value="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-presets">
+              <div class="sidebar-logo">DotMatrix Studio</div>
+              <h2 data-i18n="presetsTitle">Gespeicherte Presets</h2>
+              <div class="scroll-list" id="presetList"></div>
+
+              <div style="display: flex; gap: 8px; margin-top: 12px">
+                <button class="btn-sm" id="exportPresetBtn" data-i18n="btnExport" style="flex: 1">
+                  Export YAML
+                </button>
+                <button class="btn-sm" id="importPresetBtn" data-i18n="btnImport" style="flex: 1">
+                  Import YAML
+                </button>
+                <input
+                  type="file"
+                  id="presetFileInput"
+                  accept=".yaml,.yml,.json"
+                  style="display: none"
+                />
+              </div>
+
+              <h2 style="margin-top: 32px" data-i18n="createPresetTitle">
+                Preset Erstellen / Code
+              </h2>
+              <input
+                type="text"
+                id="presetNameInput"
+                class="text-input"
+                placeholder="Name f&#xFC;r Preset"
+              />
+              <div style="display: flex; gap: 8px; margin-top: 10px">
+                <button class="btn-sm" id="savePresetBtn" style="flex: 1" data-i18n="btnSavePreset">
+                  Speichern
+                </button>
+                <button class="btn-sm" id="exportCurrentBtn" style="flex: 1">
+                  Als YAML exportieren
+                </button>
+              </div>
+              <textarea
+                id="presetYamlArea"
+                class="yaml-area text-input"
+                placeholder="YAML Code hier einf&#xFC;gen..."
+                rows="10"
+                style="margin-top: 16px"
+              ></textarea>
+              <button class="btn-sm" id="importYamlBtn" style="width: 100%; margin-top: 10px">
+                Aus Textfeld anwenden
+              </button>
+            </div>
+
+            <div class="tab-content" id="tab-history">
+              <div class="sidebar-logo">DotMatrix Studio</div>
+              <h2>Verlauf</h2>
+              <p style="color:var(--dm-text-weak);font-size:13px;margin-top:8px">
+                W&#xE4;hle ein Preset, um den Versionsverlauf anzuzeigen.
+              </p>
+            </div>
+
+            <div class="tab-content" id="tab-errors">
+              <div class="sidebar-logo">DotMatrix Studio</div>
+              <h2 data-i18n="errorsTitle">Hardware Fehler</h2>
+              <div class="error-container scroll-list" id="errorList">
+                <div class="er" data-pattern="cloudy">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Cloudy</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="ghosting">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Ghosting</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="misaligned">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Wobble</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="pin_skip">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Pin Skip</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="smudge">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Smudge</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="ribbon_twist">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Ribbon Twist</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="head_gap">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Head Gap</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="ink_starved">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Ink Starved</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="paper_slip">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Paper Slip</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="static_noise">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Static</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="double_feed">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Double Feed</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+                <div class="er" data-pattern="mechanical_resonance">
+                  <button type="button" class="er-head" aria-expanded="false">
+                    <span class="er-check"></span><span class="er-name">Resonance</span
+                    ><span class="er-val">0%</span>
+                  </button>
+                  <div class="er-body">
+                    <input type="range" class="er-slider" min="0" max="100" value="50" />
+                  </div>
+                </div>
+              </div>
+
+              <h2 style="margin-top: 32px">Erweiterte Optionen</h2>
+              <label class="field"
+                ><span class="name"><span>Output DPI</span><b id="dpiVal">300</b></span
+                ><input type="range" id="dpiSlider" min="100" max="1200" step="50" value="300"
+              /></label>
+              <label class="field"
+                ><span class="name"><span>Jitter Scale</span><b id="jitterVal">1.0</b></span
+                ><input type="range" id="jitterSlider" min="0" max="30" value="10"
+              /></label>
+              <label class="field"
+                ><span class="name"><span>Banding Scale</span><b id="bandingVal">1.0</b></span
+                ><input type="range" id="bandingSlider" min="0" max="20" value="10"
+              /></label>
+              <label class="field"
+                ><span class="name"><span>Max Size</span><b id="maxSizeVal">3000</b></span
+                ><input
+                  type="range"
+                  id="maxSizeSlider"
+                  min="1000"
+                  max="8000"
+                  step="100"
+                  value="3000"
+              /></label>
+              <label class="field"
+                ><span class="name"><span>Seed</span><b id="seedVal">0</b></span
+                ><input type="range" id="seedSlider" min="0" max="9999" value="0"
+              /></label>
+              <div class="checks" style="margin-top: 16px">
+                <label class="check" data-flag="softBlur"
+                  ><span class="box"></span><span>Softening Blur</span></label
+                >
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-system">
+              <div class="sidebar-logo">DotMatrix Studio</div>
+              <h2 data-i18n="systemTitle">System Settings</h2>
+
+              <!-- Suchleiste (A6) -->
+              <div class="settings-search-wrap">
+                <input
+                  type="text"
+                  id="settingsSearch"
+                  class="text-input settings-search"
+                  placeholder="&#x1F50D; Einstellungen suchen..."
+                  autocomplete="off"
+                />
+                <button
+                  class="settings-search-clear"
+                  id="settingsSearchClear"
+                  aria-label="Suche leeren"
+                >
+                  &#x2715;
+                </button>
+              </div>
+
+              <details class="settings-group">
+                <summary>
+                  <span class="sg-icon">&#x1F3A8;</span><span class="sg-title">Darstellung</span>
+                </summary>
+                <div class="sg-body">
+                  <!-- Theme -->
+                  <label class="field"
+                    ><span class="name">Farbschema</span>
+                    <select id="themeSelector" class="text-input">
+                      <option value="oc-2" selected>OC-2</option>
+                      <option value="matrix">Matrix</option>
+                      <option value="tokyonight">Tokyonight</option>
+                      <option value="synthwave">Synthwave</option>
+                      <option value="gruvbox">Gruvbox</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">Globale Farbpalette der Anwendung.</p>
+                  <label class="field" style="margin-top: 12px"
+                    ><span class="name">Thema</span>
+                    <select id="themeModeSelector" class="text-input">
+                      <option value="dark" selected>Dunkel</option>
+                      <option value="light">Hell</option>
+                      <option value="auto">System</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">Hell- oder Dunkelmodus, oder System folgen.</p>
+                  <label class="field" style="margin-top: 12px"
+                    ><span class="name">Layout-Stil</span>
+                    <select id="layoutSelector" class="text-input">
+                      <option value="classic" selected>Classic</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">Aktuell nur Classic verf&#xFC;gbar.</p>
+
+                  <!-- Fonts -->
+                  <label class="field" style="margin-top: 20px"
+                    ><span class="name">UI-Schriftart</span>
+                    <select id="fontSansSelector" class="text-input">
+                      <option value="Inter" selected>Inter</option>
+                      <option value="System Sans">System Sans</option>
+                      <option value="SF Pro">SF Pro</option>
+                      <option value="Roboto">Roboto</option>
+                      <option value="Open Sans">Open Sans</option>
+                      <option value="Custom">Custom...</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">Schrift f&#xFC;r &#xDC;berschriften, Buttons und UI-Texte.</p>
+                  <label
+                    class="field"
+                    id="fontSansCustomField"
+                    style="margin-top: 8px; display: none"
+                  >
+                    <span class="name">Custom UI Font</span>
+                    <input
+                      type="text"
+                      id="fontSansCustom"
+                      class="text-input"
+                      placeholder="z.B. 'Helvetica Neue'"
+                    />
+                  </label>
+                  <label class="field" style="margin-top: 12px"
+                    ><span class="name">Eingabeschriftart</span>
+                    <select id="fontMonoSelector" class="text-input">
+                      <option value="JetBrains Mono" selected>JetBrains Mono</option>
+                      <option value="System Mono">System Mono</option>
+                      <option value="Fira Code">Fira Code</option>
+                      <option value="Cascadia Code">Cascadia Code</option>
+                      <option value="IBM Plex Mono">IBM Plex Mono</option>
+                      <option value="Custom">Custom...</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">Schrift f&#xFC;r Eingabefelder, Textareas und YAML-Code.</p>
+                  <label
+                    class="field"
+                    id="fontMonoCustomField"
+                    style="margin-top: 8px; display: none"
+                  >
+                    <span class="name">Custom Eingabeschriftart</span>
+                    <input
+                      type="text"
+                      id="fontMonoCustom"
+                      class="text-input"
+                      placeholder="z.B. 'Source Code Pro'"
+                    />
+                  </label>
+                  <label class="field" style="margin-top: 12px"
+                    ><span class="name">Render Schriftart</span>
+                    <select id="fontTerminalSelector" class="text-input">
+                      <option value="JetBrainsMono Nerd Font Mono" selected>
+                        JetBrainsMono Nerd Font Mono
+                      </option>
+                      <option value="JetBrains Mono">JetBrains Mono</option>
+                      <option value="Fira Code">Fira Code</option>
+                      <option value="Hack">Hack</option>
+                      <option value="Custom">Custom...</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">
+                    Schrift f&#xFC;r den Render-Debug-Text im Live-Vorschau-Bereich.
+                  </p>
+                  <label
+                    class="field"
+                    id="fontTerminalCustomField"
+                    style="margin-top: 8px; display: none"
+                  >
+                    <span class="name">Custom Render Schriftart</span>
+                    <input
+                      type="text"
+                      id="fontTerminalCustom"
+                      class="text-input"
+                      placeholder="z.B. 'Iosevka'"
+                    />
+                  </label>
+
+                  <!-- Animation (sub-group) -->
+                  <div
+                    class="settings-subgroup"
+                    style="
+                      margin-top: 20px;
+                      padding-top: 16px;
+                      border-top: 1px solid var(--dm-border-base);
+                    "
+                  >
+                    <div class="checks">
+                      <label class="check" data-flag="bgEffects"
+                        ><span class="box"></span><span>Hintergrund-Effekte</span></label
+                      >
+                      <p class="setting-desc check-desc">
+                        Farbige Hintergrund-Orbs und Glow-Effekte aktivieren.
+                      </p>
+                      <label class="check" data-flag="bgAnim"
+                        ><span class="box"></span><span>Hintergrund-Animation</span></label
+                      >
+                      <p class="setting-desc check-desc">
+                        Bewegte Hintergrund-Muster (erfordert Hintergrund-Effekte).
+                      </p>
+                    </div>
+                    <div id="animSettingsBody">
+                      <label class="field" style="margin-top: 12px"
+                        ><span class="name">Muster</span>
+                        <select id="animPatternSelector" class="text-input">
+                          <option value="aurora" selected>Aurora</option>
+                          <option value="pulse">Pulse</option>
+                          <option value="orbit">Orbit</option>
+                          <option value="drift">Drift</option>
+                          <option value="breathe">Breathe</option>
+                          <option value="off">Aus</option>
+                        </select>
+                      </label>
+                      <p class="setting-desc">Hintergrund-Animationsmuster oder statisch.</p>
+                      <label class="field" style="margin-top: 12px"
+                        ><span class="name">Geschwindigkeit <b id="animSpeedVal">50%</b></span>
+                        <input type="range" id="animSpeedSlider" min="10" max="200" value="50" />
+                      </label>
+                      <p class="setting-desc">
+                        Animationsgeschwindigkeit (10% = langsam, 200% = schnell).
+                      </p>
+                      <label class="field" style="margin-top: 12px"
+                        ><span class="name">Intensit&#xE4;t <b id="animIntensityVal">30%</b></span>
+                        <input type="range" id="animIntensitySlider" min="0" max="100" value="30" />
+                      </label>
+                      <p class="setting-desc">Deckkraft und Leuchtkraft der Effekte.</p>
+                      <label class="field" style="margin-top: 12px"
+                        ><span class="name">Gr&#xF6;&#xDF;e <b id="animSizeVal">50%</b></span>
+                        <input type="range" id="animSizeSlider" min="20" max="100" value="50" />
+                      </label>
+                      <p class="setting-desc">Ausdehnung der animierten Elemente.</p>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <details class="settings-group">
+                <summary>
+                  <span class="sg-icon">&#x1F50A;</span><span class="sg-title">Workflow</span>
+                </summary>
+                <div class="sg-body">
+                  <div class="checks">
+                    <label class="check" data-flag="uiSounds"
+                      ><span class="box"></span><span>UI Click Sounds</span></label
+                    >
+                    <p class="setting-desc check-desc">
+                      Akustisches Feedback bei jedem Tippen/Klicken.
+                    </p>
+                    <label class="check" data-flag="autoRender"
+                      ><span class="box"></span><span>Auto-Render (Live)</span></label
+                    >
+                    <p class="setting-desc check-desc">
+                      Automatisch neu rendern bei Einstellungs&#xE4;nderungen.
+                    </p>
+                    <label class="check" data-flag="renderDebug"
+                      ><span class="box"></span><span>Render Debug Text</span></label
+                    >
+                    <p class="setting-desc check-desc">Debug-Informationen im Canvas anzeigen.</p>
+                  </div>
+                  <label class="field" style="margin-top: 16px"
+                    ><span class="name">Sprache</span>
+                    <select id="langSelector" class="text-input">
+                      <option value="de" selected>&#x1F1E9;&#x1F1EA; Deutsch</option>
+                      <option value="en">&#x1F1FA;&#x1F1F8; English</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">Oberfl&#xE4;chensprache der Anwendung.</p>
+                </div>
+              </details>
+
+              <details class="settings-group">
+                <summary>
+                  <span class="sg-icon">&#x26A1;</span><span class="sg-title">Engine</span>
+                </summary>
+                <div class="sg-body">
+                  <div class="checks">
+                    <label class="check" data-flag="useWorker"
+                      ><span class="box"></span><span>Worker Rendering</span></label
+                    >
+                    <p class="setting-desc check-desc">
+                      Rendering im Hintergrund-Thread f&#xFC;r fl&#xFC;ssige UI.
+                    </p>
+                  </div>
+                  <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
+                    <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
+                    responsiv). F&#xE4;llt automatisch auf Inline-Rendering zur&#xFC;ck, falls OffscreenCanvas
+                    nicht verf&#xFC;gbar.
+                  </div>
+                  <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
+                    <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
+                    klassisches Floyd&#x2013;Steinberg, RGB-Filter). Aus = neuere, korrektere
+                    Mathematik.<br />
+                    <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
+                    responsiv). F&#xE4;llt automatisch auf Inline-Rendering zur&#xFC;ck, falls OffscreenCanvas
+                    nicht verf&#xFC;gbar.
+                  </div>
+                </div>
+              </details>
+
+              <details class="settings-group">
+                <summary>
+                  <span class="sg-icon">&#x1F6E1;&#xFE0F;</span><span class="sg-title">Sicherheit</span>
+                </summary>
+                <div class="sg-body" id="securitySettings">
+                  <!-- Dynamisch via security.js -->
+                </div>
+              </details>
+
+              <details class="settings-group">
+                <summary>
+                  <span class="sg-icon">&#x1F310;</span><span class="sg-title">Sprache</span>
+                </summary>
+                <div class="sg-body">
+                  <label class="field"
+                    ><span class="name">Sprache</span>
+                    <select id="langSelector" class="text-input">
+                      <option value="de" selected>&#x1F1E9;&#x1F1EA; Deutsch</option>
+                      <option value="en">&#x1F1FA;&#x1F1F8; English</option>
+                    </select>
+                  </label>
+                  <p class="setting-desc">Oberfl&#xE4;chensprache der Anwendung.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </aside>
+
+        <main class="main-editor glass-panel">
+          <div class="toolbar">
+            <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
+            <div style="display: flex; align-items: center; gap: 20px">
+              <div class="zoom-controls">
+                <button id="zoomOut">&#x2796;</button><span id="zoomLevel">100%</span
+                ><button id="zoomIn">&#x2795;</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-wrapper" id="canvasWrapper">
+            <div class="zoom-container" id="zoomContainer">
+              <canvas id="outCanvas" width="400" height="300"></canvas>
+              <pre id="ascii" class="ascii empty">// Bild laden //</pre>
+            </div>
+          </div>
+
+          <div class="floating-container">
+            <div class="status-panel glass-panel" id="statusPanel">
+              <span id="status" class="status-large">Warte auf Bild...</span>
+            </div>
+            <div class="floating-actions glass-panel">
+              <div class="action-buttons">
+                <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">
+                  Rendern
+                </button>
+                <button class="btn" id="downloadBtn" disabled>Speichern PNG</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="errorPopup" class="error-popup glass-panel">
+            <div class="error-header">&#x26A0;&#xFE0F; System Fehler</div>
+            <div id="errorText" class="error-body"></div>
+            <button
+              id="errorCloseBtn"
+              class="btn-sm"
+              style="align-self: flex-end; margin-top: 5px; border-color: rgba(255, 0, 0, 0.5)"
+            >
+              Schlie&#xDF;en
+            </button>
+          </div>
+        </main>
+      </div>
+
+      <footer class="app-footer glass-panel">
+        <div class="footer-left">
+          <span class="footer-accent">DotMatrix Studio</span>
+          <span class="footer-badge">Pro Edition</span>
+          <span class="footer-divider">|</span>
+          <div id="syncStatus" class="sync-status" title="Sync Status">
+            <span class="status-dot saved"></span> Saved
+          </div>
+          <span class="footer-divider">|</span>
+          <div class="user-session" id="userSession">
+            <span class="user-session-name" id="sessionUsername"></span>
+            <span class="user-session-time" id="sessionTime"></span>
+            <button class="logout-btn" id="logoutBtn" title="Abmelden">Abmelden</button>
+          </div>
+        </div>
+        <div
+          class="footer-right"
+          id="footerVersion"
+          role="button"
+          tabindex="0"
+          title="Changelog anzeigen"
+        >
+          <span class="online-dot" id="onlineDot" title="Online"></span>
+          <span class="version-text" id="versionText">v1.3.0</span>
+          <span class="version-separator">&#xB7;</span>
+          <span class="update-badges" id="updateBadges">
+            <span class="update-badge update-badge--ui">UI</span>
+            <span class="update-badge update-badge--perf">Perf</span>
+          </span>
+        </div>
+      </footer>
+
+      <!-- Changelog Overlay -->
+      <div class="changelog-overlay" id="changelogOverlay" aria-hidden="true">
+        <div class="changelog-backdrop"></div>
+        <div class="changelog-panel glass-panel">
+          <div class="changelog-header">
+            <h2>Updates &amp; Changelog</h2>
+            <button class="changelog-close" id="changelogClose" aria-label="Schlie&#xDF;en">&#x2715;</button>
+          </div>
+          <div class="changelog-body" id="changelogBody">
+            <!-- Dynamisch von JS gef&#xFC;llt -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="scripts/main.js?v=18"></script>
+  </body>
+</html>

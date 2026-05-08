@@ -8,7 +8,7 @@ import { state, PROFILES } from './config.js';
 import { renderImage } from './render-client.js';
 import { hydrateState, saveSettings } from './settings-store.js';
 
-import { initErrorPopup, showError } from './ui/error.js?v=2';
+import { initErrorPopup, showError } from './ui/error.js';
 import { initAudio, playClickSound, playToggleSound } from './ui/audio.js';
 import { initZoom, dragState } from './ui/zoom.js';
 import { registerSlider, wireSlider, syncAllFromState } from './ui/sliders.js';

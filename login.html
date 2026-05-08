@@ -1,1 +1,152 @@
-<FULL HTML CONTENT TRUNCATED - File is 151 lines long>
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; worker-src 'self' blob:;"
+    />
+    <title>DotMatrix Studio - Login</title>
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link
+      rel="preload"
+      href="assets/fonts/JetBrainsMono-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/main.css?v=14" />
+    <style>
+      .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .auth-panel {
+        width: 100%;
+        max-width: 400px;
+        padding: 40px 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .auth-logo {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--dm-primary);
+        text-align: center;
+        margin-bottom: 8px;
+        text-shadow:
+          0 0 16px var(--dm-primary-soft),
+          0 0 32px var(--dm-primary-soft);
+      }
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .auth-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .auth-field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--dm-text-weak);
+        font-weight: 600;
+      }
+      .auth-error {
+        color: var(--dm-error);
+        font-size: 13px;
+        text-align: center;
+        display: none;
+      }
+      .auth-footer {
+        text-align: center;
+        font-size: 13px;
+        color: var(--dm-text-weak);
+        margin-top: 16px;
+      }
+      .auth-footer a {
+        color: var(--dm-primary);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .auth-footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="dark-mode">
+    <div id="authSplash" class="app-splash" aria-hidden="true" style="opacity:0;visibility:hidden;pointer-events:none;transition:opacity 0.4s ease,visibility 0.4s;">
+      <div class="splash-inner">
+        <div class="splash-logo">DotMatrix Studio</div>
+        <div class="splash-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+    <div class="app-bg" id="appBg" data-anim="aurora">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+    </div>
+
+    <div class="auth-container">
+      <div class="glass-panel auth-panel">
+        <div class="auth-logo">DotMatrix Studio</div>
+        <div class="auth-error" id="errorMsg"></div>
+
+        <form class="auth-form" id="loginForm">
+          <div class="auth-field">
+            <label for="username">Username oder Email</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="text-input"
+              required
+              autocomplete="username"
+            />
+          </div>
+
+          <div class="auth-field">
+            <label for="password">Passwort</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="text-input"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+
+          <button type="submit" class="btn primary" style="margin-top: 8px" id="submitBtn">
+            Anmelden
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Kein Account? <a href="register.html">Mit Invite-Code registrieren</a>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="scripts/auth-ui.js?v=14"></script>
+  </body>
+</html>
