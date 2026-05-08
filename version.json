@@ -1,13 +1,13 @@
 {
   "$schema": "./version.schema.json",
   "current": "1.4.1",
-  "commit": "818bf43",
+  "commit": "6820b75",
   "buildDate": "2026-05-08",
   "lastUpdated": "2026-05-08T15:30:00Z",
   "changelog": [
     {
       "version": "1.4.1",
-      "commit": "818bf43",
+      "commit": "6820b75",
       "date": "2026-05-08",
       "tags": ["Bugfix", "UX"],
       "summary": "Fehlermeldungen auf Deutsch, Toast unten-rechts, Footer einzeilig",
