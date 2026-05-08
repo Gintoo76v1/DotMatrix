@@ -14,6 +14,7 @@ import { initZoom, dragState } from './ui/zoom.js';
 import { registerSlider, wireSlider, syncAllFromState } from './ui/sliders.js';
 import { wireSegmented } from './ui/segments.js';
 import { loadProjectHistory } from './ui/history.js';
+import { initSecurityUI } from './ui/security.js';
 import { wireSwatches, wireCustomInk, wireCustomPaper } from './ui/swatches.js';
 import { initChecks } from './ui/checks.js';
 import { initWearLayers } from './ui/wear.js';
@@ -58,6 +59,7 @@ initZoom();
 initSyncManager(currentUser?.id);
 await initAdminUI(currentPermissions, currentUser);
 initAccount(currentUser);
+initSecurityUI();
 
 // Initialize a session-based project if none exists (Auto-Save Phase F)
 if (!state.currentProjectId) {
