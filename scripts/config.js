@@ -552,6 +552,10 @@ export const state = {
   fontMonoCustom: '',
   fontTerminal: 'JetBrainsMono Nerd Font Mono',
   fontTerminalCustom: '',
+  animPattern: 'drift',
+  animSpeed: 50,
+  animIntensity: 30,
+  animSize: 50,
   // ── Sync & Persistance (Phase F) ───────────────────────────────────────────
   currentProjectId: null,
   currentProjectVersion: 0,
