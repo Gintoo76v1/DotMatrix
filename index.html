@@ -26,14 +26,16 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles/main.css?v=16" />
+    <link rel="stylesheet" href="styles/main.css?v=17" />
   </head>
   <body class="dark-mode">
     <div id="appSplash" class="app-splash">
+      <div class="splash-scanline"></div>
       <div class="splash-inner">
         <div class="splash-logo">DotMatrix Studio</div>
-        <div class="splash-dots"><span></span><span></span><span></span></div>
+        <div class="splash-dots"><span></span><span></span><span></span><span></span><span></span></div>
       </div>
+      <div class="splash-bar"></div>
     </div>
 
     <div class="app-bg" id="appBg" data-anim="drift">
@@ -837,17 +839,6 @@
             </div>
           </div>
 
-          <div id="errorPopup" class="error-popup glass-panel">
-            <div class="error-header">&#x26A0;&#xFE0F; System Fehler</div>
-            <div id="errorText" class="error-body"></div>
-            <button
-              id="errorCloseBtn"
-              class="btn-sm"
-              style="align-self: flex-end; margin-top: 5px; border-color: rgba(255, 0, 0, 0.5)"
-            >
-              Schlie&#xDF;en
-            </button>
-          </div>
         </main>
       </div>
 
@@ -898,6 +889,6 @@
       </div>
     </div>
 
-    <script type="module" src="scripts/main.js?v=18"></script>
+    <script type="module" src="scripts/main.js?v=19"></script>
   </body>
 </html>
