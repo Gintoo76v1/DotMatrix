@@ -171,6 +171,15 @@ wss.on('connection', (ws, req) => {
   });
 });
 
+// Global JSON error handler – muss nach allen Routen stehen.
+// Ohne diesen Handler schickt Express bei unbehandelten Fehlern eine HTML-Seite,
+// die der Client nicht als JSON parsen kann → "Unknown error" im Frontend.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  console.error('[server error]', err);
+  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+});
+
 // Start Server
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

@@ -27,7 +27,8 @@ router.post('/register', validate(registerSchema), async (req, res) => {
   const { inviteCode, username, password, email, displayName } = req.body;
 
   try {
-    // 1. Validate Invite Code within a transaction
+    let newUser;
+
     await db.transaction(async (tx) => {
       const invite = await tx
         .select()
@@ -59,16 +60,17 @@ router.post('/register', validate(registerSchema), async (req, res) => {
       });
 
       // 3. Create User
-      const [newUser] = await tx
+      const [created] = await tx
         .insert(users)
         .values({
           username,
-          email,
+          email: email || null,
           passwordHash,
           displayName,
           roleId: invite.roleId,
         })
         .returning();
+      newUser = created;
 
       // 4. Update Invite uses
       await tx
@@ -85,21 +87,19 @@ router.post('/register', validate(registerSchema), async (req, res) => {
       });
 
       await logAction(req, 'auth.register', 'users', newUser.id, { username: newUser.username });
+    });
 
-      // Optional: Auto-login after registration
-      req.session.userId = newUser.id;
-      req.session.roleId = newUser.roleId;
+    // Session und Antwort NACH erfolgreicher Transaktion setzen
+    req.session.userId = newUser.id;
+    req.session.roleId = newUser.roleId;
 
-      res
-        .status(201)
-        .json({
-          message: 'Registration successful',
-          user: { id: newUser.id, username: newUser.username },
-        });
+    return res.status(201).json({
+      message: 'Registration successful',
+      user: { id: newUser.id, username: newUser.username },
     });
   } catch (error) {
+    console.error('[register]', error);
     if (error.code === '23505') {
-      // Postgres unique violation
       return res.status(409).json({ error: 'Username or email already exists' });
     }
     return res.status(400).json({ error: error.message });
