@@ -251,6 +251,7 @@ html {
   height: 100%;
   overscroll-behavior: none;
   text-size-adjust: 100%;
+  touch-action: none;
 }
 
 body {
@@ -259,6 +260,7 @@ body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+  touch-action: none;
   margin: 0;
   padding: 0;
 }
@@ -707,7 +709,7 @@ input[type='file'] {
 
 /* ── 9. Version / Update Indicator ─────────────────────────────────────────── */
 
-.footer-version {
+.footer-right {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -719,8 +721,22 @@ input[type='file'] {
   flex-wrap: nowrap;
 }
 
-.footer-version:hover {
+.footer-right:hover {
   background: var(--dm-surface-hover);
+}
+
+.online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--dm-success);
+  box-shadow: 0 0 5px var(--dm-success);
+}
+
+.online-dot.offline {
+  background: var(--dm-error);
+  box-shadow: 0 0 5px var(--dm-error);
 }
 
 .version-text {
@@ -1377,6 +1393,7 @@ h2 {
   overflow: hidden auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .er {
