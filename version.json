@@ -1,10 +1,23 @@
 {
   "$schema": "./version.schema.json",
-  "current": "1.4.2",
-  "commit": "60b632f",
+  "current": "1.4.3",
+  "commit": "009692f",
   "buildDate": "2026-05-08",
-  "lastUpdated": "2026-05-08T16:00:00Z",
+  "lastUpdated": "2026-05-08T16:30:00Z",
   "changelog": [
+    {
+      "version": "1.4.3",
+      "commit": "009692f",
+      "date": "2026-05-08",
+      "tags": ["UX", "UI"],
+      "summary": "App-Splash, Button-Spinner, Footer-Fix",
+      "highlights": [
+        "App-Splash erscheint beim Laden und verschwindet mit Fade-Out nach vollständiger Initialisierung",
+        "Nahtlose Splash-Transition: Login/Register zeigt denselben Splash vor der Weiterleitung zur App",
+        "Spinner im Submit-Button während Login- und Registrierungs-Request",
+        "Doppelter grüner Punkt entfernt — nur der Online-Status-Dot links vor der Version bleibt"
+      ]
+    },
     {
       "version": "1.4.2",
       "commit": "60b632f",
