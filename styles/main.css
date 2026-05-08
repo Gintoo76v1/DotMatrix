@@ -1349,11 +1349,21 @@ canvas {
 /* ── 14. Headings & Grid ───────────────────────────────────────────────────── */
 
 h2 {
-  font-size: 12px;
+  font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin: 28px 0 10px;
-  color: var(--dm-text-base);
+  margin: 24px 0 8px;
+  color: var(--dm-text-weak);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h2::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--dm-border-base) 0%, transparent 100%);
 }
 
 /* First h2 in a tab should have less top margin */
@@ -1474,7 +1484,7 @@ h2 {
   color: inherit;
   text-align: left;
   font-family: inherit;
-  padding: 14px 16px;
+  padding: 10px 14px;
   border: none;
   border-top: 1px solid var(--dm-border-base);
   cursor: pointer;
@@ -1540,19 +1550,19 @@ h2 {
 .checks {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
 }
 
 .check {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   font-family: inherit;
   text-align: left;
   text-transform: uppercase;
-  padding: 8px 12px;
+  padding: 6px 10px;
   transition:
     transform 0.2s ease,
     background 0.2s;
@@ -1571,13 +1581,14 @@ h2 {
 }
 
 .check .box {
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
   border: 1.5px solid var(--dm-border-base);
-  border-radius: 7px;
+  border-radius: 5px;
   position: relative;
   background: rgb(0 0 0 / 20%);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
 .check:hover .box {
@@ -1601,7 +1612,7 @@ h2 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0);
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 900;
   color: #000;
   opacity: 0;
@@ -3029,8 +3040,8 @@ html.changelog-open body {
 
 .account-panel {
   position: fixed;
-  bottom: 44px;
-  left: 56px;
+  bottom: 64px;
+  left: 16px;
   width: 280px;
   background: var(--dm-glass-bg);
   border: 1px solid var(--dm-glass-border);
