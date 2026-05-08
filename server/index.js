@@ -171,6 +171,12 @@ wss.on('connection', (ws, req) => {
   });
 });
 
+// 404 catch-all for non-API routes (HTML navigation when not behind Caddy)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.status(404).sendFile(path.join(ROOT_DIR, '404.html'));
+});
+
 // Global JSON error handler – muss nach allen Routen stehen.
 // Ohne diesen Handler schickt Express bei unbehandelten Fehlern eine HTML-Seite,
 // die der Client nicht als JSON parsen kann → "Unknown error" im Frontend.
