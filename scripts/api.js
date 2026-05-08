@@ -89,6 +89,8 @@ export const api = {
       }),
     logout: () => request('/auth/logout', { method: 'POST' }),
     me: () => request('/auth/me'),
+    changePassword: (currentPassword, newPassword) =>
+      request('/auth/password', { method: 'PATCH', body: { currentPassword, newPassword } }),
   },
   settings: {
     get: () => request('/me/settings'),

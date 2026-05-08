@@ -215,31 +215,40 @@ async function _loadUsers() {
   const container = document.getElementById('userList');
   if (!container) return;
 
+  // Eagerly load roles for display
+  if (!_rolesCache) await _loadRolesIntoSelect();
+
   const res = await api.users.list();
   container.innerHTML = '';
 
   res.users.forEach((u) => {
-    const isSelf = _currentUser && u.id === _currentUser.id;
+    const isSelf   = _currentUser && u.id === _currentUser.id;
     const isActive = u.status === 'active';
+    const roleName = u.roleName || (u.roleId && _rolesCache?.find((r) => r.id === u.roleId)?.name) || '—';
+    const roleColor = roleName === 'admin' ? 'var(--dm-primary)' : 'var(--dm-text-weak)';
 
     const el = document.createElement('div');
     el.className = 'sli';
     el.innerHTML = `
       <div class="sli-row" style="width:100%;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="${!isActive ? 'opacity:0.5;' : ''}">${u.username}</span>
-          ${isSelf ? '<span style="font-size:9px;color:var(--dm-primary);font-weight:600;">ICH</span>' : ''}
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
+          <span style="${!isActive ? 'opacity:0.45;text-decoration:line-through;' : ''};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.username}</span>
+          ${isSelf ? '<span style="font-size:9px;color:var(--dm-primary);font-weight:600;flex-shrink:0;">ICH</span>' : ''}
+          <span style="font-size:9px;color:${roleColor};border:1px solid ${roleColor};border-radius:3px;padding:0 4px;opacity:0.8;flex-shrink:0;">${roleName}</span>
         </div>
-        ${
-          isSelf
-            ? '<span style="font-size:10px;color:var(--dm-text-weak);">–</span>'
-            : `<button class="btn-sm" style="font-size:9px;padding:2px 6px;border-color:${isActive ? 'var(--dm-border-base)' : 'var(--dm-error)'};">${isActive ? 'Sperren' : 'Aktivieren'}</button>`
-        }
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+          ${!isActive ? '<span style="font-size:9px;color:var(--dm-error);">gesperrt</span>' : ''}
+          ${
+            isSelf
+              ? ''
+              : `<button class="btn-sm" style="font-size:9px;padding:2px 6px;border-color:${isActive ? 'var(--dm-border-base)' : 'var(--dm-error)'};">${isActive ? 'Sperren' : 'Aktivieren'}</button>`
+          }
+        </div>
       </div>
     `;
 
     if (!isSelf) {
-      el.querySelector('button').addEventListener('click', async () => {
+      el.querySelector('button')?.addEventListener('click', async () => {
         const next = isActive ? 'suspended' : 'active';
         if (confirm(`"${u.username}" wirklich ${isActive ? 'sperren' : 'aktivieren'}?`)) {
           try {

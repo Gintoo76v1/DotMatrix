@@ -1,13 +1,26 @@
 {
   "$schema": "./version.schema.json",
-  "current": "1.4.5",
-  "commit": "1ae3616",
+  "current": "1.5.0",
   "buildDate": "2026-05-08",
-  "lastUpdated": "2026-05-08T18:00:00Z",
+  "lastUpdated": "2026-05-08T20:00:00Z",
   "changelog": [
     {
+      "version": "1.5.0",
+      "date": "2026-05-08",
+      "tags": ["Feature", "UX", "UI"],
+      "summary": "Kontoeinstellungen, User-Rolle, Splash-Animation, kleinere App-Einstellungen",
+      "highlights": [
+        "Kontoeinstellungen-Panel: Klick auf Benutzername öffnet Popup mit Passwort-Änderung, 2FA-Status, Abmelden",
+        "User-Rolle mit eigenen Berechtigungen (projects, settings) — kein Invite- oder User-Management",
+        "Splash-Animation langsamer und smoother (5 Dots, Scanline-Overlay, Indeterminate-Bar)",
+        "App-Einstellungen kompakter (kleinere Summary-Zeilen, reduziertes Padding)",
+        "Changelog nach Hauptversionen gruppiert und auf-/zuklappbar",
+        "Benutzername-Chip im Footer: Hover-Effekt, Cursor-Pointer",
+        "404-Seite mit passendem UI-Stil"
+      ]
+    },
+    {
       "version": "1.4.5",
-      "commit": "1ae3616",
       "date": "2026-05-08",
       "tags": ["Bugfix"],
       "summary": "Changelog-Bugs behoben: IN BEARBEITUNG und Update-Dot",

@@ -135,26 +135,53 @@ function _updateFooter() {
   }
 }
 
+function _getMajorMinor(ver) {
+  const parts = ver.replace(/^v/, '').split('.');
+  return `${parts[0]}.${parts[1] ?? '0'}`;
+}
+
 function _renderBody() {
   if (!versionData?.changelog?.length) {
     return '<p style="color:var(--dm-text-weak); text-align:center;">Keine Changelog-Daten verfügbar.</p>';
   }
 
-  const entries = versionData.changelog;
-  let html = '';
-
-  // Current (newest)
-  const current = entries[0];
-  html += _renderEntry(current, true);
-
-  // Divider
-  if (entries.length > 1) {
-    html += '<div class="changelog-divider"><span>Vorherige Versionen</span></div>';
+  // Group entries by major.minor
+  const groups = new Map();
+  for (const entry of versionData.changelog) {
+    const key = _getMajorMinor(entry.version);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
   }
 
-  // Older
-  for (let i = 1; i < entries.length; i++) {
-    html += _renderEntry(entries[i], false, true);
+  let html = '';
+  let isFirstGroup = true;
+
+  for (const [groupKey, groupEntries] of groups) {
+    if (isFirstGroup) {
+      // Latest group: show current inline, sub-patches collapsible
+      html += `<div class="changelog-group--open">`;
+      html += _renderEntry(groupEntries[0], true);
+      for (let i = 1; i < groupEntries.length; i++) {
+        html += _renderEntry(groupEntries[i], false, true);
+      }
+      html += `</div>`;
+      isFirstGroup = false;
+    } else {
+      // Older groups: entire minor version collapsible
+      const releaseCount = groupEntries.length;
+      html += `
+        <details class="changelog-group-details">
+          <summary class="changelog-group-summary">
+            <span class="changelog-group-label">v${groupKey}.x</span>
+            <span class="changelog-group-meta">${releaseCount} Release${releaseCount !== 1 ? 's' : ''}</span>
+            <span class="changelog-group-arrow">›</span>
+          </summary>
+          <div class="changelog-group-body">
+            ${groupEntries.map((e) => _renderEntry(e, false, false)).join('')}
+          </div>
+        </details>
+      `;
+    }
   }
 
   return html;
