@@ -50,7 +50,7 @@ const persisted = await hydrateState(state);
 initErrorPopup();
 initAudio();
 initZoom();
-initSyncManager();
+initSyncManager(currentUser?.id);
 await initAdminUI(currentPermissions);
 
 // Initialize a session-based project if none exists (Auto-Save Phase F)

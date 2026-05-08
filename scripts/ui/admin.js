@@ -1,4 +1,4 @@
-import { api } from '../api.js';
+import { api } from '../api.js?v=14';
 
 export async function initAdminUI(permissions) {
   const isAdmin =
