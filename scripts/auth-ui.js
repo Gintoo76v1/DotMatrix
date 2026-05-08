@@ -1,4 +1,4 @@
-import { api, APIError } from './api.js?v=13';
+import { api, APIError } from './api.js?v=14';
 
 // Bereits eingeloggt? Direkt zur App weiterleiten (ohne Browser-History-Eintrag)
 (async () => {

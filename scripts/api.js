@@ -39,12 +39,15 @@ async function request(endpoint, options = {}) {
     const response = await fetch(url, config);
 
     if (response.status === 401) {
-      // Unauthorized, redirect to login. Use relative path.
-      const baseUrl = window.location.pathname.substring(
-        0,
-        window.location.pathname.lastIndexOf('/') + 1
-      );
-      window.location.href = `${baseUrl}login.html`;
+      const currentPage = window.location.pathname.split('/').pop();
+      const onAuthPage = currentPage === 'login.html' || currentPage === 'register.html';
+      if (!onAuthPage) {
+        const baseUrl = window.location.pathname.substring(
+          0,
+          window.location.pathname.lastIndexOf('/') + 1
+        );
+        window.location.href = `${baseUrl}login.html`;
+      }
       throw new APIError(401, 'Unauthorized');
     }
 

@@ -20,7 +20,7 @@ import { initUpload } from './ui/upload.js';
 import { initPresets, renderPresetList } from './ui/presets.js';
 import { initAppearance } from './ui/appearance.js';
 import { initChangelog } from './ui/changelog.js';
-import { api } from './api.js?v=13';
+import { api } from './api.js?v=14';
 import { initAdminUI } from './ui/admin.js';
 import { queueSaveProject, initSyncManager } from './sync.js';
 import { captureCurrentPreset, applyPreset } from './ui/presets.js';
@@ -50,7 +50,7 @@ const persisted = await hydrateState(state);
 initErrorPopup();
 initAudio();
 initZoom();
-initSyncManager();
+initSyncManager(currentUser?.id);
 await initAdminUI(currentPermissions);
 
 // Initialize a session-based project if none exists (Auto-Save Phase F)

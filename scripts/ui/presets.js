@@ -8,7 +8,7 @@ import { setSwatchValue } from './swatches.js';
 import { applyWearLayersToUI } from './wear.js';
 import { detectAndSetPaperColor } from './analyze.js';
 import { showError } from './error.js';
-import { api } from '../api.js';
+import { api } from '../api.js?v=14';
 import { localDB } from '../db.js';
 import { queueCreateProject, queueDeleteProject } from '../sync.js';
 import { loadProjectHistory } from './history.js';
