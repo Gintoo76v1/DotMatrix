@@ -36,7 +36,8 @@ export function markSeen() {
 
 async function _loadVersionData() {
   try {
-    const res = await fetch('version.json', { cache: 'no-store' });
+    const base = window.location.pathname.replace(/[^/]*$/, '');
+    const res = await fetch(`${base}version.json`, { cache: 'no-store' });
     if (!res.ok) throw new Error(res.statusText);
     versionData = await res.json();
   } catch (e) {
