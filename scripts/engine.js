@@ -8,7 +8,7 @@
 // constants and using branch-free clamps.
 
 import { PROFILES, state, PAPER_SIZES_MM } from './config.js';
-import { mulberry32, makeGaussian, yieldUI, clamp } from './utils.js';
+import { mulberry32, makeGaussian, yieldUI, clamp, smoothstep } from './utils.js';
 import {
   toGrayscale,
   floydSteinberg,
