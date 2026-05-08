@@ -1,4 +1,4 @@
-import { api } from './api.js';
+import { api } from './api.js?v=14';
 import { queueSaveSettings } from './sync.js';
 
 // ── Persisted UI settings ───────────────────────────────────────────────────

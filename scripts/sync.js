@@ -1,15 +1,14 @@
 import { localDB } from './db.js';
-import { api } from './api.js';
+import { api } from './api.js?v=14';
 
-let syncInterval = null;
-let isSyncing = false;
 let ws = null;
 let currentUserId = null;
+let isSyncing = false;
+let syncInterval = null;
 
 async function processQueue() {
   if (isSyncing || !navigator.onLine) return;
   isSyncing = true;
-
   try {
     const queue = await localDB.getSyncQueue();
     for (const task of queue) {
@@ -21,14 +20,14 @@ async function processQueue() {
         } else if (task.type === 'project_delete') {
           await api.projects.delete(task.projectId);
         } else if (task.type === 'blob_upload') {
-          const { uploadUrl } = await api.projects.getUploadUrl(
-            task.projectId,
-            task.filename,
-            task.contentType
-          );
           const blob = await localDB.getBlob(task.blobId);
           if (blob) {
-            await fetch(uploadUrl, {
+            const { url } = await api.projects.getUploadUrl(
+              task.projectId,
+              task.filename,
+              task.contentType
+            );
+            await fetch(url, {
               method: 'PUT',
               body: blob,
               headers: { 'Content-Type': task.contentType },
@@ -54,22 +53,26 @@ async function processQueue() {
 }
 
 export function initSyncManager(userId) {
-  currentUserId = userId || null;
-
+  currentUserId = userId;
   window.removeEventListener('online', processQueue);
   window.addEventListener('online', processQueue);
 
   if (syncInterval) clearInterval(syncInterval);
   syncInterval = setInterval(processQueue, 10000);
 
-  if (currentUserId) initWebSocket();
+  initWebSocket();
+  processQueue();
 }
 
 function initWebSocket() {
   if (!currentUserId) return;
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const url = `${protocol}//${window.location.host}/ws`;
+  const base = window.location.pathname.substring(
+    0,
+    window.location.pathname.lastIndexOf('/') + 1
+  );
+  const url = `${protocol}//${window.location.host}${base}../ws`;
 
   ws = new WebSocket(url);
 
