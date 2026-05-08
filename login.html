@@ -25,7 +25,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles/main.css?v=12" />
+    <link rel="stylesheet" href="styles/main.css?v=14" />
     <style>
       .auth-container {
         display: flex;
@@ -94,6 +94,13 @@
     </style>
   </head>
   <body class="dark-mode">
+    <div id="authSplash" class="app-splash" aria-hidden="true" style="opacity:0;visibility:hidden;pointer-events:none;transition:opacity 0.4s ease,visibility 0.4s;">
+      <div class="splash-inner">
+        <div class="splash-logo">DotMatrix Studio</div>
+        <div class="splash-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
     <div class="app-bg" id="appBg" data-anim="aurora">
       <div class="orb orb-1"></div>
       <div class="orb orb-2"></div>

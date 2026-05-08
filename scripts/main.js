@@ -395,6 +395,14 @@ await renderPresetList();
 updateProfileMeta();
 syncAllFromState(state);
 
+// ── App Splash ausblenden ─────────────────────────────────────────────────
+
+const _splash = document.getElementById('appSplash');
+if (_splash) {
+  _splash.classList.add('hidden');
+  _splash.addEventListener('transitionend', () => _splash.remove(), { once: true });
+}
+
 // ── Online / Offline indicator (footer-right green dot) ───────────────────
 
 function _updateOnlineDot() {

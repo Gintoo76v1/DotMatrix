@@ -111,7 +111,6 @@ export function closeOverlay() {
 function _updateFooter() {
   const versionText = document.getElementById('versionText');
   const badges = document.getElementById('updateBadges');
-  const indicator = document.getElementById('updateIndicator');
 
   if (versionText && versionData) {
     const ver = versionData.current;
@@ -128,10 +127,6 @@ function _updateFooter() {
         return `<span class="update-badge ${cls}">${_escape(tag)}</span>`;
       })
       .join('');
-  }
-
-  if (indicator) {
-    indicator.classList.toggle('active', hasUnreadUpdates());
   }
 }
 

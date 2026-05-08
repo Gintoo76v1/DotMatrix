@@ -31,10 +31,19 @@ function clearError() {
 }
 
 function setLoading(isLoading) {
-  if (submitBtn) {
-    submitBtn.disabled = isLoading;
-    submitBtn.textContent = isLoading ? 'Bitte warten...' : loginForm ? 'Anmelden' : 'Registrieren';
-  }
+  if (!submitBtn) return;
+  submitBtn.disabled = isLoading;
+  const label = loginForm ? 'Anmelden' : 'Registrieren';
+  submitBtn.innerHTML = isLoading
+    ? `<span class="btn-spinner"></span>${label}`
+    : label;
+}
+
+function showRedirectSplash() {
+  const splash = document.getElementById('authSplash');
+  if (!splash) return;
+  splash.style.cssText = '';
+  splash.removeAttribute('aria-hidden');
 }
 
 if (loginForm) {
@@ -53,6 +62,7 @@ if (loginForm) {
         0,
         window.location.pathname.lastIndexOf('/') + 1
       );
+      showRedirectSplash();
       window.location.href = `${baseUrl}index.html`;
     } catch (error) {
       if (error instanceof APIError) {
@@ -83,6 +93,7 @@ if (registerForm) {
         0,
         window.location.pathname.lastIndexOf('/') + 1
       );
+      showRedirectSplash();
       window.location.href = `${baseUrl}index.html`;
     } catch (error) {
       if (error instanceof APIError) {
