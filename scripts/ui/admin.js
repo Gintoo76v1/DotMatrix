@@ -1,13 +1,17 @@
 import { api } from '../api.js?v=14';
 
-export async function initAdminUI(permissions) {
+let _currentUser = null;
+let _rolesCache = null;
+
+export async function initAdminUI(permissions, currentUser) {
+  _currentUser = currentUser;
+
   const isAdmin =
     permissions.includes('*') ||
     permissions.includes('roles.manage') ||
     permissions.includes('invites.read.any');
   if (!isAdmin) return;
 
-  // Add the tab button
   const nav = document.querySelector('.activity-bar');
   const systemBtn = document.querySelector('.icon-btn[data-tab="tab-system"]');
 
@@ -16,140 +20,237 @@ export async function initAdminUI(permissions) {
   adminBtn.dataset.tab = 'tab-admin';
   adminBtn.title = 'Admin';
   adminBtn.textContent = '🛡️';
-
   nav.insertBefore(adminBtn, systemBtn);
 
-  // Add the tab content
   const sidebar = document.querySelector('.sidebar-scrollable');
-
   const adminTab = document.createElement('div');
   adminTab.className = 'tab-content';
   adminTab.id = 'tab-admin';
   adminTab.innerHTML = `
     <div class="sidebar-logo">DotMatrix Studio</div>
     <h2>Admin Dashboard</h2>
-    
+
     <div style="margin-top:24px;">
       <h3>Invites</h3>
-      <div id="inviteList" class="scroll-list" style="margin-bottom:12px; max-height:200px;"></div>
+      <div id="inviteList" style="margin-bottom:12px;"></div>
       <button class="btn primary btn-sm" id="createInviteBtn" style="width:100%;">Neuen Invite erstellen</button>
+      <div id="createInviteForm" style="display:none; flex-direction:column; gap:8px; margin-top:12px; padding:12px; border:1px solid var(--dm-border-base); border-radius:8px;">
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--dm-text-weak);">Rolle</label>
+        <select id="inviteRoleSelect" class="text-input" style="font-size:13px;"></select>
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--dm-text-weak);">Max. Nutzungen</label>
+        <input type="number" id="inviteMaxUses" class="text-input" value="1" min="1" style="font-size:13px;" />
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--dm-text-weak);">Notiz (optional)</label>
+        <input type="text" id="inviteNote" class="text-input" placeholder="z.B. für Freund X" style="font-size:13px;" />
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn primary btn-sm" id="confirmInviteBtn" style="flex:1;">Erstellen</button>
+          <button class="btn btn-sm" id="cancelInviteBtn" style="flex:1;">Abbrechen</button>
+        </div>
+      </div>
+      <div id="newCodeDisplay" style="display:none; margin-top:8px; padding:12px; border:1px solid var(--dm-primary); border-radius:8px; text-align:center;">
+        <div style="font-size:10px;color:var(--dm-text-weak);margin-bottom:4px;">NEUER CODE</div>
+        <span id="newCodeText" style="font-family:monospace;font-size:15px;letter-spacing:0.12em;color:var(--dm-primary);"></span>
+      </div>
     </div>
 
     <div style="margin-top:24px;">
       <h3>Users</h3>
-      <div id="userList" class="scroll-list" style="max-height:200px;"></div>
+      <div id="userList"></div>
     </div>
   `;
-
   sidebar.appendChild(adminTab);
 
-  // Wire tab switching specifically for the new button
   adminBtn.addEventListener('click', () => {
-    document
-      .querySelectorAll('.activity-bar .icon-btn')
-      .forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll('.activity-bar .icon-btn').forEach((b) => b.classList.remove('active'));
     adminBtn.classList.add('active');
     document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
     adminTab.classList.add('active');
     loadAdminData();
   });
 
-  // Wire buttons
   document.getElementById('createInviteBtn').addEventListener('click', async () => {
+    const form = document.getElementById('createInviteForm');
+    const isVisible = form.style.display === 'flex';
+    form.style.display = isVisible ? 'none' : 'flex';
+    if (!isVisible) await _loadRolesIntoSelect();
+  });
+
+  document.getElementById('cancelInviteBtn').addEventListener('click', () => {
+    document.getElementById('createInviteForm').style.display = 'none';
+  });
+
+  document.getElementById('confirmInviteBtn').addEventListener('click', async () => {
+    const roleId = document.getElementById('inviteRoleSelect').value;
+    const maxUses = parseInt(document.getElementById('inviteMaxUses').value) || 1;
+    const note = document.getElementById('inviteNote').value.trim() || null;
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     try {
-      // Create a basic user invite for 1 use, valid for 7 days
-      const roleId = await getDefaultRoleId();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const res = await api.invites.create(roleId, 1, expiresAt, 'Auto-generated via UI');
-      alert('Neuer Invite Code: ' + res.invite.code);
+      const res = await api.invites.create(roleId, maxUses, expiresAt, note);
+      document.getElementById('createInviteForm').style.display = 'none';
+      document.getElementById('inviteNote').value = '';
+      document.getElementById('inviteMaxUses').value = '1';
+      _showNewCode(res.invite.code);
       loadAdminData();
     } catch (e) {
-      alert('Fehler beim Erstellen: ' + e.message);
+      alert('Fehler: ' + e.message);
     }
   });
 }
 
-// Global role cache
-let defaultRoleId = null;
-async function getDefaultRoleId() {
-  if (defaultRoleId) return defaultRoleId;
+function _showNewCode(code) {
+  const display = document.getElementById('newCodeDisplay');
+  document.getElementById('newCodeText').textContent = code;
+  display.style.display = 'block';
+  setTimeout(() => (display.style.display = 'none'), 30000);
+}
+
+async function _loadRolesIntoSelect() {
+  if (_rolesCache) return;
   try {
     const res = await api.roles.list();
-    const userRole = res.roles.find((r) => r.name === 'user') || res.roles[0];
-    defaultRoleId = userRole.id;
-    return defaultRoleId;
+    _rolesCache = res.roles;
+    const select = document.getElementById('inviteRoleSelect');
+    if (!select) return;
+    select.innerHTML = '';
+    res.roles.forEach((r) => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.name.charAt(0).toUpperCase() + r.name.slice(1);
+      if (r.name === 'user') opt.selected = true;
+      select.appendChild(opt);
+    });
   } catch {
-    return null;
+    /* ignore */
   }
 }
 
 async function loadAdminData() {
-  try {
-    const inviteList = document.getElementById('inviteList');
-    if (inviteList) {
-      const res = await api.invites.list();
-      inviteList.innerHTML = '';
-      if (res.invites.length === 0) {
-        inviteList.innerHTML =
-          '<div style="padding:10px; color:var(--dm-text-weak); text-align:center;">Keine Invites</div>';
-      }
-      res.invites.forEach((inv) => {
-        const el = document.createElement('div');
-        el.className = 'sli';
-        const isRevoked = inv.isRevoked;
-        el.innerHTML = `
-          <div class="sli-row">
-            <span style="${isRevoked ? 'text-decoration:line-through; opacity:0.5;' : ''}">${inv.code}</span>
-            <div>
-              <span class="sli-badge" style="margin-right:5px">${inv.usedCount}/${inv.maxUses}</span>
-              ${!isRevoked ? '<button class="sli-del" data-id="' + inv.id + '" title="Widerrufen">×</button>' : ''}
-            </div>
-          </div>`;
+  await Promise.all([_loadInvites(), _loadUsers()]).catch((e) =>
+    console.warn('Admin data load failed', e)
+  );
+}
 
-        const delBtn = el.querySelector('.sli-del');
-        if (delBtn) {
-          delBtn.addEventListener('click', async () => {
-            if (confirm('Diesen Code wirklich widerrufen?')) {
-              await api.invites.revoke(inv.id);
-              loadAdminData();
-            }
-          });
+async function _loadInvites() {
+  const container = document.getElementById('inviteList');
+  if (!container) return;
+
+  const res = await api.invites.list();
+  const all = res.invites;
+  const now = new Date();
+
+  const active = all.filter(
+    (i) => !i.isRevoked && i.usedCount < i.maxUses && (!i.expiresAt || new Date(i.expiresAt) > now)
+  );
+  const used = all.filter((i) => !i.isRevoked && i.usedCount >= i.maxUses);
+  const dead = all.filter(
+    (i) => i.isRevoked || (i.expiresAt && new Date(i.expiresAt) <= now && i.usedCount < i.maxUses)
+  );
+
+  container.innerHTML = '';
+  _renderInviteGroup(container, 'Aktiv', active, 'var(--dm-primary)', false);
+  _renderInviteGroup(container, 'Genutzt', used, '#4caf50', true);
+  _renderInviteGroup(container, 'Widerrufen / Abgelaufen', dead, 'var(--dm-error)', true);
+}
+
+function _renderInviteGroup(container, label, invites, color, collapsed) {
+  if (invites.length === 0) return;
+
+  const details = document.createElement('details');
+  if (!collapsed) details.open = true;
+  details.style.marginBottom = '8px';
+
+  const arrow = collapsed ? '▶' : '▼';
+  const summary = document.createElement('summary');
+  summary.style.cssText = `cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:${color};padding:6px 0;user-select:none;list-style:none;display:flex;align-items:center;gap:6px;`;
+  summary.innerHTML = `<span class="grp-arrow">${arrow}</span>${label}<span style="opacity:0.6;">(${invites.length})</span>`;
+  details.addEventListener('toggle', () => {
+    summary.querySelector('.grp-arrow').textContent = details.open ? '▼' : '▶';
+  });
+  details.appendChild(summary);
+
+  invites.forEach((inv) => {
+    const el = document.createElement('div');
+    el.className = 'sli';
+    el.style.cssText =
+      'flex-direction:column;align-items:flex-start;gap:4px;padding:8px 10px;margin-bottom:2px;';
+
+    const isDead = inv.isRevoked || (inv.expiresAt && new Date(inv.expiresAt) <= new Date());
+    const isFullyUsed = inv.usedCount >= inv.maxUses;
+    const canRevoke = !isDead && !isFullyUsed;
+
+    const redemptions = inv.redemptions || [];
+    const redemptionHtml = redemptions
+      .map(
+        (r) =>
+          `<span style="font-size:10px;color:var(--dm-text-weak);">↳ ${r.username || r.email || 'Unbekannt'} · ${new Date(r.redeemedAt).toLocaleDateString('de-DE')}</span>`
+      )
+      .join('');
+
+    el.innerHTML = `
+      <div class="sli-row" style="width:100%;">
+        <span style="font-family:monospace;font-size:12px;${isDead ? 'text-decoration:line-through;opacity:0.45;' : ''}">${inv.code}</span>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="sli-badge">${inv.usedCount}/${inv.maxUses}</span>
+          ${canRevoke ? `<button class="sli-del" title="Widerrufen">×</button>` : ''}
+        </div>
+      </div>
+      ${redemptionHtml ? `<div style="display:flex;flex-direction:column;gap:2px;padding-left:2px;">${redemptionHtml}</div>` : ''}
+    `;
+
+    const delBtn = el.querySelector('.sli-del');
+    if (delBtn) {
+      delBtn.addEventListener('click', async () => {
+        if (confirm('Code wirklich widerrufen?')) {
+          await api.invites.revoke(inv.id);
+          _loadInvites();
         }
-        inviteList.appendChild(el);
       });
     }
+    details.appendChild(el);
+  });
 
-    const userList = document.getElementById('userList');
-    if (userList) {
-      const res = await api.users.list();
-      userList.innerHTML = '';
-      res.users.forEach((u) => {
-        const el = document.createElement('div');
-        el.className = 'sli';
-        const isActive = u.status === 'active';
-        el.innerHTML = `
-          <div class="sli-row">
-            <span style="${!isActive ? 'opacity:0.5;' : ''}">${u.username}</span>
-            <button class="btn-sm" style="font-size:9px; padding:2px 6px; border-color:${isActive ? 'var(--dm-border-base)' : 'var(--dm-error)'}">
-              ${isActive ? 'Sperren' : 'Aktivieren'}
-            </button>
-          </div>`;
+  container.appendChild(details);
+}
 
-        el.querySelector('button').addEventListener('click', async () => {
-          const nextStatus = isActive ? 'suspended' : 'active';
-          if (confirm(`User ${u.username} wirklich ${isActive ? 'sperren' : 'aktivieren'}?`)) {
-            try {
-              await api.users.updateStatus(u.id, nextStatus);
-              loadAdminData();
-            } catch (err) {
-              alert(err.message);
-            }
+async function _loadUsers() {
+  const container = document.getElementById('userList');
+  if (!container) return;
+
+  const res = await api.users.list();
+  container.innerHTML = '';
+
+  res.users.forEach((u) => {
+    const isSelf = _currentUser && u.id === _currentUser.id;
+    const isActive = u.status === 'active';
+
+    const el = document.createElement('div');
+    el.className = 'sli';
+    el.innerHTML = `
+      <div class="sli-row" style="width:100%;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="${!isActive ? 'opacity:0.5;' : ''}">${u.username}</span>
+          ${isSelf ? '<span style="font-size:9px;color:var(--dm-primary);font-weight:600;">ICH</span>' : ''}
+        </div>
+        ${
+          isSelf
+            ? '<span style="font-size:10px;color:var(--dm-text-weak);">–</span>'
+            : `<button class="btn-sm" style="font-size:9px;padding:2px 6px;border-color:${isActive ? 'var(--dm-border-base)' : 'var(--dm-error)'};">${isActive ? 'Sperren' : 'Aktivieren'}</button>`
+        }
+      </div>
+    `;
+
+    if (!isSelf) {
+      el.querySelector('button').addEventListener('click', async () => {
+        const next = isActive ? 'suspended' : 'active';
+        if (confirm(`"${u.username}" wirklich ${isActive ? 'sperren' : 'aktivieren'}?`)) {
+          try {
+            await api.users.updateStatus(u.id, next);
+            _loadUsers();
+          } catch (err) {
+            alert(err.message);
           }
-        });
-        userList.appendChild(el);
+        }
       });
     }
-  } catch (e) {
-    console.warn('Failed to load admin data', e);
-  }
+    container.appendChild(el);
+  });
 }

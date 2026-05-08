@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../db/index.js';
-import { inviteCodes } from '../db/schema.js';
+import { inviteCodes, inviteRedemptions, users } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requirePermission } from '../middleware/auth.js';
 import crypto from 'crypto';
@@ -20,10 +20,26 @@ function generateInviteCode() {
   return crypto.randomBytes(6).toString('hex').toUpperCase().match(/.{4}/g).join('-');
 }
 
-// Get all invites
+// Get all invites (with redemption info)
 router.get('/', requireAuth, requirePermission('invites.read.any'), async (req, res) => {
   try {
-    const invites = await db.select().from(inviteCodes);
+    const allInvites = await db.select().from(inviteCodes);
+
+    const redemptions = await db
+      .select({
+        inviteCodeId: inviteRedemptions.inviteCodeId,
+        username: users.username,
+        email: users.email,
+        redeemedAt: inviteRedemptions.redeemedAt,
+      })
+      .from(inviteRedemptions)
+      .leftJoin(users, eq(inviteRedemptions.userId, users.id));
+
+    const invites = allInvites.map((inv) => ({
+      ...inv,
+      redemptions: redemptions.filter((r) => r.inviteCodeId === inv.id),
+    }));
+
     res.json({ invites });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });

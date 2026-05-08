@@ -51,7 +51,7 @@ initErrorPopup();
 initAudio();
 initZoom();
 initSyncManager(currentUser?.id);
-await initAdminUI(currentPermissions);
+await initAdminUI(currentPermissions, currentUser);
 
 // Initialize a session-based project if none exists (Auto-Save Phase F)
 if (!state.currentProjectId) {
