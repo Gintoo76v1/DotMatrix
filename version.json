@@ -1,9 +1,25 @@
 {
   "$schema": "./version.schema.json",
-  "current": "1.4.0",
+  "current": "1.4.1",
+  "commit": "818bf43",
   "buildDate": "2026-05-08",
-  "lastUpdated": "2026-05-08T15:00:00Z",
+  "lastUpdated": "2026-05-08T15:30:00Z",
   "changelog": [
+    {
+      "version": "1.4.1",
+      "commit": "818bf43",
+      "date": "2026-05-08",
+      "tags": ["Bugfix", "UX"],
+      "summary": "Fehlermeldungen auf Deutsch, Toast unten-rechts, Footer einzeilig",
+      "highlights": [
+        "HTTP-Fehlercodes (429, 403, 500 etc.) werden jetzt auf Deutsch angezeigt",
+        "Fehlermeldungen erscheinen als Toast unten-rechts statt über dem Canvas",
+        "Footer-Versions-Badge bleibt immer einzeilig (white-space: nowrap)",
+        "Rohe JS-Fehlermeldungen werden durch verständliche Texte ersetzt",
+        "Render-Fehler zeigen eine freundliche Meldung statt eines internen Fehlers",
+        "Changelog-Overlay zeigt Commit-ID bei aktiven Subversionen"
+      ]
+    },
     {
       "version": "1.4.0",
       "date": "2026-05-08",
