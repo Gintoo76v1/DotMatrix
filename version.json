@@ -1,26 +1,44 @@
 {
   "$schema": "./version.schema.json",
-  "current": "1.3.0",
-  "buildDate": "2026-05-05",
-  "lastUpdated": "2026-05-05T14:30:00Z",
+  "current": "1.4.0",
+  "buildDate": "2026-05-08",
+  "lastUpdated": "2026-05-08T15:00:00Z",
   "changelog": [
+    {
+      "version": "1.4.0",
+      "date": "2026-05-08",
+      "tags": ["Auth", "Admin", "Bugfix"],
+      "summary": "Vollständiges Auth-System, Admin-Dashboard, kritische Engine-Fixes",
+      "highlights": [
+        "Invite-Only Registrierung mit Rollen-Auswahl (Admin / User) beim Code-Erstellen",
+        "Admin-Dashboard: Invite-Liste kategorisiert in Aktiv / Genutzt / Widerrufen — ein- und ausklappbar",
+        "Admin-Dashboard: Anzeige wer einen Invite-Code benutzt hat (Username + Datum)",
+        "Selbst-Sperren im Admin-Panel verhindert (UI + Server)",
+        "Fix: smoothstep fehlte im Import von engine.js → Render-Absturz bei jedem Preset",
+        "Fix: boxBlur3x3 fehlte im Import von engine.js → Absturz bei aktiviertem Softening Blur",
+        "Fix: history.js war leer → ES-Modul-Link-Fehler ließ die gesamte App einfrieren",
+        "Fix: sync.js hatte doppelten export → SyntaxError blockierte alle Event-Listener",
+        "Fix: Changelog-Overlay öffnete nicht wegen falschem version.json-Pfad",
+        "Fix: Redirect-Loop auf Login/Register-Seite durch fehlenden Auth-Page-Check",
+        "Verlauf-Tab zeigt Platzhalter und Snapshot-Liste bei Preset-Auswahl",
+        "Preset-Tab wird beim Öffnen automatisch aktualisiert"
+      ]
+    },
     {
       "version": "1.3.0",
       "date": "2026-05-05",
       "tags": ["UI", "Performance", "Testing"],
       "summary": "OpenCode Theme-System, 120 Tests, Worker-Rendering, Font-Individualisierung",
-      "mdFile": "CHANGELOG.md#v130",
       "highlights": [
-        "5 neue Themes inspiriert von OpenCode Desktop: OC-2, Matrix, Tokyonight, Synthwave, Gruvbox",
+        "5 neue Themes: OC-2, Matrix, Tokyonight, Synthwave, Gruvbox",
         "Token-basiertes CSS-Design-System mit 26 Custom Properties pro Theme",
-        "120 Unit-Tests mit 93% Coverage auf Math/Engine-Modulen",
+        "120 Unit-Tests mit 93 % Coverage auf Math/Engine-Modulen",
         "OffscreenCanvas Web-Worker für nicht-blockierendes Rendering",
         "3 individualisierbare Fonts: UI-Sans, Code-Mono, Terminal-Mono",
-        "Animation-System mit 4 Patterns (Aurora, Pulse, Orbit, Off) + Detail-Slider",
+        "Animation-System mit 4 Patterns (Aurora, Pulse, Orbit, Off)",
         "Version/Changelog-Overlay mit Update-Indikator im Footer",
-        "13 Render-Engine-Bugs behoben mit Legacy-Math-Toggle",
-        "9 UI/State-Bugs behoben (Slider-Sync, YAML-Parser, etc.)",
-        "YAML-basierter Preset-Parser mit String-Quoting und Edge-Case-Handling"
+        "13 Render-Engine-Bugs behoben",
+        "YAML-basierter Preset-Parser mit robustem Edge-Case-Handling"
       ]
     },
     {
@@ -28,14 +46,11 @@
       "date": "2026-04-20",
       "tags": ["Bugfix", "Refactor"],
       "summary": "Wear-Layer Scroll-Fix, UI-Modularisierung, YAML-Parser",
-      "mdFile": "CHANGELOG.md#v120",
       "highlights": [
-        "Wear-Layer-Liste scrollbar gemacht (max-height + overflow-y: auto)",
-        "Touch-Scroll-Whitelist erweitert um .error-container",
-        "main.js in 12 UI-Module aufgesplittet (error, audio, zoom, sliders, etc.)",
-        "YAML-Preset-Parser robuster gemacht (Kommentare, Quotes, Number-Detection)",
-        "State-Persistenz via settings-store.js (localStorage)",
-        "Math-Mode-Helper für Legacy/Modern-Toggle"
+        "Wear-Layer-Liste scrollbar (max-height + overflow-y: auto)",
+        "main.js in 12 UI-Module aufgesplittet",
+        "YAML-Preset-Parser robuster (Kommentare, Quotes, Number-Detection)",
+        "State-Persistenz via settings-store.js"
       ]
     },
     {
@@ -43,13 +58,10 @@
       "date": "2026-03-15",
       "tags": ["Feature", "UI"],
       "summary": "Preset-System, Multi-Touch Zoom, Audio-Feedback",
-      "mdFile": "CHANGELOG.md#v110",
       "highlights": [
         "Preset-System mit Import/Export (YAML + JSON)",
-        "User-Presets in localStorage",
         "Multi-Touch Pinch-Zoom mit Low-Pass-Filter",
         "UI Click-Sounds via WebAudio API",
-        "Click-Shockwave Animation",
         "12 Hardware-Fehler-Layer (Wear-Patterns)"
       ]
     },
@@ -58,14 +70,12 @@
       "date": "2026-02-01",
       "tags": ["Release"],
       "summary": "Erstveröffentlichung DotMatrix Studio",
-      "mdFile": "CHANGELOG.md#v100",
       "highlights": [
         "10 Drucker-Profile (Epson FX-80, LQ-850, IBM Proprinter, OKI Microline, etc.)",
-        "3 Dither-Algorithmen: Floyd-Steinberg, Ordered Bayer 4x4, Threshold",
+        "3 Dither-Algorithmen: Floyd-Steinberg, Ordered Bayer 4×4, Threshold",
         "Dot-Matrix Render-Engine mit Pin-Offset, Jitter, Banding",
         "Bild-Upload mit Drag & Drop",
-        "Pan & Zoom auf Canvas",
-        "Dark/Light Mode"
+        "Pan & Zoom auf Canvas"
       ]
     }
   ]

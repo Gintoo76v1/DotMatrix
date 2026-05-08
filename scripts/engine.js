@@ -14,6 +14,7 @@ import {
   floydSteinberg,
   orderedDither,
   thresholdDither,
+  boxBlur3x3,
 } from './filters.js';
 import { RENDERING, MM_PER_INCH } from './constants.js';
 
