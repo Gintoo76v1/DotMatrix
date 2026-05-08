@@ -2,7 +2,7 @@
 // Opens as a small popup above the footer when the user clicks their name chip.
 
 import { api, APIError } from '../api.js?v=14';
-import { showSuccess, showError, showInfo } from './toast.js';
+import { showSuccess, showError } from './toast.js';
 
 let _user = null;
 let _isOpen = false;
@@ -119,7 +119,22 @@ async function _handlePasswordChange() {
 }
 
 function _handle2FA() {
-  showInfo('2FA-Einrichtung ist in den Sicherheitseinstellungen verfügbar (bald verfügbar).');
+  closePanel();
+  // Switch to system settings tab and scroll to the security section
+  const systemBtn = document.querySelector('.activity-bar .icon-btn[data-tab="tab-system"]');
+  const systemTab = document.getElementById('tab-system');
+  if (systemBtn && systemTab) {
+    document.querySelectorAll('.activity-bar .icon-btn').forEach((b) => b.classList.remove('active'));
+    systemBtn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
+    systemTab.classList.add('active');
+    // Open the security details group and scroll to it
+    setTimeout(() => {
+      const secEl = document.getElementById('securitySettings');
+      secEl?.closest('details')?.setAttribute('open', '');
+      secEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
 }
 
 async function _handleLogout() {

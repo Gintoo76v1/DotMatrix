@@ -22,12 +22,12 @@ async function processQueue() {
         } else if (task.type === 'blob_upload') {
           const blob = await localDB.getBlob(task.blobId);
           if (blob) {
-            const { url } = await api.projects.getUploadUrl(
+            const { uploadUrl } = await api.projects.getUploadUrl(
               task.projectId,
               task.filename,
               task.contentType
             );
-            await fetch(url, {
+            await fetch(uploadUrl, {
               method: 'PUT',
               body: blob,
               headers: { 'Content-Type': task.contentType },

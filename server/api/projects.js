@@ -33,7 +33,7 @@ router.get('/', requireAuth, requirePermission('projects.read.own'), async (req,
   }
 });
 
-router.post('/', requireAuth, requirePermission('projects.create'), async (req, res) => {
+router.post('/', requireAuth, requirePermission('projects.write.own'), async (req, res) => {
   const { name, contentJson } = req.body;
 
   if (!name) return res.status(400).json({ error: 'name is required' });
@@ -55,7 +55,7 @@ router.post('/', requireAuth, requirePermission('projects.create'), async (req, 
   }
 });
 
-router.patch('/:id', requireAuth, requirePermission('projects.update.own'), async (req, res) => {
+router.patch('/:id', requireAuth, requirePermission('projects.write.own'), async (req, res) => {
   const { id } = req.params;
   const { contentJson, version } = req.body;
 
@@ -82,8 +82,8 @@ router.patch('/:id', requireAuth, requirePermission('projects.update.own'), asyn
     if (!updated)
       return res.status(409).json({ error: 'Conflict: Version mismatch during update' });
 
-    // 3. Optional: Create a snapshot every 10 versions
-    if (updated.version % 10 === 0) {
+    // 3. Create a snapshot every 5 versions for history
+    if (updated.version % 5 === 0) {
       await db.insert(projectSnapshots).values({
         projectId: id,
         contentJson,
@@ -102,7 +102,7 @@ router.patch('/:id', requireAuth, requirePermission('projects.update.own'), asyn
 router.post(
   '/:id/upload-url',
   requireAuth,
-  requirePermission('projects.update.own'),
+  requirePermission('projects.write.own'),
   async (req, res) => {
     const { id } = req.params;
     const { filename, contentType } = req.body;
@@ -130,6 +130,29 @@ router.post(
     }
   }
 );
+
+router.delete('/:id', requireAuth, requirePermission('projects.delete.own'), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const project = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, id), eq(projects.ownerId, req.session.userId)))
+      .limit(1)
+      .then((r) => r[0]);
+
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    await db.delete(projectSnapshots).where(eq(projectSnapshots.projectId, id));
+    await db.delete(projects).where(eq(projects.id, id));
+
+    await logAction(req, 'project.delete', 'projects', id);
+    res.json({ message: 'Project deleted' });
+  } catch (error) {
+    console.error('[project delete]', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // ── SNAPSHOTS & HISTORY ──────────────────────────────────────────────────
 
@@ -159,7 +182,7 @@ router.get(
 router.post(
   '/:id/snapshots/:snapId/restore',
   requireAuth,
-  requirePermission('projects.update.own'),
+  requirePermission('projects.write.own'),
   async (req, res) => {
     try {
       const snap = await db
