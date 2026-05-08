@@ -19,8 +19,10 @@ router.get('/', requireAuth, requirePermission('users.read.any'), async (req, re
         lastLoginAt: users.lastLoginAt,
         createdAt: users.createdAt,
         roleId: users.roleId,
+        roleName: roles.name,
       })
-      .from(users);
+      .from(users)
+      .leftJoin(roles, eq(users.roleId, roles.id));
 
     res.json({ users: allUsers });
   } catch (error) {

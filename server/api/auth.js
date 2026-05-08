@@ -14,6 +14,7 @@ import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema } from '../utils/schemas.js';
 import rateLimit from 'express-rate-limit';
 import { logAction } from '../utils/audit.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -233,6 +234,44 @@ router.get('/me', async (req, res) => {
       permissions: userPermissions,
     });
   } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Change own password
+router.patch('/password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: 'Passwort muss mindestens 8 Zeichen haben.' });
+  }
+  try {
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.session.userId))
+      .limit(1)
+      .then((r) => r[0]);
+    if (!user) return res.status(404).json({ error: 'Benutzer nicht gefunden.' });
+
+    const isValid = await argon2.verify(user.passwordHash, currentPassword);
+    if (!isValid) return res.status(401).json({ error: 'Aktuelles Passwort ist falsch.' });
+
+    const newHash = await argon2.hash(newPassword, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 4,
+    });
+
+    await db
+      .update(users)
+      .set({ passwordHash: newHash, updatedAt: new Date() })
+      .where(eq(users.id, user.id));
+
+    await logAction(req, 'auth.password_change', 'users', user.id);
+    res.json({ message: 'Passwort erfolgreich geändert.' });
+  } catch (err) {
+    console.error('[password change]', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

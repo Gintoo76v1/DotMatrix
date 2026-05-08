@@ -852,7 +852,7 @@
           </div>
           <span class="footer-divider">|</span>
           <div class="user-session" id="userSession">
-            <div class="user-session-chip">
+            <div class="user-session-chip" id="userSessionChip" role="button" tabindex="0" title="Kontoeinstellungen">
               <span class="user-session-dot" aria-hidden="true"></span>
               <span class="user-session-name" id="sessionUsername"></span>
               <span class="user-session-time" id="sessionTime"></span>
@@ -892,6 +892,42 @@
       </div>
     </div>
 
-    <script type="module" src="scripts/main.js?v=19"></script>
+    <!-- Account Settings Panel -->
+    <div class="account-panel" id="accountPanel" aria-hidden="true">
+      <div class="account-panel-header">
+        <div class="account-avatar">&#x2B21;</div>
+        <div class="account-user-info">
+          <div class="account-username" id="acUsername">—</div>
+          <span class="account-role-badge" id="acRole">user</span>
+        </div>
+        <button class="account-close" id="accountClose" aria-label="Schlie&#xDF;en">&#x2715;</button>
+      </div>
+      <div class="account-session">
+        <span>Sitzungsdauer</span>
+        <span class="account-session-value" id="acSession">—</span>
+      </div>
+      <div class="account-body">
+        <button class="account-btn" id="acPasswordBtn">
+          <span class="account-btn-icon">&#x1F511;</span>Passwort &#xE4;ndern
+        </button>
+        <div class="account-password-form" id="acPasswordForm" style="display:none;">
+          <input type="password" class="text-input" id="acCurPw" placeholder="Aktuelles Passwort" autocomplete="current-password" />
+          <input type="password" class="text-input" id="acNewPw" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password" />
+          <div class="account-form-actions">
+            <button class="btn btn-sm primary" id="acPwSave" style="flex:1;">Speichern</button>
+            <button class="btn btn-sm" id="acPwCancel" style="flex:1;">Abbrechen</button>
+          </div>
+        </div>
+        <button class="account-btn" id="ac2faBtn">
+          <span class="account-btn-icon">&#x1F510;</span>2-Faktor-Auth<span id="ac2faStatus" style="margin-left:auto;font-size:10px;"></span>
+        </button>
+        <div class="account-divider"></div>
+        <button class="account-btn account-btn--danger" id="acLogoutBtn">
+          <span class="account-btn-icon">&#x21A9;</span>Abmelden
+        </button>
+      </div>
+    </div>
+
+    <script type="module" src="scripts/main.js?v=20"></script>
   </body>
 </html>
