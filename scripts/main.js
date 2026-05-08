@@ -19,7 +19,7 @@ import { initWearLayers } from './ui/wear.js';
 import { initUpload } from './ui/upload.js';
 import { initPresets, renderPresetList } from './ui/presets.js';
 import { initAppearance } from './ui/appearance.js';
-import { initChangelog } from './ui/changelog.js';
+import { initChangelog } from './ui/changelog.js?v=2';
 import { api } from './api.js?v=14';
 import { initAdminUI } from './ui/admin.js';
 import { queueSaveProject, initSyncManager } from './sync.js';

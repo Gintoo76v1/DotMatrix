@@ -44,15 +44,15 @@
     <div class="app-layout">
       <div class="app-container">
         <nav class="activity-bar glass-panel">
-          <div class="icon-btn active" data-tab="tab-source" title="Quelle">🖨️</div>
-          <div class="icon-btn" data-tab="tab-presets" title="Presets">📂</div>
-          <div class="icon-btn" data-tab="tab-history" title="Historie">⏳</div>
-          <div class="icon-btn" data-tab="tab-errors" title="Hardware">🔧</div>
+          <div class="icon-btn active" data-tab="tab-source" title="Quelle">&#x1F5A8;&#xFE0F;</div>
+          <div class="icon-btn" data-tab="tab-presets" title="Presets">&#x1F4C2;</div>
+          <div class="icon-btn" data-tab="tab-history" title="Historie">&#x23F3;</div>
+          <div class="icon-btn" data-tab="tab-errors" title="Hardware">&#x1F527;</div>
           <div class="spacer"></div>
           <div class="icon-btn toggle-btn" id="sidebarToggleBtn" title="Sidebar umschalten">
             <span class="toggle-chevron"></span>
           </div>
-          <div class="icon-btn" data-tab="tab-system" title="System">⚙️</div>
+          <div class="icon-btn" data-tab="tab-system" title="System">&#x2699;&#xFE0F;</div>
         </nav>
 
         <aside class="sidebar glass-panel">
@@ -61,8 +61,8 @@
               <div class="sidebar-logo">DotMatrix Studio</div>
               <h2 data-i18n="sourceTitle">Bildquelle</h2>
               <div id="dropzone" class="dropzone">
-                <div class="big" id="dzBig" data-i18n="dropzoneBig">Bild auswählen</div>
-                <div class="small" id="dzSmall">PNG · JPG · HEIC · WebP</div>
+                <div class="big" id="dzBig" data-i18n="dropzoneBig">Bild ausw&#xE4;hlen</div>
+                <div class="small" id="dzSmall">PNG &#xB7; JPG &#xB7; HEIC &#xB7; WebP</div>
                 <input type="file" id="fileInput" accept="image/*" />
               </div>
 
@@ -165,7 +165,7 @@
                 <input type="range" id="thresholdSlider" min="0" max="255" value="128" />
               </label>
 
-              <h2 data-i18n="paperFormatTitle" style="margin-top: 24px">Paper & Format</h2>
+              <h2 data-i18n="paperFormatTitle" style="margin-top: 24px">Paper &amp; Format</h2>
               <div class="segmented scrollable" id="paperFormatBtns" style="margin-bottom: 12px">
                 <button data-format="Original" class="active">Orig</button>
                 <button data-format="Fit">Auto</button>
@@ -267,7 +267,7 @@
                       class="swatch active"
                       style="background: #ffffff"
                       data-paper="255,255,255"
-                      aria-label="Papier Weiß"
+                      aria-label="Papier Wei&#xDF;"
                     ></button>
                     <button
                       type="button"
@@ -342,7 +342,7 @@
                 type="text"
                 id="presetNameInput"
                 class="text-input"
-                placeholder="Name für Preset"
+                placeholder="Name f&#xFC;r Preset"
               />
               <div style="display: flex; gap: 8px; margin-top: 10px">
                 <button class="btn-sm" id="savePresetBtn" style="flex: 1" data-i18n="btnSavePreset">
@@ -355,7 +355,7 @@
               <textarea
                 id="presetYamlArea"
                 class="yaml-area text-input"
-                placeholder="YAML Code hier einfügen..."
+                placeholder="YAML Code hier einf&#xFC;gen..."
                 rows="10"
                 style="margin-top: 16px"
               ></textarea>
@@ -368,7 +368,7 @@
               <div class="sidebar-logo">DotMatrix Studio</div>
               <h2>Verlauf</h2>
               <p style="color:var(--dm-text-weak);font-size:13px;margin-top:8px">
-                Wähle ein Preset, um den Versionsverlauf anzuzeigen.
+                W&#xE4;hle ein Preset, um den Versionsverlauf anzuzeigen.
               </p>
             </div>
 
@@ -530,7 +530,7 @@
                   type="text"
                   id="settingsSearch"
                   class="text-input settings-search"
-                  placeholder="🔍 Einstellungen suchen..."
+                  placeholder="&#x1F50D; Einstellungen suchen..."
                   autocomplete="off"
                 />
                 <button
@@ -538,13 +538,13 @@
                   id="settingsSearchClear"
                   aria-label="Suche leeren"
                 >
-                  ✕
+                  &#x2715;
                 </button>
               </div>
 
               <details class="settings-group">
                 <summary>
-                  <span class="sg-icon">🎨</span><span class="sg-title">Darstellung</span>
+                  <span class="sg-icon">&#x1F3A8;</span><span class="sg-title">Darstellung</span>
                 </summary>
                 <div class="sg-body">
                   <!-- Theme -->
@@ -574,7 +574,7 @@
                       <option value="classic" selected>Classic</option>
                     </select>
                   </label>
-                  <p class="setting-desc">Aktuell nur Classic verfügbar.</p>
+                  <p class="setting-desc">Aktuell nur Classic verf&#xFC;gbar.</p>
 
                   <!-- Fonts -->
                   <label class="field" style="margin-top: 20px"
@@ -588,7 +588,7 @@
                       <option value="Custom">Custom...</option>
                     </select>
                   </label>
-                  <p class="setting-desc">Schrift für Überschriften, Buttons und UI-Texte.</p>
+                  <p class="setting-desc">Schrift f&#xFC;r &#xDC;berschriften, Buttons und UI-Texte.</p>
                   <label
                     class="field"
                     id="fontSansCustomField"
@@ -613,7 +613,7 @@
                       <option value="Custom">Custom...</option>
                     </select>
                   </label>
-                  <p class="setting-desc">Schrift für Eingabefelder, Textareas und YAML-Code.</p>
+                  <p class="setting-desc">Schrift f&#xFC;r Eingabefelder, Textareas und YAML-Code.</p>
                   <label
                     class="field"
                     id="fontMonoCustomField"
@@ -640,7 +640,7 @@
                     </select>
                   </label>
                   <p class="setting-desc">
-                    Schrift für den Render-Debug-Text im Live-Vorschau-Bereich.
+                    Schrift f&#xFC;r den Render-Debug-Text im Live-Vorschau-Bereich.
                   </p>
                   <label
                     class="field"
@@ -700,12 +700,12 @@
                         Animationsgeschwindigkeit (10% = langsam, 200% = schnell).
                       </p>
                       <label class="field" style="margin-top: 12px"
-                        ><span class="name">Intensität <b id="animIntensityVal">30%</b></span>
+                        ><span class="name">Intensit&#xE4;t <b id="animIntensityVal">30%</b></span>
                         <input type="range" id="animIntensitySlider" min="0" max="100" value="30" />
                       </label>
                       <p class="setting-desc">Deckkraft und Leuchtkraft der Effekte.</p>
                       <label class="field" style="margin-top: 12px"
-                        ><span class="name">Größe <b id="animSizeVal">50%</b></span>
+                        ><span class="name">Gr&#xF6;&#xDF;e <b id="animSizeVal">50%</b></span>
                         <input type="range" id="animSizeSlider" min="20" max="100" value="50" />
                       </label>
                       <p class="setting-desc">Ausdehnung der animierten Elemente.</p>
@@ -716,7 +716,7 @@
 
               <details class="settings-group">
                 <summary>
-                  <span class="sg-icon">🔊</span><span class="sg-title">Workflow</span>
+                  <span class="sg-icon">&#x1F50A;</span><span class="sg-title">Workflow</span>
                 </summary>
                 <div class="sg-body">
                   <div class="checks">
@@ -730,7 +730,7 @@
                       ><span class="box"></span><span>Auto-Render (Live)</span></label
                     >
                     <p class="setting-desc check-desc">
-                      Automatisch neu rendern bei Einstellungsänderungen.
+                      Automatisch neu rendern bei Einstellungs&#xE4;nderungen.
                     </p>
                     <label class="check" data-flag="renderDebug"
                       ><span class="box"></span><span>Render Debug Text</span></label
@@ -740,17 +740,17 @@
                   <label class="field" style="margin-top: 16px"
                     ><span class="name">Sprache</span>
                     <select id="langSelector" class="text-input">
-                      <option value="de" selected>🇩🇪 Deutsch</option>
-                      <option value="en">🇺🇸 English</option>
+                      <option value="de" selected>&#x1F1E9;&#x1F1EA; Deutsch</option>
+                      <option value="en">&#x1F1FA;&#x1F1F8; English</option>
                     </select>
                   </label>
-                  <p class="setting-desc">Oberflächensprache der Anwendung.</p>
+                  <p class="setting-desc">Oberfl&#xE4;chensprache der Anwendung.</p>
                 </div>
               </details>
 
               <details class="settings-group">
                 <summary>
-                  <span class="sg-icon">⚡</span><span class="sg-title">Engine</span>
+                  <span class="sg-icon">&#x26A1;</span><span class="sg-title">Engine</span>
                 </summary>
                 <div class="sg-body">
                   <div class="checks">
@@ -758,28 +758,28 @@
                       ><span class="box"></span><span>Worker Rendering</span></label
                     >
                     <p class="setting-desc check-desc">
-                      Rendering im Hintergrund-Thread für flüssige UI.
+                      Rendering im Hintergrund-Thread f&#xFC;r fl&#xFC;ssige UI.
                     </p>
                   </div>
                   <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
                     <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
-                    responsiv). Fällt automatisch auf Inline-Rendering zurück, falls OffscreenCanvas
-                    nicht verfügbar.
+                    responsiv). F&#xE4;llt automatisch auf Inline-Rendering zur&#xFC;ck, falls OffscreenCanvas
+                    nicht verf&#xFC;gbar.
                   </div>
                   <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
                     <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
-                    klassisches Floyd–Steinberg, RGB-Filter). Aus = neuere, korrektere
+                    klassisches Floyd&#x2013;Steinberg, RGB-Filter). Aus = neuere, korrektere
                     Mathematik.<br />
                     <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
-                    responsiv). Fällt automatisch auf Inline-Rendering zurück, falls OffscreenCanvas
-                    nicht verfügbar.
+                    responsiv). F&#xE4;llt automatisch auf Inline-Rendering zur&#xFC;ck, falls OffscreenCanvas
+                    nicht verf&#xFC;gbar.
                   </div>
                 </div>
               </details>
 
               <details class="settings-group">
                 <summary>
-                  <span class="sg-icon">🛡️</span><span class="sg-title">Sicherheit</span>
+                  <span class="sg-icon">&#x1F6E1;&#xFE0F;</span><span class="sg-title">Sicherheit</span>
                 </summary>
                 <div class="sg-body" id="securitySettings">
                   <!-- Dynamisch via security.js -->
@@ -788,17 +788,17 @@
 
               <details class="settings-group">
                 <summary>
-                  <span class="sg-icon">🌐</span><span class="sg-title">Sprache</span>
+                  <span class="sg-icon">&#x1F310;</span><span class="sg-title">Sprache</span>
                 </summary>
                 <div class="sg-body">
                   <label class="field"
                     ><span class="name">Sprache</span>
                     <select id="langSelector" class="text-input">
-                      <option value="de" selected>🇩🇪 Deutsch</option>
-                      <option value="en">🇺🇸 English</option>
+                      <option value="de" selected>&#x1F1E9;&#x1F1EA; Deutsch</option>
+                      <option value="en">&#x1F1FA;&#x1F1F8; English</option>
                     </select>
                   </label>
-                  <p class="setting-desc">Oberflächensprache der Anwendung.</p>
+                  <p class="setting-desc">Oberfl&#xE4;chensprache der Anwendung.</p>
                 </div>
               </details>
             </div>
@@ -810,8 +810,8 @@
             <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
             <div style="display: flex; align-items: center; gap: 20px">
               <div class="zoom-controls">
-                <button id="zoomOut">➖</button><span id="zoomLevel">100%</span
-                ><button id="zoomIn">➕</button>
+                <button id="zoomOut">&#x2796;</button><span id="zoomLevel">100%</span
+                ><button id="zoomIn">&#x2795;</button>
               </div>
             </div>
           </div>
@@ -838,14 +838,14 @@
           </div>
 
           <div id="errorPopup" class="error-popup glass-panel">
-            <div class="error-header">⚠️ System Fehler</div>
+            <div class="error-header">&#x26A0;&#xFE0F; System Fehler</div>
             <div id="errorText" class="error-body"></div>
             <button
               id="errorCloseBtn"
               class="btn-sm"
               style="align-self: flex-end; margin-top: 5px; border-color: rgba(255, 0, 0, 0.5)"
             >
-              Schließen
+              Schlie&#xDF;en
             </button>
           </div>
         </main>
@@ -875,7 +875,7 @@
         >
           <span class="online-dot" id="onlineDot" title="Online"></span>
           <span class="version-text" id="versionText">v1.3.0</span>
-          <span class="version-separator">·</span>
+          <span class="version-separator">&#xB7;</span>
           <span class="update-badges" id="updateBadges">
             <span class="update-badge update-badge--ui">UI</span>
             <span class="update-badge update-badge--perf">Perf</span>
@@ -888,16 +888,16 @@
         <div class="changelog-backdrop"></div>
         <div class="changelog-panel glass-panel">
           <div class="changelog-header">
-            <h2>Updates & Changelog</h2>
-            <button class="changelog-close" id="changelogClose" aria-label="Schließen">✕</button>
+            <h2>Updates &amp; Changelog</h2>
+            <button class="changelog-close" id="changelogClose" aria-label="Schlie&#xDF;en">&#x2715;</button>
           </div>
           <div class="changelog-body" id="changelogBody">
-            <!-- Dynamisch von JS gefüllt -->
+            <!-- Dynamisch von JS gef&#xFC;llt -->
           </div>
         </div>
       </div>
     </div>
 
-    <script type="module" src="scripts/main.js?v=17"></script>
+    <script type="module" src="scripts/main.js?v=18"></script>
   </body>
 </html>
