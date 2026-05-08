@@ -715,6 +715,8 @@ input[type='file'] {
   padding: 4px 10px;
   border-radius: 8px;
   transition: background 0.2s;
+  white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
 .footer-version:hover {
@@ -2498,20 +2500,22 @@ html.changelog-open body {
 /* ── 28. Error Popup ──────────────────────────────────────────────────────── */
 
 .error-popup {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-150%);
-  width: 90%;
-  max-width: 400px;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  left: auto;
+  top: auto;
+  transform: translateY(calc(100% + 24px));
+  width: 340px;
+  max-width: calc(100vw - 48px);
   z-index: 9999;
-  background: rgb(30 0 0 / 75%);
+  background: rgb(30 0 0 / 85%);
   border: 1px solid rgb(255 50 50 / 40%);
   box-shadow: 0 10px 40px rgb(255 0 0 / 25%);
   border-radius: 16px;
   transition:
-    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-    visibility 0.4s;
+    transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    visibility 0.35s;
   display: flex;
   flex-direction: column;
   padding: 16px;
@@ -2521,7 +2525,7 @@ html.changelog-open body {
 }
 
 .error-popup.show {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
   pointer-events: auto;
   visibility: visible;
 }

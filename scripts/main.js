@@ -201,7 +201,8 @@ async function performRender() {
     }
     setStatus(`${width}×${height} px ready`);
   } catch (e) {
-    showError(`[Render Engine Absturz]: ${e.message}`);
+    console.error('[Render Engine]', e);
+    showError('Fehler beim Rendern. Bitte ein anderes Preset oder Bild versuchen.');
     setStatus('Render Error');
   } finally {
     isRendering = false;

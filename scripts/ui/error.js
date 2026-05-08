@@ -17,10 +17,16 @@ export function initErrorPopup() {
 
   // Global capture — uncaught exceptions and unhandled rejections.
   window.addEventListener('error', (ev) => {
-    showError(`[JS Fehler]: ${ev.message} (Zeile ${ev.lineno || '?'})`);
+    console.error('[Uncaught Error]', ev.error || ev.message);
+    showError('Ein unerwarteter Fehler ist aufgetreten. Seite neu laden könnte helfen.');
   });
   window.addEventListener('unhandledrejection', (ev) => {
-    showError(`[Promise Fehler]: ${ev.reason}`);
+    console.error('[Unhandled Rejection]', ev.reason);
+    const msg =
+      ev.reason?.message && !ev.reason.message.match(/[A-Z][a-z]+Error|undefined|null/i)
+        ? ev.reason.message
+        : 'Ein unerwarteter Fehler ist aufgetreten.';
+    showError(msg);
   });
 }
 

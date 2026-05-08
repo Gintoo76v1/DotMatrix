@@ -114,7 +114,9 @@ function _updateFooter() {
   const indicator = document.getElementById('updateIndicator');
 
   if (versionText && versionData) {
-    versionText.textContent = 'v' + versionData.current;
+    const ver = versionData.current;
+    const commit = versionData.commit;
+    versionText.textContent = commit ? `v${ver}-${commit}` : `v${ver}`;
   }
 
   if (badges && versionData?.changelog?.length > 0) {
@@ -170,6 +172,9 @@ function _renderEntry(entry, isCurrent, collapsible = false) {
     .join('');
 
   const version = _escape(entry.version);
+  const commit = entry.commit ? _escape(entry.commit) : null;
+  const versionLabel = commit ? `v${version}<span style="font-size:9px;opacity:0.5;font-weight:400;margin-left:4px;">${commit}</span>` : `v${version}`;
+  const inProgressBadge = commit ? `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgb(255 165 0 / 15%);color:orange;font-weight:600;letter-spacing:0.05em;">IN BEARBEITUNG</span>` : '';
   const date = _escape(entry.date);
   const summary = _escape(entry.summary || '');
 
@@ -177,8 +182,9 @@ function _renderEntry(entry, isCurrent, collapsible = false) {
     return `
       <details class="changelog-entry">
         <summary>
-          <span class="changelog-version">v${version}</span>
+          <span class="changelog-version">${versionLabel}</span>
           <span class="changelog-date">${date}</span>
+          ${inProgressBadge}
         </summary>
         <div class="changelog-tags">${tagHtml}</div>
         <p class="changelog-summary">${summary}</p>
@@ -190,9 +196,10 @@ function _renderEntry(entry, isCurrent, collapsible = false) {
   return `
     <div class="changelog-entry ${isCurrent ? 'changelog-entry--current' : ''}">
       <div class="changelog-meta">
-        <span class="changelog-version">v${version}</span>
+        <span class="changelog-version">${versionLabel}</span>
         <span class="changelog-date">${date}</span>
-        ${isCurrent ? '<span class="changelog-badge--new">NEU</span>' : ''}
+        ${isCurrent && !commit ? '<span class="changelog-badge--new">NEU</span>' : ''}
+        ${inProgressBadge}
       </div>
       <div class="changelog-tags">${tagHtml}</div>
       <p class="changelog-summary">${summary}</p>

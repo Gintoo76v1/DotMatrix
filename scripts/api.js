@@ -3,6 +3,18 @@
 // Use a relative path so it works when hosted in a subfolder like /dotmatrix/
 const API_BASE = 'api/v1';
 
+// German user-friendly messages for HTTP status codes
+const STATUS_MESSAGES = {
+  401: 'Falsche Anmeldedaten.',
+  403: 'Keine Berechtigung für diese Aktion.',
+  404: 'Inhalt nicht gefunden.',
+  409: 'Bereits vorhanden.',
+  429: 'Zu viele Versuche – bitte einen Moment warten.',
+  500: 'Serverfehler – bitte später erneut versuchen.',
+  502: 'Server nicht erreichbar.',
+  503: 'Dienst vorübergehend nicht verfügbar.',
+};
+
 export class APIError extends Error {
   constructor(status, message) {
     super(message);
@@ -11,13 +23,7 @@ export class APIError extends Error {
 }
 
 async function request(endpoint, options = {}) {
-  // Ensure we don't have double slashes if endpoint starts with /
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-
-  // Calculate base path from current location to support subfolders
-  // If we are at /dotmatrix/index.html, we want /dotmatrix/api/v1
-  // Using relative path 'api/v1' directly in fetch() will resolve correctly
-  // IF the current URL ends with a slash or is a file in the directory.
   const url = `${window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)}${API_BASE}/${cleanEndpoint}`;
 
   const headers = {
@@ -28,7 +34,7 @@ async function request(endpoint, options = {}) {
   const config = {
     ...options,
     headers,
-    credentials: 'same-origin', // Ensures session cookies are sent
+    credentials: 'same-origin',
   };
 
   if (options.body && typeof options.body === 'object') {
@@ -48,25 +54,27 @@ async function request(endpoint, options = {}) {
         );
         window.location.href = `${baseUrl}login.html`;
       }
-      throw new APIError(401, 'Unauthorized');
+      throw new APIError(401, STATUS_MESSAGES[401]);
     }
 
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      // data is null when the server returned HTML instead of JSON (e.g. Caddy 404/502)
+      // For 400 (validation), keep server message since it contains field-specific info.
+      // For all other codes, use the German mapped message.
       const message =
+        (response.status === 400 ? (data?.error || data?.message) : null) ||
+        STATUS_MESSAGES[response.status] ||
         data?.error ||
         data?.message ||
-        `Serverfehler ${response.status}${response.status === 404 ? ' – API-Proxy nicht konfiguriert?' : ''}`;
+        `Unbekannter Fehler (${response.status})`;
       throw new APIError(response.status, message);
     }
 
     return data;
   } catch (err) {
     if (err instanceof APIError) throw err;
-    // Network error (Offline)
-    throw new Error('Network error or offline');
+    throw new APIError(0, 'Keine Verbindung zum Server.');
   }
 }
 
