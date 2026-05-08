@@ -1,10 +1,24 @@
 {
   "$schema": "./version.schema.json",
-  "current": "1.4.1",
-  "commit": "6820b75",
+  "current": "1.4.2",
+  "commit": "60b632f",
   "buildDate": "2026-05-08",
-  "lastUpdated": "2026-05-08T15:30:00Z",
+  "lastUpdated": "2026-05-08T16:00:00Z",
   "changelog": [
+    {
+      "version": "1.4.2",
+      "commit": "60b632f",
+      "date": "2026-05-08",
+      "tags": ["Bugfix", "UX"],
+      "summary": "Online-Dot vor Versionsnummer, Seiten-Scroll gesperrt",
+      "highlights": [
+        "Grüner/roter Online-Status-Punkt erscheint links vor der Versionsnummer im Footer (rechts unten)",
+        "CSS-Klassen-Fix: footer-right erhält jetzt korrektes Flexbox-Layout (.footer-version hatte nicht gegriffen)",
+        "touch-action: none auf html/body sperrt iOS-Elastic-Scroll der Gesamtseite",
+        "Scrollbare Elemente (Listen, Sidebar, Error-Container, Changelog) behalten touch-action: pan-y",
+        "Online/Offline-Wechsel aktualisiert den Punkt live via navigator.onLine Events"
+      ]
+    },
     {
       "version": "1.4.1",
       "commit": "6820b75",

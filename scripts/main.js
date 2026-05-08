@@ -349,7 +349,7 @@ document.addEventListener('dm:triggerRender', () => {
 // ── Click sounds on every interactive element ─────────────────────────────
 
 const INTERACTIVE_SELECTOR =
-  'button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker, .segmented button, select, .btn-sm, .changelog-close, .settings-search-clear, textarea, .zoom-controls button, .footer-version';
+  'button, .icon-btn, .sli, .swatch, .check, .er-head, .dropzone, input[type="range"], .color-picker, .segmented button, select, .btn-sm, .changelog-close, .settings-search-clear, textarea, .zoom-controls button, .footer-right';
 
 document.addEventListener('click', (e) => {
   if (!state.uiSounds) return;
@@ -394,3 +394,16 @@ if (downloadBtn)
 await renderPresetList();
 updateProfileMeta();
 syncAllFromState(state);
+
+// ── Online / Offline indicator (footer-right green dot) ───────────────────
+
+function _updateOnlineDot() {
+  const dot = document.getElementById('onlineDot');
+  if (!dot) return;
+  const online = navigator.onLine;
+  dot.classList.toggle('offline', !online);
+  dot.title = online ? 'Online' : 'Offline';
+}
+window.addEventListener('online', _updateOnlineDot);
+window.addEventListener('offline', _updateOnlineDot);
+_updateOnlineDot();
