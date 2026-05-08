@@ -60,7 +60,17 @@ if (!state.currentProjectId) {
 
 /* initTabs wurde aus dem gelöschten theme.js hierher migriert */
 function initTabs() {
-  document.querySelectorAll('.activity-bar .icon-btn[data-tab]').forEach((btn) => {
+  const btns = document.querySelectorAll('.activity-bar .icon-btn[data-tab]');
+
+  // Default: ersten Tab aktivieren
+  if (btns.length > 0) {
+    const first = btns[0];
+    first.classList.add('active');
+    const firstTab = document.getElementById(first.dataset.tab);
+    if (firstTab) firstTab.classList.add('active');
+  }
+
+  btns.forEach((btn) => {
     btn.addEventListener('click', () => {
       document
         .querySelectorAll('.activity-bar .icon-btn')
@@ -69,6 +79,11 @@ function initTabs() {
       document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
       const tab = document.getElementById(btn.dataset.tab);
       if (tab) tab.classList.add('active');
+
+      // Preset-Liste beim Öffnen des Preset-Tabs aktualisieren
+      if (btn.dataset.tab === 'tab-presets') {
+        renderPresetList();
+      }
     });
   });
 }
