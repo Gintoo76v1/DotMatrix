@@ -13,6 +13,7 @@ import { initAudio, playClickSound, playToggleSound } from './ui/audio.js';
 import { initZoom, dragState } from './ui/zoom.js';
 import { registerSlider, wireSlider, syncAllFromState } from './ui/sliders.js';
 import { wireSegmented } from './ui/segments.js';
+import { loadProjectHistory } from './ui/history.js';
 import { wireSwatches, wireCustomInk, wireCustomPaper } from './ui/swatches.js';
 import { initChecks } from './ui/checks.js';
 import { initWearLayers } from './ui/wear.js';
@@ -25,6 +26,9 @@ import { initAdminUI } from './ui/admin.js';
 import { initAccount } from './ui/account.js';
 import { queueSaveProject, initSyncManager } from './sync.js';
 import { captureCurrentPreset, applyPreset } from './ui/presets.js';
+
+// Record boot time so the splash stays visible for at least 1500 ms
+const _bootAt = Date.now();
 
 // ── Authentication Check ───────────────────────────────────────────────────
 
@@ -85,6 +89,10 @@ function initTabs() {
       // Preset-Liste beim Öffnen des Preset-Tabs aktualisieren
       if (btn.dataset.tab === 'tab-presets') {
         renderPresetList();
+      }
+      // Verlauf beim Öffnen laden
+      if (btn.dataset.tab === 'tab-history' && state.currentProjectId) {
+        loadProjectHistory(state.currentProjectId);
       }
     });
   });
@@ -397,12 +405,15 @@ await renderPresetList();
 updateProfileMeta();
 syncAllFromState(state);
 
-// ── App Splash ausblenden ─────────────────────────────────────────────────
+// ── App Splash ausblenden (min. 1500 ms sichtbar) ─────────────────────────
 
 const _splash = document.getElementById('appSplash');
 if (_splash) {
-  _splash.classList.add('hidden');
-  _splash.addEventListener('transitionend', () => _splash.remove(), { once: true });
+  const _splashDelay = Math.max(0, 1500 - (Date.now() - _bootAt));
+  setTimeout(() => {
+    _splash.classList.add('hidden');
+    _splash.addEventListener('transitionend', () => _splash.remove(), { once: true });
+  }, _splashDelay);
 }
 
 // ── User session display & logout ─────────────────────────────────────────
