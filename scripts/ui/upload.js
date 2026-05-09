@@ -54,6 +54,9 @@ export function initUpload(state, opts) {
       document.getElementById('ascii')?.classList.add('empty');
       URL.revokeObjectURL(img.src);
 
+      // Notify other modules (footer filename, etc.)
+      document.dispatchEvent(new CustomEvent('dm:imageLoaded', { detail: { name: file.name } }));
+
       // Queue image for cloud sync (Phase F)
       if (state.currentProjectId) {
         queueBlobUpload(state.currentProjectId, 'source_image', file, file.name, file.type).catch(
@@ -75,14 +78,14 @@ export function initUpload(state, opts) {
   fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
-    dropzone.style.borderColor = 'var(--accent)';
+    dropzone.classList.add('dragover');
   });
   dropzone.addEventListener('dragleave', () => {
-    dropzone.style.borderColor = 'var(--glass-border-light)';
+    dropzone.classList.remove('dragover');
   });
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
-    dropzone.style.borderColor = 'var(--glass-border-light)';
+    dropzone.classList.remove('dragover');
     if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   });
 }

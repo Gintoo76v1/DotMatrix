@@ -16,12 +16,14 @@ export async function initChangelog() {
   _updateFooter();
 }
 
-/** Check if current version is newer than lastSeenVersion. */
+/** Check if current version is newer than lastSeenVersion (or never seen). */
 export function hasUnreadUpdates() {
   if (!versionData) return false;
   const last = state.lastSeenVersion || '';
   const current = versionData.current || '';
-  return last && current && _versionCompare(last, current) < 0;
+  if (!current) return false;
+  if (!last) return true; // new user — nothing ever seen
+  return _versionCompare(last, current) < 0;
 }
 
 /** Mark current version as seen. */
