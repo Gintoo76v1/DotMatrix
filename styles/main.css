@@ -44,9 +44,13 @@
   --dm-primary: #fab283;
   --dm-primary-soft: rgb(250 178 131 / 15%);
   --dm-success: #12c905;
+  --dm-success-soft: rgb(18 201 5 / 12%);
   --dm-warning: #fcd53a;
+  --dm-warning-soft: rgb(252 213 58 / 12%);
   --dm-error: #fc533a;
+  --dm-error-soft: rgb(252 83 58 / 12%);
   --dm-info: #edb2f1;
+  --dm-info-soft: rgb(237 178 241 / 12%);
   --dm-interactive: #034cff;
 
   /* Glass (abgeleitet von surface) */
@@ -1409,6 +1413,10 @@ h2::after {
   position: relative;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgb(80 80 80 / 30%);
+}
+.dropzone.dragover {
+  box-shadow: inset 0 0 0 2px var(--dm-primary);
+  background: rgb(250 178 131 / 5%);
 }
 
 .dropzone::before {

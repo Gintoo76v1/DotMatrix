@@ -22,6 +22,7 @@ import { initUpload } from './ui/upload.js';
 import { initPresets, renderPresetList } from './ui/presets.js';
 import { initAppearance } from './ui/appearance.js';
 import { initChangelog, hasUnreadUpdates } from './ui/changelog.js?v=2';
+import { showWarning } from './ui/toast.js';
 import { api } from './api.js?v=14';
 import { initAdminUI } from './ui/admin.js';
 import { initAccount } from './ui/account.js';
@@ -350,7 +351,7 @@ initPresets({
 // ── Appearance (theme, fonts, animation) ─────────────────────────────────────
 
 initAppearance(persisted);
-initChangelog();
+await initChangelog();
 
 // ── Custom event bridge (avoids circular imports) ──────────────────────────
 
@@ -433,6 +434,7 @@ function _initUserSession(user) {
     sessionStorage.setItem('dm_login_at', String(loginAt));
   }
 
+  // Initial render only — idle timer owns the live updates every 5s
   function _tick() {
     if (!timeEl) return;
     const mins = Math.floor((Date.now() - loginAt) / 60000);
@@ -441,7 +443,6 @@ function _initUserSession(user) {
     timeEl.textContent = h > 0 ? `· ${h}h ${m}m` : mins > 0 ? `· ${mins}m` : '· < 1m';
   }
   _tick();
-  setInterval(_tick, 60000);
 
   if (btn) {
     btn.addEventListener('click', async () => {
@@ -549,6 +550,7 @@ document.addEventListener('dm:imageLoaded', (e) => {
   btn.addEventListener('click', () => {
     state.renderDebug = !state.renderDebug;
     _syncBtn();
+    saveSettings({ renderDebug: state.renderDebug });
     // Sync the hidden checkbox in settings too
     const check = document.querySelector('.check[data-flag="renderDebug"]');
     if (check) check.classList.toggle('on', state.renderDebug);
@@ -694,18 +696,19 @@ document.addEventListener('dm:imageLoaded', (e) => {
 
     // Load changelog content inline if needed
     if (showChangelog) {
-      fetch('version.json', { cache: 'no-store' })
+      const base = window.location.pathname.replace(/[^/]*$/, '');
+      fetch(`${base}version.json`, { cache: 'no-store' })
         .then((r) => r.json())
         .then((data) => {
           const inlineEl = document.getElementById('welcomeChangelogInline');
-          if (!inlineEl || !data?.history?.length) return;
-          const latest = data.history[0];
-          const items = (latest?.changes || []).slice(0, 5).map((c) =>
+          if (!inlineEl || !data?.changelog?.length) return;
+          const latest = data.changelog[0];
+          const items = (latest?.highlights || []).slice(0, 5).map((c) =>
             `<div style="margin:3px 0;padding-left:8px;border-left:2px solid var(--dm-primary);">
-              ${_escHtml(c.text || String(c))}
+              ${_escHtml(String(c))}
             </div>`
           ).join('');
-          inlineEl.innerHTML = `<b style="color:var(--dm-primary);">${_escHtml(latest?.version || '')}</b> — ${_escHtml(latest?.title || '')}<br/>${items}`;
+          inlineEl.innerHTML = `<b style="color:var(--dm-primary);">${_escHtml(latest?.version || '')}</b> — ${_escHtml(latest?.summary || '')}<br/>${items}`;
         })
         .catch(() => {});
     }
@@ -713,6 +716,7 @@ document.addEventListener('dm:imageLoaded', (e) => {
     // Start countdown
     let countdown = 15;
     const counter = document.getElementById('welcomeCounter');
+    if (counter) counter.textContent = countdown;
     const tick = setInterval(() => {
       countdown--;
       if (counter) counter.textContent = countdown;
@@ -812,6 +816,7 @@ document.addEventListener('dm:imageLoaded', (e) => {
       if (countdown) countdown.textContent = secs;
       if (secs <= 0) {
         clearInterval(_dialogInterval);
+        clearInterval(_checkInterval);
         _logout();
       }
     }, 1000);
@@ -830,9 +835,6 @@ document.addEventListener('dm:imageLoaded', (e) => {
     _reset();
   });
   document.getElementById('idleLogoutBtn')?.addEventListener('click', _logout);
-
-  // Close dialog on X (same as stay)
-  document.querySelector('.idle-btn-stay')?.addEventListener('click', _reset);
 
   // Activity resets deadline (only resets within 25min mark to avoid gaming)
   ['mousemove', 'keydown', 'click', 'touchstart'].forEach((ev) => {
@@ -856,9 +858,7 @@ document.addEventListener('dm:imageLoaded', (e) => {
       if (!_warnedAt.has(key) && remaining <= interval && remaining > interval - 65000) {
         _warnedAt.add(key);
         const mins = Math.round(interval / 60000);
-        import('./ui/toast.js').then(({ showWarning }) => {
-          showWarning(`Sitzung läuft in ${mins} Minute${mins > 1 ? 'n' : ''} ab. Aktiv bleiben zum Verlängern.`, 8000);
-        });
+        showWarning(`Sitzung läuft in ${mins} Minute${mins > 1 ? 'n' : ''} ab. Aktiv bleiben zum Verlängern.`, 8000);
       }
     }
 

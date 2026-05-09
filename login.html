@@ -177,9 +177,6 @@
           a.textContent = d.reg_link;
           footer.appendChild(a);
         }
-        document.querySelectorAll('.lang-switcher').forEach(b => {
-          b.classList.toggle('active', b.dataset.lang === lang);
-        });
       }
       // Restore saved language
       const _sl = localStorage.getItem('dm_lang');
