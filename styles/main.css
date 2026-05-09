@@ -812,6 +812,7 @@ input[type='file'] {
 .online-dot.offline {
   background: var(--dm-error);
   box-shadow: 0 0 5px var(--dm-error);
+  animation: none;
 }
 
 .online-dot.has-updates {
@@ -3886,9 +3887,8 @@ html:has(.welcome-overlay.open) .app-layout {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   margin-top: 6px;
-  opacity: 0.5;
-  animation: authorFadeIn 2s ease 1.2s forwards;
   opacity: 0;
+  animation: authorFadeIn 2s ease 1.2s forwards;
 }
 
 @keyframes authorFadeIn {

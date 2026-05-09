@@ -70,24 +70,27 @@ if (!state.currentProjectId) {
 /* initTabs wurde aus dem gelöschten theme.js hierher migriert */
 function initTabs() {
   const btns = document.querySelectorAll('.activity-bar .icon-btn[data-tab]');
+  const ACTIVE_TAB_KEY = 'dm_active_tab';
 
-  // Default: ersten Tab aktivieren
-  if (btns.length > 0) {
-    const first = btns[0];
-    first.classList.add('active');
-    const firstTab = document.getElementById(first.dataset.tab);
-    if (firstTab) firstTab.classList.add('active');
+  function activateTab(targetId) {
+    document.querySelectorAll('.activity-bar .icon-btn').forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
+    const btn = [...btns].find((b) => b.dataset.tab === targetId) || btns[0];
+    if (!btn) return;
+    btn.classList.add('active');
+    const tab = document.getElementById(btn.dataset.tab);
+    if (tab) tab.classList.add('active');
   }
+
+  // Restore last active tab or fall back to first
+  const saved = sessionStorage.getItem(ACTIVE_TAB_KEY);
+  const savedExists = saved && document.getElementById(saved);
+  activateTab(savedExists ? saved : btns[0]?.dataset.tab);
 
   btns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      document
-        .querySelectorAll('.activity-bar .icon-btn')
-        .forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach((tc) => tc.classList.remove('active'));
-      const tab = document.getElementById(btn.dataset.tab);
-      if (tab) tab.classList.add('active');
+      activateTab(btn.dataset.tab);
+      sessionStorage.setItem(ACTIVE_TAB_KEY, btn.dataset.tab);
 
       // Preset-Liste beim Öffnen des Preset-Tabs aktualisieren
       if (btn.dataset.tab === 'tab-presets') {

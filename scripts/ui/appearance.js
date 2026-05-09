@@ -151,6 +151,13 @@ export function initAppearance(persisted = {}) {
   _initSettingsSearch();
 }
 
+const APPEARANCE_KEYS = [
+  'theme','themeMode','fontSans','fontSansCustom','fontMono','fontMonoCustom',
+  'fontTerminal','fontTerminalCustom','animPattern','animSpeed','animIntensity',
+  'animSize','bgEffects','bgAnim','renderDebug','autoCheckUpdates',
+];
+let _lastSavedSnapshot = '';
+
 /**
  * Apply all appearance-related CSS custom properties and classes.
  * Call this whenever any appearance state changes.
@@ -174,8 +181,7 @@ export function applyAppearance() {
 
   body.style.setProperty('--dm-font-sans', sansStack);
   body.style.setProperty('--dm-font-mono', monoStack);
-  // Terminal-Font wird nicht als CSS-Variable exposet, sondern direkt im State
-  // für Canvas-Render-Debug verwendet (Canvas ctx.font kann kein CSS-Variable lesen)
+  body.style.setProperty('--dm-font-terminal', terminalStack);
   state._terminalFontStack = terminalStack;
 
   // ── Animation ──
@@ -212,24 +218,28 @@ export function applyAppearance() {
     appBg.style.setProperty('--anim-dur-orb2', scale(baseDur.orb2));
   }
 
-  // Persist
-  saveSettings({
-    theme: state.theme,
-    themeMode: state.themeMode,
-    fontSans: state.fontSans,
-    fontSansCustom: state.fontSansCustom,
-    fontMono: state.fontMono,
-    fontMonoCustom: state.fontMonoCustom,
-    fontTerminal: state.fontTerminal,
-    fontTerminalCustom: state.fontTerminalCustom,
-    animPattern: state.animPattern,
-    animSpeed: state.animSpeed,
-    animIntensity: state.animIntensity,
-    animSize: state.animSize,
-    autoCheckUpdates: state.autoCheckUpdates,
-    bgEffects: state.bgEffects,
-    renderDebug: state.renderDebug,
-  });
+  // Persist only when something changed
+  const snapshot = JSON.stringify(APPEARANCE_KEYS.map((k) => state[k]));
+  if (snapshot !== _lastSavedSnapshot) {
+    _lastSavedSnapshot = snapshot;
+    saveSettings({
+      theme: state.theme,
+      themeMode: state.themeMode,
+      fontSans: state.fontSans,
+      fontSansCustom: state.fontSansCustom,
+      fontMono: state.fontMono,
+      fontMonoCustom: state.fontMonoCustom,
+      fontTerminal: state.fontTerminal,
+      fontTerminalCustom: state.fontTerminalCustom,
+      animPattern: state.animPattern,
+      animSpeed: state.animSpeed,
+      animIntensity: state.animIntensity,
+      animSize: state.animSize,
+      autoCheckUpdates: state.autoCheckUpdates,
+      bgEffects: state.bgEffects,
+      renderDebug: state.renderDebug,
+    });
+  }
 
   _updateFooterGlow();
 }
@@ -266,10 +276,11 @@ function _wireSlider(id, stateKey, transform, onChange) {
 }
 
 function _resolveFont(type, selected, custom) {
+  const fallback = FONT_STACKS[type][Object.keys(FONT_STACKS[type])[0]];
   if (selected === 'Custom' && custom && custom.trim()) {
-    return `"${custom.trim()}", ${FONT_STACKS[type]['System Sans'] || FONT_STACKS[type]['System Mono']}`;
+    return `"${custom.trim()}", ${fallback}`;
   }
-  return FONT_STACKS[type][selected] || FONT_STACKS[type][Object.keys(FONT_STACKS[type])[0]];
+  return FONT_STACKS[type][selected] || fallback;
 }
 
 function _toggleCustomFields() {
