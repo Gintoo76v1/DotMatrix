@@ -70,7 +70,7 @@ export function applyLanguage(lang) {
   });
 
   // Sync all lang selectors on page (M3: multiple selectors for same setting)
-  document.querySelectorAll('#langSelector').forEach((sel) => {
+  document.querySelectorAll('.lang-selector').forEach((sel) => {
     if (sel.value !== resolvedLang) sel.value = resolvedLang;
   });
 }

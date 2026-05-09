@@ -170,7 +170,13 @@
         const btn = document.getElementById('submitBtn');
         if (btn) btn.textContent = d.btn;
         const footer = document.querySelector('.auth-footer');
-        if (footer) footer.innerHTML = `${d.no_acc} <a href="register.html">${d.reg_link}</a>`;
+        if (footer) {
+          footer.textContent = d.no_acc + ' ';
+          const a = document.createElement('a');
+          a.href = 'register.html';
+          a.textContent = d.reg_link;
+          footer.appendChild(a);
+        }
         document.querySelectorAll('.lang-switcher').forEach(b => {
           b.classList.toggle('active', b.dataset.lang === lang);
         });

@@ -171,14 +171,20 @@
       function setLang(lang) {
         localStorage.setItem('dm_lang', lang);
         const t = {
-          de: { btn: 'Registrieren', footer: 'Bereits einen Account? <a href="login.html">Hier anmelden</a>' },
-          en: { btn: 'Register', footer: 'Already have an account? <a href="login.html">Sign in</a>' }
+          de: { btn: 'Registrieren', footer_pre: 'Bereits einen Account?', footer_link: 'Hier anmelden' },
+          en: { btn: 'Register', footer_pre: 'Already have an account?', footer_link: 'Sign in' }
         };
         const d = t[lang] || t.de;
         const btn = document.getElementById('submitBtn');
         if (btn) btn.textContent = d.btn;
         const footer = document.querySelector('.auth-footer');
-        if (footer) footer.innerHTML = d.footer;
+        if (footer) {
+          footer.textContent = d.footer_pre + ' ';
+          const a = document.createElement('a');
+          a.href = 'login.html';
+          a.textContent = d.footer_link;
+          footer.appendChild(a);
+        }
         document.querySelectorAll('.lang-switcher').forEach(b => {
           b.classList.toggle('active', b.dataset.lang === lang);
         });

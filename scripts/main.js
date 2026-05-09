@@ -21,7 +21,7 @@ import { initWearLayers } from './ui/wear.js';
 import { initUpload } from './ui/upload.js';
 import { initPresets, renderPresetList } from './ui/presets.js';
 import { initAppearance } from './ui/appearance.js';
-import { initChangelog } from './ui/changelog.js?v=2';
+import { initChangelog, hasUnreadUpdates } from './ui/changelog.js?v=2';
 import { api } from './api.js?v=14';
 import { initAdminUI } from './ui/admin.js';
 import { initAccount } from './ui/account.js';
@@ -483,7 +483,6 @@ _updateOnlineDot();
 })();
 
 // ── A9/A8: Pulse dot only when update NOT seen at welcome screen ─────────────
-import { hasUnreadUpdates } from './ui/changelog.js?v=2';
 (function _initUpdateDot() {
   const dot = document.getElementById('onlineDot');
   if (!dot) return;
@@ -601,11 +600,13 @@ document.addEventListener('dm:imageLoaded', (e) => {
     }, 3000);
   });
 
-  authorEl.addEventListener('pointerup', () => {
-    clearTimeout(holdTimer);
-    if (!holdActive) {
-      authorEl.closest('.splash-author')?.classList.remove('easter-egg-active');
-    }
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => {
+    authorEl.addEventListener(ev, () => {
+      clearTimeout(holdTimer);
+      if (!holdActive) {
+        authorEl.closest('.splash-author')?.classList.remove('easter-egg-active');
+      }
+    });
   });
 
   function _showEasterEgg() {
@@ -627,15 +628,12 @@ document.addEventListener('dm:imageLoaded', (e) => {
   if (!justLoggedIn) return;
   sessionStorage.removeItem('dm_just_logged_in');
 
-  // Import version data for changelog section
-  import('./ui/changelog.js?v=2').then(({ hasUnreadUpdates }) => {
-    _showWelcome(hasUnreadUpdates());
-    // Mark update as seen since it's shown in welcome
-    sessionStorage.setItem('dm_welcome_shown', '1');
-    // Refresh pulse dot
-    const dot = document.getElementById('onlineDot');
-    if (dot) dot.classList.remove('has-updates');
-  });
+  _showWelcome(hasUnreadUpdates());
+  // Mark update as seen since it's shown in welcome
+  sessionStorage.setItem('dm_welcome_shown', '1');
+  // Refresh pulse dot
+  const dot = document.getElementById('onlineDot');
+  if (dot) dot.classList.remove('has-updates');
 
   function _showWelcome(showChangelog) {
     const overlay = document.getElementById('welcomeOverlay');
@@ -841,7 +839,7 @@ document.addEventListener('dm:imageLoaded', (e) => {
     document.addEventListener(ev, () => {
       if (_dialogOpen) return; // don't reset while dialog is open
       const remaining = _deadline - Date.now();
-      if (remaining > 5 * 60 * 1000) _deadline = Date.now() + TIMEOUT_MS;
+      if (remaining < TIMEOUT_MS - 10000) _deadline = Date.now() + TIMEOUT_MS;
     }, { passive: true });
   });
 
@@ -871,6 +869,7 @@ document.addEventListener('dm:imageLoaded', (e) => {
 
     // Auto-logout if past deadline
     if (remaining <= 0 && !_dialogOpen) {
+      clearInterval(_checkInterval);
       _logout();
     }
   }, 5000);
