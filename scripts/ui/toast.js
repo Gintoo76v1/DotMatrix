@@ -63,6 +63,8 @@ export function showToast(msg, type = 'info', duration) {
   });
 
   let timer;
+  let _remaining = ms;
+  let _startedAt = Date.now();
   const bar = toast.querySelector('.toast-progress-bar');
 
   function dismiss() {
@@ -75,16 +77,19 @@ export function showToast(msg, type = 'info', duration) {
 
   function startTimer(delay) {
     clearTimeout(timer);
+    _remaining = delay;
+    _startedAt = Date.now();
     timer = setTimeout(dismiss, delay);
   }
 
   toast.addEventListener('mouseenter', () => {
     clearTimeout(timer);
+    _remaining = Math.max(0, _remaining - (Date.now() - _startedAt));
     bar.style.animationPlayState = 'paused';
   });
   toast.addEventListener('mouseleave', () => {
     bar.style.animationPlayState = 'running';
-    startTimer(2000);
+    startTimer(Math.max(800, _remaining));
   });
 
   toast.querySelector('.toast-close').addEventListener('click', dismiss);
