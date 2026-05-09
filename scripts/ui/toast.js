@@ -5,6 +5,7 @@
 
 const DURATIONS = { error: 8000, warning: 6000, info: 4000, success: 3500, debug: 5000 };
 const ICONS     = { error: '⚠', warning: '⚡', info: 'ℹ', success: '✓', debug: '⬡' };
+const MAX_VISIBLE = 3; // A30: max 3 toasts visible at once
 
 let _container = null;
 
@@ -14,6 +15,18 @@ function _ensureContainer() {
   _container.className = 'toast-container';
   document.body.appendChild(_container);
   return _container;
+}
+
+// A30: Remove oldest toast if we exceed MAX_VISIBLE
+function _enforceLimit(container) {
+  const toasts = [...container.querySelectorAll('.toast--in')];
+  if (toasts.length >= MAX_VISIBLE) {
+    const oldest = toasts[0];
+    oldest.classList.remove('toast--in');
+    oldest.classList.add('toast--out');
+    oldest.addEventListener('transitionend', () => oldest.remove(), { once: true });
+    setTimeout(() => oldest.remove(), 400);
+  }
 }
 
 function _escape(s) {
@@ -43,8 +56,11 @@ export function showToast(msg, type = 'info', duration) {
 
   container.appendChild(toast);
 
-  // Two rAFs ensure the browser has painted before we add the class
-  requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('toast--in')));
+  // A30: enforce max 3 visible toasts before showing the new one
+  requestAnimationFrame(() => {
+    _enforceLimit(container);
+    requestAnimationFrame(() => toast.classList.add('toast--in'));
+  });
 
   let timer;
   const bar = toast.querySelector('.toast-progress-bar');

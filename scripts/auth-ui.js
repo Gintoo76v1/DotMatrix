@@ -41,6 +41,7 @@ if (loginForm) {
       await api.auth.login(fd.get('username'), fd.get('password'));
       const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
       sessionStorage.setItem('dm_login_at', String(Date.now()));
+      sessionStorage.setItem('dm_just_logged_in', '1'); // trigger welcome overlay
       showRedirectSplash();
       window.location.href = `${base}index.html`;
     } catch (err) {
@@ -64,6 +65,7 @@ if (registerForm) {
       );
       const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
       sessionStorage.setItem('dm_login_at', String(Date.now()));
+      sessionStorage.setItem('dm_just_logged_in', '1'); // trigger welcome overlay
       showRedirectSplash();
       window.location.href = `${base}index.html`;
     } catch (err) {
