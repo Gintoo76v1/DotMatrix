@@ -91,7 +91,15 @@ function _wireOverlay() {
 export function openOverlay() {
   const overlay = document.getElementById('changelogOverlay');
   const body = document.getElementById('changelogBody');
-  if (!overlay || !body || !versionData) return;
+  if (!overlay || !body) return;
+  if (!versionData) {
+    body.innerHTML = '<p style="color:var(--dm-error);text-align:center;padding:24px;">Changelog konnte nicht geladen werden. Bitte Seite neu laden.</p>';
+    isOpen = true;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.documentElement.classList.add('changelog-open');
+    return;
+  }
 
   isOpen = true;
   overlay.classList.add('open');
