@@ -58,9 +58,19 @@ export const translations = {
 };
 
 export function applyLanguage(lang) {
-  const dict = translations[lang] || translations.de;
+  const resolvedLang = Object.keys(translations).includes(lang) ? lang : 'de';
+  const dict = translations[resolvedLang];
+
+  // Update html lang attribute (M3)
+  document.documentElement.lang = resolvedLang;
+
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     if (dict[key]) el.textContent = dict[key];
+  });
+
+  // Sync all lang selectors on page (M3: multiple selectors for same setting)
+  document.querySelectorAll('#langSelector').forEach((sel) => {
+    if (sel.value !== resolvedLang) sel.value = resolvedLang;
   });
 }

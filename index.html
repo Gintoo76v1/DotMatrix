@@ -34,6 +34,8 @@
       <div class="splash-inner">
         <div class="splash-logo">DotMatrix Studio</div>
         <div class="splash-dots"><span></span><span></span><span></span><span></span><span></span></div>
+        <!-- A20: Author byline -->
+        <div class="splash-author">von <span class="author-name" id="authorName" title="Klick mich 3x">Gintoo</span></div>
       </div>
       <div class="splash-bar"></div>
     </div>
@@ -549,20 +551,10 @@
                   <span class="sg-icon">&#x1F3A8;</span><span class="sg-title">Darstellung</span>
                 </summary>
                 <div class="sg-body">
-                  <!-- Theme -->
+                  <!-- Farbschema hidden per settings report — OC-2 is fixed default -->
+                  <!-- Theme mode (hell/dunkel) -->
                   <label class="field"
-                    ><span class="name">Farbschema</span>
-                    <select id="themeSelector" class="text-input">
-                      <option value="oc-2" selected>OC-2</option>
-                      <option value="matrix">Matrix</option>
-                      <option value="tokyonight">Tokyonight</option>
-                      <option value="synthwave">Synthwave</option>
-                      <option value="gruvbox">Gruvbox</option>
-                    </select>
-                  </label>
-                  <p class="setting-desc">Globale Farbpalette der Anwendung.</p>
-                  <label class="field" style="margin-top: 12px"
-                    ><span class="name">Thema</span>
+                    ><span class="name">Erscheinungsbild</span>
                     <select id="themeModeSelector" class="text-input">
                       <option value="dark" selected>Dunkel</option>
                       <option value="light">Hell</option>
@@ -570,13 +562,14 @@
                     </select>
                   </label>
                   <p class="setting-desc">Hell- oder Dunkelmodus, oder System folgen.</p>
-                  <label class="field" style="margin-top: 12px"
-                    ><span class="name">Layout-Stil</span>
-                    <select id="layoutSelector" class="text-input">
-                      <option value="classic" selected>Classic</option>
-                    </select>
-                  </label>
-                  <p class="setting-desc">Aktuell nur Classic verf&#xFC;gbar.</p>
+                  <!-- Layout-Stil removed — no use -->
+                  <!-- themeSelector kept hidden for code compatibility -->
+                  <select id="themeSelector" style="display:none">
+                    <option value="oc-2" selected>OC-2</option>
+                  </select>
+                  <select id="layoutSelector" style="display:none">
+                    <option value="classic" selected>Classic</option>
+                  </select>
 
                   <!-- Fonts -->
                   <label class="field" style="margin-top: 20px"
@@ -734,11 +727,12 @@
                     <p class="setting-desc check-desc">
                       Automatisch neu rendern bei Einstellungs&#xE4;nderungen.
                     </p>
-                    <label class="check" data-flag="renderDebug"
+                    <!-- renderDebug toggle in settings still exists for fallback -->
+                    <label class="check" data-flag="renderDebug" style="display:none"
                       ><span class="box"></span><span>Render Debug Text</span></label
                     >
-                    <p class="setting-desc check-desc">Debug-Informationen im Canvas anzeigen.</p>
                   </div>
+                  <!-- M3: Single language selector (removed duplicate below) -->
                   <label class="field" style="margin-top: 16px"
                     ><span class="name">Sprache</span>
                     <select id="langSelector" class="text-input">
@@ -762,16 +756,15 @@
                     <p class="setting-desc check-desc">
                       Rendering im Hintergrund-Thread f&#xFC;r fl&#xFC;ssige UI.
                     </p>
+                    <!-- B3: Legacy Math toggle -->
+                    <label class="check" data-flag="legacyMath"
+                      ><span class="box"></span><span>Legacy Math</span></label
+                    >
+                    <p class="setting-desc check-desc">
+                      V1-Render-Mathematik (asymmetrisches Banding, klassisches Floyd–Steinberg).
+                    </p>
                   </div>
                   <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
-                    <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
-                    responsiv). F&#xE4;llt automatisch auf Inline-Rendering zur&#xFC;ck, falls OffscreenCanvas
-                    nicht verf&#xFC;gbar.
-                  </div>
-                  <div style="font-size: 11px; opacity: 0.65; margin-top: 8px; line-height: 1.5">
-                    <b>Legacy Math:</b> Nutzt die v1-Render-Mathematik (asymmetrisches Banding,
-                    klassisches Floyd&#x2013;Steinberg, RGB-Filter). Aus = neuere, korrektere
-                    Mathematik.<br />
                     <b>Worker Rendering:</b> Verlagert das Rendering in einen Web-Worker (UI bleibt
                     responsiv). F&#xE4;llt automatisch auf Inline-Rendering zur&#xFC;ck, falls OffscreenCanvas
                     nicht verf&#xFC;gbar.
@@ -787,22 +780,7 @@
                   <!-- Dynamisch via security.js -->
                 </div>
               </details>
-
-              <details class="settings-group">
-                <summary>
-                  <span class="sg-icon">&#x1F310;</span><span class="sg-title">Sprache</span>
-                </summary>
-                <div class="sg-body">
-                  <label class="field"
-                    ><span class="name">Sprache</span>
-                    <select id="langSelector" class="text-input">
-                      <option value="de" selected>&#x1F1E9;&#x1F1EA; Deutsch</option>
-                      <option value="en">&#x1F1FA;&#x1F1F8; English</option>
-                    </select>
-                  </label>
-                  <p class="setting-desc">Oberfl&#xE4;chensprache der Anwendung.</p>
-                </div>
-              </details>
+              <!-- M3: Duplicate language section removed -->
             </div>
           </div>
         </aside>
@@ -810,7 +788,12 @@
         <main class="main-editor glass-panel">
           <div class="toolbar">
             <span data-i18n="previewTitle" class="header-fancy">Live-Vorschau</span>
-            <div style="display: flex; align-items: center; gap: 20px">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <!-- A32/A6: Render Debug toggle in toolbar -->
+              <button class="toolbar-render-debug" id="toolbarRenderDebug" title="Render-Debug ein/ausschalten">
+                <span class="trd-dot"></span>
+                <span style="font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">Debug</span>
+              </button>
               <div class="zoom-controls">
                 <button id="zoomOut">&#x2796;</button><span id="zoomLevel">100%</span
                 ><button id="zoomIn">&#x2795;</button>
@@ -829,7 +812,11 @@
             <div class="status-panel glass-panel" id="statusPanel">
               <span id="status" class="status-large">Warte auf Bild...</span>
             </div>
-            <div class="floating-actions glass-panel">
+            <!-- A10: Collapsible export/render box -->
+            <div class="floating-actions glass-panel" id="floatingActions">
+              <button class="floating-actions-toggle" id="floatingActionsToggle" title="Ein/Ausklappen">
+                <span class="fat-arrow">&#x25B2;</span>
+              </button>
               <div class="action-buttons">
                 <button class="btn primary" id="renderBtn" disabled data-i18n="btnRender">
                   Rendern
@@ -842,15 +829,38 @@
         </main>
       </div>
 
-      <footer class="app-footer glass-panel">
+      <!-- A11: Footer with collapse button -->
+      <footer class="app-footer glass-panel" id="appFooter">
         <div class="footer-left">
           <span class="footer-accent">DotMatrix Studio</span>
-          <span class="footer-badge">Pro Edition</span>
+          <!-- A17: footer-badge hidden via CSS -->
           <span class="footer-divider">|</span>
           <div id="syncStatus" class="sync-status" title="Sync Status">
             <span class="status-dot saved"></span> Saved
           </div>
+          <!-- A16: filename in footer -->
+          <span class="footer-divider" id="footerFilenameDivider" style="display:none">|</span>
+          <span class="footer-filename" id="footerFilename" style="display:none"></span>
+        </div>
+        <!-- A3: version area center-left, user panel on right -->
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div
+            class="footer-right"
+            id="footerVersion"
+            role="button"
+            tabindex="0"
+            title="Changelog anzeigen"
+          >
+            <span class="online-dot" id="onlineDot" title="Online"></span>
+            <span class="version-text" id="versionText">v1.3.0</span>
+            <span class="version-separator">&#xB7;</span>
+            <span class="update-badges" id="updateBadges">
+              <span class="update-badge update-badge--ui">UI</span>
+              <span class="update-badge update-badge--perf">Perf</span>
+            </span>
+          </div>
           <span class="footer-divider">|</span>
+          <!-- A3: user session moved to right of version -->
           <div class="user-session" id="userSession">
             <div class="user-session-chip" id="userSessionChip" role="button" tabindex="0" title="Kontoeinstellungen">
               <span class="user-session-dot" aria-hidden="true"></span>
@@ -859,21 +869,8 @@
             </div>
             <button class="logout-btn" id="logoutBtn" title="Abmelden" aria-label="Abmelden">&#x2715;</button>
           </div>
-        </div>
-        <div
-          class="footer-right"
-          id="footerVersion"
-          role="button"
-          tabindex="0"
-          title="Changelog anzeigen"
-        >
-          <span class="online-dot" id="onlineDot" title="Online"></span>
-          <span class="version-text" id="versionText">v1.3.0</span>
-          <span class="version-separator">&#xB7;</span>
-          <span class="update-badges" id="updateBadges">
-            <span class="update-badge update-badge--ui">UI</span>
-            <span class="update-badge update-badge--perf">Perf</span>
-          </span>
+          <!-- A11: footer collapse button -->
+          <button class="footer-collapse-btn" id="footerCollapseBtn" title="Fußzeile ein/ausklappen">&#x25BC;</button>
         </div>
       </footer>
 
@@ -890,12 +887,53 @@
           </div>
         </div>
       </div>
+
+      <!-- Welcome Overlay (shown after login/register) -->
+      <div class="welcome-overlay" id="welcomeOverlay" aria-hidden="true">
+        <div class="welcome-backdrop" id="welcomeBackdrop"></div>
+        <div class="welcome-panel glass-panel">
+          <div class="welcome-header">
+            <h2>Willkommen bei DotMatrix Studio <span class="welcome-counter" id="welcomeCounter">10</span></h2>
+            <button class="welcome-close" id="welcomeClose" aria-label="Schlie&#xDF;en">&#x2715;</button>
+          </div>
+          <div class="welcome-body" id="welcomeBody">
+            <!-- Dynamisch per JS bef&#xFC;llt -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Idle Warning Overlay (B2) -->
+      <div class="idle-overlay" id="idleOverlay" aria-hidden="true">
+        <div class="idle-backdrop"></div>
+        <div class="idle-panel glass-panel">
+          <div class="idle-progress-wrap">
+            <div class="idle-progress-bar" id="idleProgressBar"></div>
+          </div>
+          <div class="idle-body">
+            <span class="idle-icon">&#x23F1;&#xFE0F;</span>
+            <div class="idle-title">Bist du noch da?</div>
+            <div class="idle-countdown" id="idleCountdown">10</div>
+            <div class="idle-actions">
+              <button class="idle-btn-stay" id="idleStayBtn">&#x2714; Noch da!</button>
+              <button class="idle-btn-logout" id="idleLogoutBtn">Abmelden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Easter Egg Toast -->
+      <div class="easter-egg-toast" id="easterEggToast">
+        <span class="ee-emoji">&#x1F95A;</span>
+        <div>Du hast das Easter Egg gefunden!</div>
+        <div style="font-size:11px;opacity:0.6;margin-top:4px;">Entwickelt mit &#x2764;&#xFE0F; von Gintoo</div>
+      </div>
     </div>
 
     <!-- Account Settings Panel -->
     <div class="account-panel" id="accountPanel" aria-hidden="true">
       <div class="account-panel-header">
-        <div class="account-avatar">&#x2B21;</div>
+        <!-- A5: Better avatar using initials -->
+        <div class="account-avatar" id="acAvatar" data-initials="?"></div>
         <div class="account-user-info">
           <div class="account-username" id="acUsername">—</div>
           <span class="account-role-badge" id="acRole">user</span>

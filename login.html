@@ -144,8 +144,41 @@
         <div class="auth-footer">
           Kein Account? <a href="register.html">Mit Invite-Code registrieren</a>
         </div>
+        <!-- M3: Language switcher on login page -->
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:8px;">
+          <button class="lang-switcher active" data-lang="de" onclick="setLang('de')">&#x1F1E9;&#x1F1EA; DE</button>
+          <button class="lang-switcher" data-lang="en" onclick="setLang('en')">&#x1F1FA;&#x1F1F8; EN</button>
+        </div>
       </div>
     </div>
+    <script>
+      function setLang(lang) {
+        localStorage.setItem('dm_lang', lang);
+        document.querySelectorAll('.lang-switcher').forEach(b => {
+          b.classList.toggle('active', b.dataset.lang === lang);
+        });
+        // Basic translation for login page
+        const t = {
+          de: { title: 'DotMatrix Studio - Login', label_user: 'Username oder Email', label_pw: 'Passwort', btn: 'Anmelden', no_acc: 'Kein Account?', reg_link: 'Mit Invite-Code registrieren' },
+          en: { title: 'DotMatrix Studio - Login', label_user: 'Username or Email', label_pw: 'Password', btn: 'Sign In', no_acc: 'No account?', reg_link: 'Register with invite code' }
+        };
+        const d = t[lang] || t.de;
+        document.title = d.title;
+        const labels = document.querySelectorAll('.auth-field label');
+        if (labels[0]) labels[0].textContent = d.label_user;
+        if (labels[1]) labels[1].textContent = d.label_pw;
+        const btn = document.getElementById('submitBtn');
+        if (btn) btn.textContent = d.btn;
+        const footer = document.querySelector('.auth-footer');
+        if (footer) footer.innerHTML = `${d.no_acc} <a href="register.html">${d.reg_link}</a>`;
+        document.querySelectorAll('.lang-switcher').forEach(b => {
+          b.classList.toggle('active', b.dataset.lang === lang);
+        });
+      }
+      // Restore saved language
+      const _sl = localStorage.getItem('dm_lang');
+      if (_sl && _sl !== 'de') setLang(_sl);
+    </script>
 
     <script type="module" src="scripts/auth-ui.js?v=15"></script>
   </body>

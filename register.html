@@ -160,8 +160,32 @@
         </form>
 
         <div class="auth-footer">Bereits einen Account? <a href="login.html">Hier anmelden</a></div>
+        <!-- M3: Language switcher on register page -->
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:8px;">
+          <button class="lang-switcher active" data-lang="de" onclick="setLang('de')">&#x1F1E9;&#x1F1EA; DE</button>
+          <button class="lang-switcher" data-lang="en" onclick="setLang('en')">&#x1F1FA;&#x1F1F8; EN</button>
+        </div>
       </div>
     </div>
+    <script>
+      function setLang(lang) {
+        localStorage.setItem('dm_lang', lang);
+        const t = {
+          de: { btn: 'Registrieren', footer: 'Bereits einen Account? <a href="login.html">Hier anmelden</a>' },
+          en: { btn: 'Register', footer: 'Already have an account? <a href="login.html">Sign in</a>' }
+        };
+        const d = t[lang] || t.de;
+        const btn = document.getElementById('submitBtn');
+        if (btn) btn.textContent = d.btn;
+        const footer = document.querySelector('.auth-footer');
+        if (footer) footer.innerHTML = d.footer;
+        document.querySelectorAll('.lang-switcher').forEach(b => {
+          b.classList.toggle('active', b.dataset.lang === lang);
+        });
+      }
+      const _sl = localStorage.getItem('dm_lang');
+      if (_sl && _sl !== 'de') setLang(_sl);
+    </script>
 
     <script type="module" src="scripts/auth-ui.js?v=15"></script>
   </body>

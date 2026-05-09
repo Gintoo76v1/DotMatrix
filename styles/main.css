@@ -1359,11 +1359,24 @@ h2 {
   gap: 10px;
 }
 
+/* A21: Animated shimmer on gradient line */
 h2::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, var(--dm-border-base) 0%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    var(--dm-border-base) 0%,
+    var(--dm-primary) 40%,
+    transparent 80%
+  );
+  background-size: 300% 100%;
+  animation: headerLineShimmer 5s linear infinite;
+}
+
+@keyframes headerLineShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
 }
 
 /* First h2 in a tab should have less top margin */
@@ -1379,6 +1392,7 @@ h2::after {
 
 /* ── 15. Dropzone ───────────────────────────────────────────────────────────── */
 
+/* A18: box-shadow creates visible corner pixels for the animated dashed border */
 .dropzone {
   flex-shrink: 0;
   min-height: 120px;
@@ -1394,6 +1408,7 @@ h2::after {
   transition: 0.3s;
   position: relative;
   overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgb(80 80 80 / 30%);
 }
 
 .dropzone::before {
@@ -1547,10 +1562,11 @@ h2::after {
 
 /* ── 17. Checks ────────────────────────────────────────────────────────────── */
 
+/* A25: More gap between toggle elements */
 .checks {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .check {
@@ -1573,11 +1589,13 @@ h2::after {
   background: transparent;
 }
 
+/* A28: Thinner border on selected elements */
 .check.on {
   background: var(--dm-primary-soft);
   color: var(--dm-primary);
   border-color: var(--dm-primary);
-  box-shadow: inset 0 0 8px var(--dm-primary-soft);
+  border-width: 1px;
+  box-shadow: inset 0 0 6px var(--dm-primary-soft);
 }
 
 .check .box {
@@ -1605,25 +1623,16 @@ h2::after {
   transform: scale(1.05);
 }
 
+/* A26: No ✕ — the glow/highlight is enough to show active state */
 .check .box::after,
 .er-check::after {
-  content: '✕';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  font-size: 11px;
-  font-weight: 900;
-  color: #000;
-  opacity: 0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  line-height: 1;
+  content: '';
+  display: none;
 }
 
 .check.on .box::after,
 .er.on .er-check::after {
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 1;
+  display: none;
 }
 
 .check span:not(.box) {
@@ -2156,8 +2165,9 @@ input[type='range']::-webkit-slider-thumb {
   transform: rotate(-90deg);
 }
 
+/* A29: Add top padding so first element doesn't overlap summary heading */
 .settings-group .sg-body {
-  padding: 0 12px 12px;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -2960,10 +2970,11 @@ html.changelog-open body {
 .toast--success { border-left: 3px solid var(--dm-success); }
 .toast--debug   { border-left: 3px solid var(--dm-text-weaker); }
 
-/* Progress bar */
+/* Progress bar — A1: offset from left border so it doesn't connect visually */
 .toast-progress {
   height: 2px;
-  width: 100%;
+  width: calc(100% - 3px);
+  margin-left: 3px;
   overflow: hidden;
 }
 
@@ -3290,3 +3301,761 @@ html.changelog-open body {
   border-top: none;
   margin: 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   V1.6 Bug-Fix & Enhancement Styles
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* A2: Prevent scrolling on auth pages */
+.auth-container {
+  overflow: hidden;
+  height: 100vh;
+  max-height: 100dvh;
+  box-sizing: border-box;
+}
+
+/* A7: Animate "Bild auswählen" text with shimmer */
+.dropzone .big {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  background: linear-gradient(
+    90deg,
+    var(--dm-text-strong) 0%,
+    var(--dm-primary) 45%,
+    var(--dm-text-strong) 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: dropzoneTextShimmer 4s ease-in-out infinite;
+}
+
+@keyframes dropzoneTextShimmer {
+  0%   { background-position: -100% center; }
+  50%  { background-position: 150% center; }
+  100% { background-position: -100% center; }
+}
+
+/* A15: Add » prefix to h2 headings that have gradient line */
+h2::before {
+  content: '»';
+  color: var(--dm-primary);
+  opacity: 0.65;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-right: 2px;
+}
+
+/* A17: Hide PRO EDITION badge — no editions exist */
+.footer-badge {
+  display: none !important;
+}
+
+/* A22: Backdrop blur when overlays are open */
+.app-layout.overlay-open {
+  filter: blur(2px);
+  transition: filter 0.25s ease;
+  pointer-events: none;
+}
+
+/* ── Welcome Overlay (same structure as changelog) ── */
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.welcome-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.welcome-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 60%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+
+.welcome-panel {
+  position: relative;
+  width: min(540px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  overflow: hidden;
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.welcome-overlay.open .welcome-panel {
+  transform: translateY(0) scale(1);
+}
+
+.welcome-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--dm-border-base);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.welcome-header h2 {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: var(--dm-primary);
+  text-transform: uppercase;
+}
+
+.welcome-header h2::before { content: none; }
+.welcome-header h2::after  { display: none; }
+
+.welcome-close {
+  background: none;
+  border: none;
+  color: var(--dm-text-weak);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.welcome-close:hover {
+  color: var(--dm-text-strong);
+  background: var(--dm-surface-hover);
+}
+
+.welcome-body {
+  padding: 18px 20px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.welcome-greeting {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dm-text-strong);
+  letter-spacing: 0.05em;
+}
+
+.welcome-greeting span {
+  color: var(--dm-primary);
+}
+
+.welcome-text {
+  font-size: 12px;
+  color: var(--dm-text-base);
+  line-height: 1.6;
+}
+
+.welcome-divider {
+  height: 1px;
+  background: var(--dm-border-base);
+}
+
+.welcome-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dm-primary);
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.welcome-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.welcome-guide-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.welcome-guide-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--dm-primary-soft);
+  border: 1px solid var(--dm-primary);
+  color: var(--dm-primary);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.welcome-guide-text {
+  font-size: 12px;
+  color: var(--dm-text-base);
+  line-height: 1.5;
+}
+
+.welcome-guide-text b {
+  color: var(--dm-text-strong);
+}
+
+/* Welcome panel counter badge */
+.welcome-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--dm-primary);
+  color: var(--dm-text-invert);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+  margin-left: 8px;
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+
+@keyframes countdownPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ── Inactivity Warning Dialog (B2) ── */
+.idle-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 19000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.idle-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.idle-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 75%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.idle-panel {
+  position: relative;
+  width: min(380px, calc(100vw - 32px));
+  border-radius: 16px;
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.idle-overlay.open .idle-panel {
+  transform: scale(1);
+}
+
+.idle-progress-wrap {
+  height: 3px;
+  width: 100%;
+  background: rgb(252 83 58 / 20%);
+}
+
+.idle-progress-bar {
+  height: 100%;
+  background: var(--dm-error);
+  transform-origin: left;
+}
+
+.idle-body {
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  text-align: center;
+}
+
+.idle-icon {
+  font-size: 32px;
+  line-height: 1;
+  animation: idleIconPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes idleIconPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+.idle-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dm-text-strong);
+}
+
+.idle-countdown {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dm-error);
+  font-family: var(--dm-font-mono);
+  min-width: 2ch;
+  text-align: center;
+}
+
+.idle-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.idle-btn-stay {
+  flex: 2;
+  padding: 10px;
+  background: var(--dm-primary);
+  color: var(--dm-text-invert);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: filter 0.15s;
+}
+
+.idle-btn-stay:hover { filter: brightness(1.1); }
+
+.idle-btn-logout {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: 1px solid var(--dm-error);
+  color: var(--dm-error);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: background 0.15s;
+}
+
+.idle-btn-logout:hover { background: rgb(252 83 58 / 10%); }
+
+/* ── Language switcher button in footer / auth pages ── */
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid var(--dm-border-base);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-family: var(--dm-font-mono);
+  color: var(--dm-text-weak);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lang-switcher:hover {
+  border-color: var(--dm-primary);
+  color: var(--dm-primary);
+  background: var(--dm-primary-soft);
+}
+
+.lang-switcher.active {
+  border-color: var(--dm-primary);
+  color: var(--dm-primary);
+  background: var(--dm-primary-soft);
+}
+
+/* ── A23/A24: Smaller select inputs and search box in settings ── */
+#tab-system select.text-input,
+#tab-system .settings-group select {
+  padding: 5px 8px !important;
+  font-size: 12px !important;
+  height: 30px;
+  min-height: unset;
+  border-radius: 8px;
+}
+
+.settings-search {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+}
+
+/* ── A27: Fix description alignment — align check-desc with check text ── */
+.check-desc {
+  padding-left: 37px; /* 10px padding + 17px box + 10px gap */
+  margin-top: -4px;
+  margin-bottom: 4px;
+}
+
+/* ── A31: Fix button active state — no dark flash ── */
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.9);
+}
+
+.btn.primary:active:not(:disabled) {
+  background: var(--dm-primary);
+  filter: brightness(0.9);
+  transform: scale(0.98);
+}
+
+.btn-sm:active:not(:disabled) {
+  filter: brightness(0.9);
+  transform: scale(0.97);
+}
+
+.btn-sm.primary {
+  background: var(--dm-primary);
+  color: var(--dm-text-invert);
+  border: none;
+}
+
+.btn-sm.primary:active:not(:disabled) {
+  background: var(--dm-primary);
+  filter: brightness(0.9);
+}
+
+/* ── A3/A4: Account panel — right-aligned, matching footer background ── */
+.account-panel {
+  left: auto !important;
+  right: 16px !important;
+  background: var(--dm-glass-bg) !important;
+  border-color: var(--dm-border-base) !important;
+}
+
+/* ── A5: Better default avatar ── */
+.account-avatar {
+  background: var(--dm-primary-soft);
+  border: 1.5px solid var(--dm-primary);
+  font-size: 0 !important; /* hide old emoji */
+  position: relative;
+  overflow: hidden;
+}
+
+.account-avatar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 38%, var(--dm-primary) 0%, var(--dm-primary-soft) 45%, transparent 60%),
+    linear-gradient(180deg, var(--dm-primary-soft) 0%, transparent 100%);
+  opacity: 0.8;
+}
+
+.account-avatar::after {
+  content: attr(data-initials);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dm-primary);
+  font-family: var(--dm-font-mono);
+  letter-spacing: 0.05em;
+  z-index: 1;
+}
+
+/* ── A22: Blur app layout when changelog / welcome overlay open ── */
+.changelog-overlay.open ~ .welcome-overlay,
+html:has(.changelog-overlay.open) .app-layout,
+html:has(.welcome-overlay.open) .app-layout {
+  filter: blur(3px);
+  transition: filter 0.25s ease;
+}
+
+/* ── Printer profile details (A13) — inline next to active profile name ── */
+.sli-details {
+  display: none;
+  font-size: 9px;
+  color: var(--dm-text-weak);
+  font-family: var(--dm-font-mono);
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+.sli.active .sli-details {
+  display: block;
+}
+
+/* A12: Printer profile groups */
+.profile-group-header {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dm-text-weaker);
+  padding: 6px 14px 4px;
+  font-weight: 700;
+  border-top: 1px solid var(--dm-border-base);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s;
+  user-select: none;
+}
+
+.profile-group-header:first-child {
+  border-top: none;
+}
+
+.profile-group-header:hover {
+  color: var(--dm-text-weak);
+}
+
+.profile-group-header .pg-arrow {
+  font-size: 11px;
+  transition: transform 0.2s;
+  margin-left: auto;
+}
+
+.profile-group-header.collapsed .pg-arrow {
+  transform: rotate(-90deg);
+}
+
+.profile-group-items {
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+}
+
+.profile-group-items.collapsed {
+  max-height: 0 !important;
+}
+
+/* A16: Filename in footer */
+.footer-filename {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dm-text-weak);
+  font-size: 10px;
+  font-family: var(--dm-font-mono);
+  opacity: 0.7;
+}
+
+/* A20: Author byline under logo */
+.splash-author {
+  font-size: 10px;
+  color: var(--dm-text-weak);
+  font-family: var(--dm-font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 6px;
+  opacity: 0.5;
+  animation: authorFadeIn 2s ease 1.2s forwards;
+  opacity: 0;
+}
+
+@keyframes authorFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 0.55; transform: translateY(0); }
+}
+
+.splash-author .author-name {
+  color: var(--dm-primary);
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+
+.splash-author .author-name:hover {
+  opacity: 1;
+  text-shadow: 0 0 10px var(--dm-primary-soft);
+}
+
+/* Easter egg animation */
+@keyframes easterEggWiggle {
+  0%   { transform: rotate(0deg) scale(1); }
+  15%  { transform: rotate(-5deg) scale(1.1); }
+  30%  { transform: rotate(5deg) scale(1.15); }
+  45%  { transform: rotate(-4deg) scale(1.1); }
+  60%  { transform: rotate(4deg) scale(1.05); }
+  75%  { transform: rotate(-2deg) scale(1.02); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.easter-egg-active .author-name {
+  animation: easterEggWiggle 0.5s ease infinite;
+  color: #ff6b9d;
+  text-shadow: 0 0 15px #ff6b9d;
+}
+
+/* Easter egg toast override */
+.easter-egg-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  border: 1px solid #e94560;
+  border-radius: 14px;
+  padding: 16px 24px;
+  font-family: var(--dm-font-mono);
+  font-size: 14px;
+  color: #e2e2e2;
+  text-align: center;
+  z-index: 99999;
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%), 0 0 40px rgb(233 69 96 / 30%);
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+  max-width: 320px;
+}
+
+.easter-egg-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.easter-egg-toast .ee-emoji {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* ── Footer collapse (A11) ── */
+.app-footer.footer-collapsed {
+  height: 36px;
+  padding: 6px 24px;
+  overflow: hidden;
+}
+
+.footer-collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--dm-text-weaker);
+  font-size: 10px;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.footer-collapse-btn:hover { color: var(--dm-primary); }
+
+/* ── Accordion: only one settings group open at a time ── (uses JS) */
+
+/* ── A32: Render debug toggle in toolbar ── */
+.toolbar-render-debug {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: var(--dm-font-mono);
+  color: var(--dm-text-weak);
+  background: var(--dm-surface-raised);
+  border: 1px solid var(--dm-border-base);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.toolbar-render-debug:hover,
+.toolbar-render-debug.active {
+  border-color: var(--dm-primary);
+  color: var(--dm-primary);
+}
+
+.toolbar-render-debug .trd-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dm-text-weaker);
+  flex-shrink: 0;
+}
+
+.toolbar-render-debug.active .trd-dot {
+  background: var(--dm-success);
+  box-shadow: 0 0 4px var(--dm-success);
+}
+
+/* ── A10: Collapse export/render floating container ── */
+.floating-actions-toggle {
+  position: absolute;
+  top: -14px;
+  right: 12px;
+  background: var(--dm-surface-raised);
+  border: 1px solid var(--dm-border-base);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 3px 10px;
+  font-size: 9px;
+  font-family: var(--dm-font-mono);
+  color: var(--dm-text-weak);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: color 0.15s;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.floating-actions-toggle:hover {
+  color: var(--dm-primary);
+}
+
+.floating-actions-toggle .fat-arrow {
+  font-size: 11px;
+  transition: transform 0.2s;
+}
+
+.floating-actions-toggle.collapsed .fat-arrow {
+  transform: rotate(180deg);
+}
+
+.floating-actions.actions-collapsed {
+  transform: translateY(calc(100% - 1px));
+}
+
+.floating-actions {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* ── Settings accordion: only one open ── */
+.settings-group[data-accordion] summary {
+  outline: none;
+}
+
