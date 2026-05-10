@@ -6,12 +6,9 @@ import {
   boolean,
   timestamp,
   integer,
-  inet,
   jsonb,
   primaryKey,
-  check,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 
 // ── ROLES & PERMISSIONS ──────────────────────────────────────────────────
 
@@ -25,7 +22,7 @@ export const roles = pgTable('roles', {
 
 export const permissions = pgTable('permissions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  key: varchar('key', { length: 100 }).notNull().unique(), // e.g., 'invites.create'
+  key: varchar('key', { length: 100 }).notNull().unique(),
   description: text('description'),
 });
 
@@ -39,29 +36,23 @@ export const rolePermissions = pgTable(
       .notNull()
       .references(() => permissions.id, { onDelete: 'cascade' }),
   },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.roleId, table.permissionId] }),
-    };
-  }
+  (table) => ({
+    pk: primaryKey({ columns: [table.roleId, table.permissionId] }),
+  })
 );
 
-// ── USERS ────────────────────────────────────────────────────────────────
+// ── USERS (profile table — auth handled by Supabase Auth) ────────────────
 
 export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
+  id: uuid('id').primaryKey(), // Matches auth.users.id from Supabase
   username: varchar('username', { length: 50 }).notNull().unique(),
-  email: varchar('email', { length: 255 }).unique(), // Nullable since we might only use username
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).unique(),
   displayName: varchar('display_name', { length: 100 }),
   roleId: uuid('role_id').references(() => roles.id, { onDelete: 'restrict' }),
-  status: varchar('status', { length: 20 }).default('active'), // 'active', 'suspended', 'pending'
-  failedLoginCount: integer('failed_login_count').default(0),
-  lockedUntil: timestamp('locked_until', { withTimezone: true }),
+  status: varchar('status', { length: 20 }).default('active'),
+  twoFactorEnabled: boolean('two_factor_enabled').default(false),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   lastActiveAt: timestamp('last_active_at', { withTimezone: true }),
-  twoFactorSecret: text('two_factor_secret'),
-  twoFactorEnabled: boolean('two_factor_enabled').default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -77,15 +68,6 @@ export const apiKeys = pgTable('api_keys', {
   keyHash: varchar('key_hash', { length: 255 }).notNull().unique(),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
-
-// ── SESSIONS (handled by connect-pg-simple) ──────────────────────────────
-// The "session" table is usually created automatically or via a provided SQL script,
-// but we define it here for reference or manual creation if needed.
-export const session = pgTable('session', {
-  sid: varchar('sid').primaryKey(),
-  sess: jsonb('sess').notNull(),
-  expire: timestamp('expire', { precision: 6 }).notNull(),
 });
 
 // ── INVITES ──────────────────────────────────────────────────────────────
@@ -108,7 +90,7 @@ export const inviteRedemptions = pgTable('invite_redemptions', {
   inviteCodeId: uuid('invite_code_id').references(() => inviteCodes.id, { onDelete: 'restrict' }),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
   redeemedAt: timestamp('redeemed_at', { withTimezone: true }).defaultNow(),
-  ipAddress: varchar('ip_address'), // inet equivalent for generic varchar if inet fails, but we'll use varchar for now
+  ipAddress: varchar('ip_address'),
   userAgent: text('user_agent'),
 });
 

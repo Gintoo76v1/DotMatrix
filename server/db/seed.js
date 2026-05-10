@@ -1,18 +1,18 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from './schema.js';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 
+dotenv.config({ path: '.env.local' });
 dotenv.config();
 
-const { Pool } = pg;
-const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
-});
+const client = postgres(
+  process.env.DIRECT_URL || process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
+  { prepare: false }
+);
 
-const db = drizzle(pool, { schema });
+const db = drizzle(client, { schema });
 
 const PERMISSIONS = [
   { key: 'projects.read.own',   description: 'Eigene Projekte lesen' },
@@ -90,6 +90,7 @@ async function seed() {
 
   if (!adminRole) {
     console.log('ℹ️  Admin role already exists — skipping invite creation.');
+    await client.end();
     process.exit(0);
   }
 
@@ -108,10 +109,12 @@ async function seed() {
   console.log(`       ${code}`);
   console.log('==============================\n');
 
+  await client.end();
   process.exit(0);
 }
 
-seed().catch((err) => {
+seed().catch(async (err) => {
   console.error('Seeding failed:', err);
+  await client.end();
   process.exit(1);
 });
