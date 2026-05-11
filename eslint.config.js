@@ -3,6 +3,9 @@ import pluginJs from '@eslint/js';
 
 export default [
   {
+    ignores: ['.next/**', 'node_modules/**', 'public/scripts/**', 'tests/**'],
+  },
+  {
     languageOptions: {
       globals: {
         ...globals.browser,
