@@ -8,7 +8,7 @@ dotenv.config({ path: '.env.local' });
 dotenv.config();
 
 const client = postgres(
-  process.env.DIRECT_URL || process.env.DATABASE_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
+  process.env.DATABASE_URL || process.env.DIRECT_URL || 'postgres://dotmatrix:dotmatrixpassword@localhost:5432/dotmatrix',
   { prepare: false }
 );
 
