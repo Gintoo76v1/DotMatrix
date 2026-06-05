@@ -142,6 +142,5 @@ async function _handleLogout() {
   if (btn) btn.disabled = true;
   try { await api.auth.logout(); } catch { /* ignore */ }
   sessionStorage.removeItem('dm_login_at');
-  const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-  window.location.href = `${base}login.html`;
+  window.location.href = '/login';
 }

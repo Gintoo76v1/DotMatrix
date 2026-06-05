@@ -2,6 +2,8 @@ import { getAuthUser, unauthorized } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { userSettings } from '@/server/db/schema.js';
 import { eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { readJson, jsonObject } from '@/lib/validate';
 
 export async function GET() {
   const user = await getAuthUser();
@@ -21,11 +23,15 @@ export async function GET() {
   }
 }
 
+const SettingsSchema = z.object({ settingsJson: jsonObject });
+
 export async function PUT(req: Request) {
   const user = await getAuthUser();
   if (!user) return unauthorized();
 
-  const { settingsJson } = await req.json();
+  const parsed = await readJson(req, SettingsSchema);
+  if (!parsed.ok) return parsed.response;
+  const { settingsJson } = parsed.data;
 
   try {
     const [settings] = await db

@@ -29,6 +29,8 @@ export async function POST(
       .where(and(eq(projects.id, id), eq(projects.ownerId, user.id)))
       .returning();
 
+    if (!updated) return Response.json({ error: 'Project not found' }, { status: 404 });
+
     await logAction(user.id, 'project.restore_snapshot', 'projects', updated.id, { snapshotId: snap.id });
 
     return Response.json({ project: updated });

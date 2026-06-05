@@ -2,7 +2,14 @@ import { getAuthUser, hasPermission, unauthorized, forbidden } from '@/lib/auth'
 import { db } from '@/lib/db';
 import { projects, projectSnapshots } from '@/server/db/schema.js';
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { logAction } from '@/lib/audit';
+import { readJson, jsonObject } from '@/lib/validate';
+
+const UpdateProjectSchema = z.object({
+  version: z.number().int().nonnegative(),
+  contentJson: jsonObject,
+});
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getAuthUser();
@@ -10,9 +17,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!(await hasPermission(user.id, 'projects.write.own'))) return forbidden();
 
   const { id } = await params;
-  try {
-    const { contentJson, version } = await req.json();
+  const parsed = await readJson(req, UpdateProjectSchema);
+  if (!parsed.ok) return parsed.response;
+  const { contentJson, version } = parsed.data;
 
+  try {
     const project = await db
       .select()
       .from(projects)
@@ -28,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const [updated] = await db
       .update(projects)
       .set({ contentJson, version: version + 1, updatedAt: new Date() })
-      .where(and(eq(projects.id, id), eq(projects.version, version)))
+      .where(and(eq(projects.id, id), eq(projects.ownerId, user.id), eq(projects.version, version)))
       .returning();
 
     if (!updated) {

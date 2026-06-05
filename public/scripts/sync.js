@@ -60,41 +60,12 @@ export function initSyncManager(userId) {
   if (syncInterval) clearInterval(syncInterval);
   syncInterval = setInterval(processQueue, 10000);
 
-  initWebSocket();
   processQueue();
 }
 
-function initWebSocket() {
-  if (!currentUserId) return;
-
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const base = window.location.pathname.substring(
-    0,
-    window.location.pathname.lastIndexOf('/') + 1
-  );
-  const url = `${protocol}//${window.location.host}${base}../ws`;
-
-  ws = new WebSocket(url);
-
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ type: 'auth', userId: currentUserId }));
-  };
-
-  ws.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.type === 'update' && data.state) {
-        document.dispatchEvent(new CustomEvent('dm:remoteUpdate', { detail: data.state }));
-      }
-    } catch (e) {
-      console.error('WS Sync Error', e);
-    }
-  };
-
-  ws.onclose = () => {
-    setTimeout(initWebSocket, 5000);
-  };
-}
+// Real-time WebSocket sync was removed: Vercel's serverless runtime has no
+// persistent WebSocket server, so the connection only failed and retried in a
+// loop. Offline changes reconcile via the 10s polling loop above instead.
 
 export function broadcastState(state) {
   if (ws && ws.readyState === 1) {

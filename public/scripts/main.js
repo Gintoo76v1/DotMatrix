@@ -34,7 +34,7 @@ const _bootAt = Date.now();
 
 // ── Authentication Check ───────────────────────────────────────────────────
 
-// Verify session before initializing the app. If unauthorized, api.js will redirect to login.html.
+// Verify session before initializing the app. If unauthorized, api.js will redirect to /login.
 export let currentUser = null;
 let currentPermissions = [];
 try {
@@ -43,11 +43,7 @@ try {
   currentPermissions = data.permissions || [];
 } catch {
   // Redirect to login on any auth failure (api.js handles 401, this covers network/other errors)
-  const baseUrl = window.location.pathname.substring(
-    0,
-    window.location.pathname.lastIndexOf('/') + 1
-  );
-  window.location.href = `${baseUrl}login.html`;
+  window.location.href = '/login';
   await new Promise(() => {});
 }
 
@@ -453,8 +449,7 @@ function _initUserSession(user) {
       btn.textContent = '…';
       try { await api.auth.logout(); } catch {}
       sessionStorage.removeItem('dm_login_at');
-      const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-      window.location.href = `${base}login.html`;
+      window.location.href = '/login';
     });
   }
 }
@@ -828,8 +823,7 @@ document.addEventListener('dm:imageLoaded', (e) => {
   async function _logout() {
     try { await api.auth.logout(); } catch {}
     sessionStorage.removeItem('dm_login_at');
-    const base = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-    window.location.href = `${base}login.html`;
+    window.location.href = '/login';
   }
 
   // Wire dialog buttons

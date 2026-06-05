@@ -1,16 +1,31 @@
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 import { users } from '@/server/db/schema.js';
-import { or, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { headers } from 'next/headers';
 import { logAction } from '@/lib/audit';
+import { readJson } from '@/lib/validate';
+import { isRateLimited, recordAttempt, clientIp } from '@/lib/rate-limit';
+
+const LoginSchema = z.object({
+  usernameOrEmail: z.string().min(1).max(255),
+  password: z.string().min(1).max(200),
+});
 
 export async function POST(req: Request) {
   try {
-    const { usernameOrEmail, password } = await req.json();
-
-    if (!usernameOrEmail || !password) {
-      return Response.json({ error: 'Missing credentials' }, { status: 400 });
+    const ip = clientIp(await headers());
+    if (await isRateLimited('login', ip, { max: 10, windowSec: 900 })) {
+      return Response.json(
+        { error: 'Zu viele Versuche – bitte einen Moment warten.' },
+        { status: 429 }
+      );
     }
+
+    const parsed = await readJson(req, LoginSchema);
+    if (!parsed.ok) return parsed.response;
+    const { usernameOrEmail, password } = parsed.data;
 
     // Resolve email from username if needed
     let email = usernameOrEmail;
@@ -23,6 +38,7 @@ export async function POST(req: Request) {
         .then((r) => r[0] ?? null);
 
       if (!profile?.email) {
+        await recordAttempt('login', ip);
         return Response.json({ error: 'Invalid credentials' }, { status: 401 });
       }
       email = profile.email;
@@ -32,6 +48,7 @@ export async function POST(req: Request) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error || !data.user) {
+      await recordAttempt('login', ip);
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 

@@ -26,6 +26,7 @@ const PERMISSIONS = [
   { key: 'users.read.any',      description: 'Alle Benutzer lesen' },
   { key: 'users.update.any',    description: 'Beliebige Benutzer verwalten' },
   { key: 'roles.manage',        description: 'Rollen verwalten' },
+  { key: 'audit.read',          description: 'Audit-Log lesen' },
 ];
 
 // Permissions granted to the "user" role

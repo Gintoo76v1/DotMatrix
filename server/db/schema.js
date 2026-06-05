@@ -8,6 +8,7 @@ import {
   integer,
   jsonb,
   primaryKey,
+  index,
 } from 'drizzle-orm/pg-core';
 
 // ── ROLES & PERMISSIONS ──────────────────────────────────────────────────
@@ -135,3 +136,18 @@ export const auditLog = pgTable('audit_log', {
   ipAddress: varchar('ip_address'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+// ── AUTH RATE LIMITING (serverless-safe, Postgres-backed) ────────────────
+
+export const authAttempts = pgTable(
+  'auth_attempts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    bucket: varchar('bucket', { length: 50 }).notNull(),
+    ip: varchar('ip').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    lookup: index('auth_attempts_lookup_idx').on(table.bucket, table.ip, table.createdAt),
+  })
+);

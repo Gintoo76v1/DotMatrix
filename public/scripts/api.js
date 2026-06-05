@@ -1,7 +1,7 @@
 // ── API Client Layer ─────────────────────────────────────────────────────────
 
-// Use a relative path so it works when hosted in a subfolder like /dotmatrix/
-const API_BASE = 'api/v1';
+// Absolute path — the app is hosted at the domain root on Vercel.
+const API_BASE = '/api/v1';
 
 // German user-friendly messages for HTTP status codes
 const STATUS_MESSAGES = {
@@ -24,7 +24,7 @@ export class APIError extends Error {
 
 async function request(endpoint, options = {}) {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const url = `${window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)}${API_BASE}/${cleanEndpoint}`;
+  const url = `${API_BASE}/${cleanEndpoint}`;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -45,14 +45,10 @@ async function request(endpoint, options = {}) {
     const response = await fetch(url, config);
 
     if (response.status === 401) {
-      const currentPage = window.location.pathname.split('/').pop();
-      const onAuthPage = currentPage === 'login.html' || currentPage === 'register.html';
+      const onAuthPage =
+        window.location.pathname === '/login' || window.location.pathname === '/register';
       if (!onAuthPage) {
-        const baseUrl = window.location.pathname.substring(
-          0,
-          window.location.pathname.lastIndexOf('/') + 1
-        );
-        window.location.href = `${baseUrl}login.html`;
+        window.location.href = '/login';
       }
       throw new APIError(401, STATUS_MESSAGES[401]);
     }
