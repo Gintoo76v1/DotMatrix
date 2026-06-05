@@ -34,7 +34,9 @@ export function toGrayscale(imgData, stateObj) {
   const gray = new Uint8Array(w * h);
 
   const brightness = stateObj.brightness || 0;
-  const contrast = stateObj.contrast || 0;
+  // Clamp contrast to keep the standard factor finite — at contrast = 259 the
+  // denominator hits zero and the whole image would turn to NaN.
+  const contrast = clamp(stateObj.contrast || 0, -254, 254);
   const cFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
   const gamma = stateObj.gamma || 1.0;
   const invert = stateObj.invert || false;

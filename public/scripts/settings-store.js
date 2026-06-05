@@ -53,6 +53,7 @@ const PERSIST_KEYS = [
   'seed',
   'softBlur',
   'legacyMath',
+  'mathVersion',
 ];
 
 export function loadSettings() {

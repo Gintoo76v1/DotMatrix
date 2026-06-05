@@ -509,6 +509,37 @@ export const SYSTEM_PRESETS = [
     softBlur: false,
     invert: false,
   },
+  {
+    id: 'v2_showcase',
+    name: 'V2 · Linear Ink',
+    system: true,
+    profile: 'epson_fx',
+    brightness: 0,
+    contrast: 25,
+    gamma: 1.1,
+    dither: 'floyd_steinberg',
+    threshold: 128,
+    ink: [20, 22, 28],
+    paper: [248, 245, 232],
+    paperFormat: 'Original',
+    orientation: 'Portrait',
+    doubleStrike: true,
+    condensed: false,
+    dpi: 300,
+    jitterScale: 1.0,
+    bandingScale: 0.8,
+    maxSize: 8000,
+    mathVersion: 'v2',
+    wearLayers: [
+      { pattern: 'cloudy', strength: 35 },
+      { pattern: 'head_gap', strength: 25 },
+      { pattern: 'ink_starved', strength: 30 },
+      { pattern: 'ribbon_twist', strength: 20 },
+    ],
+    seed: 7,
+    softBlur: false,
+    invert: false,
+  },
 ];
 
 export const state = {
@@ -533,8 +564,12 @@ export const state = {
   seed: 0,
   softBlur: false,
   sourceImage: null,
-  // v2 math toggle — false = improved math (default), true = v1-compatible
-  legacyMath: false,
+  // Dot-matrix math model: 'legacy' (v1-compatible hard-coded anisotropy),
+  // 'v1' (current improved default) or 'v2' (physically truer: linear-light
+  // compositing, ink saturation, exponential head-gap, non-linear ribbon fade,
+  // seamless cloud noise, DPI-correct paper slip). v1 stays the default so
+  // existing renders are unchanged; v2 is opt-in.
+  mathVersion: 'v1',
   // Worker rendering — falls back automatically if OffscreenCanvas missing
   useWorker: true,
   // UI flags (persisted via settings-store)

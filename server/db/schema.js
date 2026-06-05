@@ -39,6 +39,7 @@ export const rolePermissions = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.roleId, table.permissionId] }),
+    permissionIdIdx: index('role_permissions_permission_id_idx').on(table.permissionId),
   })
 );
 
@@ -56,7 +57,9 @@ export const users = pgTable('users', {
   lastActiveAt: timestamp('last_active_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  roleIdIdx: index('users_role_id_idx').on(table.roleId),
+}));
 
 // ── API KEYS ─────────────────────────────────────────────────────────────
 
@@ -69,7 +72,9 @@ export const apiKeys = pgTable('api_keys', {
   keyHash: varchar('key_hash', { length: 255 }).notNull().unique(),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index('api_keys_user_id_idx').on(table.userId),
+}));
 
 // ── INVITES ──────────────────────────────────────────────────────────────
 
@@ -84,7 +89,10 @@ export const inviteCodes = pgTable('invite_codes', {
   isRevoked: boolean('is_revoked').default(false),
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  roleIdIdx: index('invite_codes_role_id_idx').on(table.roleId),
+  createdByIdx: index('invite_codes_created_by_idx').on(table.createdBy),
+}));
 
 export const inviteRedemptions = pgTable('invite_redemptions', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -93,7 +101,10 @@ export const inviteRedemptions = pgTable('invite_redemptions', {
   redeemedAt: timestamp('redeemed_at', { withTimezone: true }).defaultNow(),
   ipAddress: varchar('ip_address'),
   userAgent: text('user_agent'),
-});
+}, (table) => ({
+  inviteCodeIdIdx: index('invite_redemptions_invite_code_id_idx').on(table.inviteCodeId),
+  userIdIdx: index('invite_redemptions_user_id_idx').on(table.userId),
+}));
 
 // ── APP DATA ─────────────────────────────────────────────────────────────
 
@@ -113,7 +124,9 @@ export const projects = pgTable('projects', {
   version: integer('version').default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  ownerIdIdx: index('projects_owner_id_idx').on(table.ownerId),
+}));
 
 export const projectSnapshots = pgTable('project_snapshots', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -122,7 +135,10 @@ export const projectSnapshots = pgTable('project_snapshots', {
   version: integer('version').notNull(),
   createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  projectIdIdx: index('project_snapshots_project_id_idx').on(table.projectId),
+  createdByIdx: index('project_snapshots_created_by_idx').on(table.createdBy),
+}));
 
 // ── SECURITY AUDIT ───────────────────────────────────────────────────────
 
@@ -135,7 +151,9 @@ export const auditLog = pgTable('audit_log', {
   metadataJson: jsonb('metadata_json'),
   ipAddress: varchar('ip_address'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  actorUserIdIdx: index('audit_log_actor_user_id_idx').on(table.actorUserId),
+}));
 
 // ── AUTH RATE LIMITING (serverless-safe, Postgres-backed) ────────────────
 

@@ -12,7 +12,7 @@ import { initErrorPopup, showError } from './ui/error.js?v=2';
 import { initAudio, playClickSound, playToggleSound } from './ui/audio.js';
 import { initZoom, dragState } from './ui/zoom.js';
 import { registerSlider, wireSlider, syncAllFromState } from './ui/sliders.js';
-import { wireSegmented } from './ui/segments.js';
+import { wireSegmented, setSegmentedValue } from './ui/segments.js';
 import { loadProjectHistory } from './ui/history.js';
 import { initSecurityUI } from './ui/security.js';
 import { wireSwatches, wireCustomInk, wireCustomPaper } from './ui/swatches.js';
@@ -276,6 +276,9 @@ wireSegmented('ditherBtns', state, 'dither', 'dither', () => {
 });
 wireSegmented('paperFormatBtns', state, 'paperFormat', 'format', triggerUpdate);
 wireSegmented('orientationBtns', state, 'orientation', 'orient', triggerUpdate);
+wireSegmented('mathVersionBtns', state, 'mathVersion', 'mathv', triggerUpdate);
+// Reflect the persisted/hydrated math model on the segmented control.
+setSegmentedValue('mathVersionBtns', 'mathv', state.mathVersion);
 
 // ── Swatches ───────────────────────────────────────────────────────────────
 

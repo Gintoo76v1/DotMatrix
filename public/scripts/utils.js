@@ -63,3 +63,17 @@ export function smoothstep(t) {
 export function clamp(v, lo, hi) {
   return v < lo ? lo : v > hi ? hi : v;
 }
+
+// ── sRGB ↔ linear-light transfer (used by the v2 compositor) ────────────────
+// Both directions operate on normalised [0,1] values using the exact sRGB
+// piecewise transfer function. Blending ink over paper in linear light gives
+// physically correct dot-gain / overlap darkening instead of the muddy result
+// of lerping gamma-encoded values directly.
+export function srgbToLinear(c) {
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+export function linearToSrgb(c) {
+  const v = c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}

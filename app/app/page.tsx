@@ -94,6 +94,13 @@ export default function AppPage() {
                   <input type="range" id="thresholdSlider" min="0" max="255" defaultValue="128" />
                 </label>
 
+                <h2 style={{ marginTop: '24px' }}>Druck-Mathematik</h2>
+                <div className="segmented" id="mathVersionBtns">
+                  <button data-mathv="legacy">Legacy</button>
+                  <button data-mathv="v1" className="active">V1</button>
+                  <button data-mathv="v2">V2</button>
+                </div>
+
                 <h2 data-i18n="paperFormatTitle" style={{ marginTop: '24px' }}>Paper &amp; Format</h2>
                 <div className="segmented scrollable" id="paperFormatBtns" style={{ marginBottom: '12px' }}>
                   <button data-format="Original" className="active">Orig</button>

@@ -8,7 +8,15 @@
 // constants and using branch-free clamps.
 
 import { PROFILES, state, PAPER_SIZES_MM } from './config.js';
-import { mulberry32, makeGaussian, yieldUI, clamp, smoothstep } from './utils.js';
+import {
+  mulberry32,
+  makeGaussian,
+  yieldUI,
+  clamp,
+  smoothstep,
+  srgbToLinear,
+  linearToSrgb,
+} from './utils.js';
 import {
   toGrayscale,
   floydSteinberg,
@@ -129,15 +137,20 @@ export function makeValueNoise(rng, noiseW, noiseH, opts = {}) {
   const grid = new Float32Array(noiseW * noiseH);
   for (let i = 0; i < grid.length; i++) grid[i] = rng();
   const interp = opts.interp === 'bilinear' ? (t) => t : smoothstep;
+  const tile = !!opts.tileable;
   return (x, y, totalW, totalH) => {
-    const nx = (x / totalW) * (noiseW - 1);
-    const ny = (y / totalH) * (noiseH - 1);
-    const x0 = Math.floor(nx),
-      x1 = Math.min(x0 + 1, noiseW - 1);
-    const y0 = Math.floor(ny),
-      y1 = Math.min(y0 + 1, noiseH - 1);
-    const fx = interp(nx - x0),
-      fy = interp(ny - y0);
+    // Tileable mode wraps the lattice so opposite edges meet seamlessly — this
+    // removes the visible seam the clamped sampler leaves on small grids.
+    const sx = tile ? (x / totalW) * noiseW : (x / totalW) * (noiseW - 1);
+    const sy = tile ? (y / totalH) * noiseH : (y / totalH) * (noiseH - 1);
+    const ix = Math.floor(sx),
+      iy = Math.floor(sy);
+    const x0 = tile ? ((ix % noiseW) + noiseW) % noiseW : ix;
+    const y0 = tile ? ((iy % noiseH) + noiseH) % noiseH : iy;
+    const x1 = tile ? (x0 + 1) % noiseW : Math.min(ix + 1, noiseW - 1);
+    const y1 = tile ? (y0 + 1) % noiseH : Math.min(iy + 1, noiseH - 1);
+    const fx = interp(sx - ix),
+      fy = interp(sy - iy);
     const v00 = grid[y0 * noiseW + x0],
       v10 = grid[y0 * noiseW + x1];
     const v01 = grid[y1 * noiseW + x0],
@@ -212,7 +225,7 @@ function _buildPaperSlip(ld, rng, gridH, str, stepY) {
 // Each wear pattern caches whatever it can compute up-front (row/column
 // LUTs, RNG-derived constants).  Per-cell work in the hot loop is then
 // limited to a switch and a few arithmetic ops.
-function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
+function buildLayerData(layer, rng, gridW, gridH, numPins, stepY, v2) {
   const str = (layer.strength ?? 50) / 100;
   const ld = { pattern: layer.pattern, strength: str };
 
@@ -220,6 +233,7 @@ function buildLayerData(layer, rng, gridW, gridH, numPins, stepY) {
     case 'cloudy': {
       ld.noise = makeValueNoise(rng, 16, 16, {
         interp: 'smoothstep',
+        tileable: !!v2,
       });
       break;
     }
@@ -300,6 +314,11 @@ function defaultCreateCanvas(w, h) {
 export async function render(srcImage, onProgressUpdate, opts = {}) {
   const createCanvas = opts.createCanvas || defaultCreateCanvas;
   const profile = PROFILES[state.profile];
+  // Math model selector (see config.js state.mathVersion). Honour the old
+  // boolean `legacyMath` for any settings persisted before the selector existed.
+  const mathV = state.mathVersion || (state.legacyMath ? 'legacy' : 'v1');
+  const v2 = mathV === 'v2';
+  const legacyMath = mathV === 'legacy';
   const seed = state.seed || Math.floor(Math.random() * 1e9);
   const rng = mulberry32(seed);
   const gauss = makeGaussian(rng);
@@ -392,7 +411,12 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
   const ink = new Float32Array(outW * outH);
   // Bug R — keep dot diameter ≥3 (matches makeDotStamp's own minimum)
   const dotPx = Math.max(3, Math.round((profile.dot_diameter_mm / MM_PER_INCH) * effDpi));
-  const baseStamp = makeDotStamp(dotPx, profile.dot_softness, profile.ink_density, { dpiH, dpiV });
+  const baseStamp = makeDotStamp(
+    dotPx,
+    profile.dot_softness,
+    profile.ink_density,
+    legacyMath ? { legacy: true } : { dpiH, dpiV }
+  );
   const stamp = baseStamp.data;
   const stampSize = baseStamp.size;
   const stampR = (stampSize - 1) / 2;
@@ -419,7 +443,7 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
   const wearLayers = Array.isArray(state.wearLayers) ? state.wearLayers : [];
   const layerData = wearLayers
     .filter((l) => l && l.pattern && l.pattern !== 'none' && (l.strength ?? 0) > 0)
-    .map((l) => buildLayerData(l, rng, gridW, gridH, numPins, stepY));
+    .map((l) => buildLayerData(l, rng, gridW, gridH, numPins, stepY, v2));
 
   // Row banding LUT — symmetric (mean ≈ 1) in v2.
   const rowBands = new Float32Array(gridH);
@@ -525,7 +549,9 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
             break;
           }
           case 'head_gap': {
-            wearFactor *= Math.max(0.05, 1.0 - str * 0.7);
+            // v2: exponential intensity falloff with platen gap (air-gap
+            // diffusion); v1: linear approximation.
+            wearFactor *= v2 ? Math.max(0.03, Math.exp(-1.7 * str)) : Math.max(0.05, 1.0 - str * 0.7);
             break;
           }
           case 'ink_starved': {
@@ -535,7 +561,9 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
             break;
           }
           case 'paper_slip': {
-            dyTotal += ld.rowShift[gy];
+            // v2 scales the feed slip by the row pitch so it is DPI-independent
+            // (v1 added raw lattice units, which drifted with resolution).
+            dyTotal += ld.rowShift[gy] * (v2 ? stepY : 1);
             break;
           }
           case 'static_noise': {
@@ -574,7 +602,10 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
       cx += dxTotal;
       cy += dyTotal;
 
-      const ribbonFade = 1.0 - gx * invGridW * ribbonFadeAmt;
+      // v2: ink depletes non-linearly across the sweep (accelerating toward the
+      // dry end of the ribbon); v1: linear.
+      const rfx = gx * invGridW;
+      const ribbonFade = v2 ? 1.0 - ribbonFadeAmt * rfx * rfx * 1.8 : 1.0 - rfx * ribbonFadeAmt;
 
       if (passJitter > 0) {
         cx += gauss() * passJitter;
@@ -606,17 +637,42 @@ export async function render(srcImage, onProgressUpdate, opts = {}) {
     }
   }
 
-  // Compose output ImageData — paper underlies ink with linear blend.
+  // Compose output ImageData.
+  //   v1 / legacy — simple sRGB lerp between paper and ink.
+  //   v2          — blend in linear light with an ink-coverage saturation
+  //                 curve, for physically truer dot gain and overlap darkening.
   const finalImg = new ImageData(outW, outH);
   const [pr, pg, pb] = state.paper;
   const [ir, ig, ib] = state.ink;
   const d = finalImg.data;
-  for (let i = 0, j = 0; i < ink.length; i++, j += 4) {
-    const a = ink[i] > 1 ? 1 : ink[i];
-    d[j] = (pr * (1 - a) + ir * a) | 0;
-    d[j + 1] = (pg * (1 - a) + ig * a) | 0;
-    d[j + 2] = (pb * (1 - a) + ib * a) | 0;
-    d[j + 3] = 255;
+
+  if (v2) {
+    const prL = srgbToLinear(pr / 255),
+      pgL = srgbToLinear(pg / 255),
+      pbL = srgbToLinear(pb / 255);
+    const irL = srgbToLinear(ir / 255),
+      igL = srgbToLinear(ig / 255),
+      ibL = srgbToLinear(ib / 255);
+    // Beer–Lambert-style coverage: ink spreads on contact, so partial coverage
+    // already lays down substantial ink. Normalised so a0 = 1 maps to a = 1.
+    const K = 2.6;
+    const norm = 1 / (1 - Math.exp(-K));
+    for (let i = 0, j = 0; i < ink.length; i++, j += 4) {
+      const a0 = ink[i] > 1 ? 1 : ink[i];
+      const a = (1 - Math.exp(-K * a0)) * norm;
+      d[j] = (linearToSrgb(prL * (1 - a) + irL * a) * 255) | 0;
+      d[j + 1] = (linearToSrgb(pgL * (1 - a) + igL * a) * 255) | 0;
+      d[j + 2] = (linearToSrgb(pbL * (1 - a) + ibL * a) * 255) | 0;
+      d[j + 3] = 255;
+    }
+  } else {
+    for (let i = 0, j = 0; i < ink.length; i++, j += 4) {
+      const a = ink[i] > 1 ? 1 : ink[i];
+      d[j] = (pr * (1 - a) + ir * a) | 0;
+      d[j + 1] = (pg * (1 - a) + ig * a) | 0;
+      d[j + 2] = (pb * (1 - a) + ib * a) | 0;
+      d[j + 3] = 255;
+    }
   }
 
   if (state.softBlur) boxBlur3x3(d, outW, outH);

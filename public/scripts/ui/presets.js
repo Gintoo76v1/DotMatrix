@@ -94,6 +94,7 @@ export function captureCurrentPreset(name) {
     condensed: state.condensed,
     softBlur: state.softBlur,
     invert: state.invert,
+    mathVersion: state.mathVersion,
     wearLayers: state.wearLayers.map((l) => ({ ...l })),
   };
 }
@@ -129,6 +130,10 @@ export function applyPreset(p) {
       setSegmentedValue('ditherBtns', 'dither', p.dither);
       const tf = document.getElementById('thresholdField');
       if (tf) tf.style.display = p.dither === 'threshold' ? 'block' : 'none';
+    }
+    if (p.mathVersion) {
+      state.mathVersion = p.mathVersion;
+      setSegmentedValue('mathVersionBtns', 'mathv', p.mathVersion);
     }
     if (p.paperFormat) {
       state.paperFormat = p.paperFormat;

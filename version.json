@@ -1,9 +1,23 @@
 {
   "$schema": "./version.schema.json",
-  "current": "1.5.0",
-  "buildDate": "2026-05-08",
-  "lastUpdated": "2026-05-08T20:00:00Z",
+  "current": "2.0.0",
+  "buildDate": "2026-06-05",
+  "lastUpdated": "2026-06-05T00:00:00Z",
   "changelog": [
+    {
+      "version": "2.0.0",
+      "date": "2026-06-05",
+      "tags": ["Platform", "Security", "Engine"],
+      "summary": "Next.js 15 + Supabase + Vercel; Härtung & V2-Druckmathematik",
+      "highlights": [
+        "Plattform-Migration: Express/Docker/MinIO → Next.js 15 App Router, Supabase (Auth + Postgres via Drizzle), Vercel-Deployment",
+        "V2-Druckmathematik (auswählbar: legacy / v1 / v2) — Linear-Licht-Compositing, Ink-Sättigungskurve, exponentieller Head-Gap, nichtlinearer Ribbon-Fade, nahtloses Cloud-Noise, DPI-korrekter Paper-Slip",
+        "Render-Bugfixes: Kontrast-NaN bei Extremwerten, Value-Noise-Säume, Paper-Slip-Skalierung",
+        "Sicherheit: Snapshot-Ownership-Check, S3 fail-closed, atomare Invite-Vergabe, Zod-Validierung, Rate-Limiting für Login/Register, CSP/COOP/HSTS-Header",
+        "Datenbank: 11 fehlende Fremdschlüssel-Indizes ergänzt, anon/authenticated-Exposure entfernt, SECURITY-DEFINER-Helfer abgesichert",
+        "Frontend: Redirects auf echte Next-Routen (/login) statt toter *.html-Seiten; toter WebSocket-Pfad entfernt (Serverless nutzt Polling)"
+      ]
+    },
     {
       "version": "1.5.0",
       "date": "2026-05-08",
